@@ -143,16 +143,12 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
   }
 #endif
 
-	struct timeval start_syndrome, end_syndrome;
-    gettimeofday(&start_syndrome, NULL);
+	#ifdef SYNDROME_KERNEL
+	syndrome_host(s, pk, e);
+	#endif
+	#ifndef SYNDROME_KERNEL
+	syndrome_sw_host(s, pk, e);
+	#endif
 
-	syndrome(s, pk, e);
-
-	gettimeofday(&end_syndrome, 0);
-    long seconds = end_syndrome.tv_sec - start_syndrome.tv_sec;
-    long microseconds = end_syndrome.tv_usec - start_syndrome.tv_usec;
-    double elapsed_syndrome = seconds + microseconds*0.000001;
-	sum_syndrome += elapsed_syndrome;
-	times_syndrome = times_syndrome + 1;
 }
 

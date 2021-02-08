@@ -13,24 +13,560 @@
 #include "pk_gen.h"
 #include "root.h"
 #include "encrypt.h"
+#include "root.h"
+#include "gf.h"
+#include "controlbits.h"
 
 #include <sys/time.h>
+#include <CL/opencl.h>
+#include <CL/cl_ext.h>
 
 #define KAT_SUCCESS          0
 #define KAT_FILE_OPEN_ERROR -1
 #define KAT_CRYPTO_FAILURE  -4
+
+#define CL_HPP_CL_1_2_DEFAULT_BUILD
+#define CL_HPP_TARGET_OPENCL_VERSION 120
+#define CL_HPP_MINIMUM_OPENCL_VERSION 120
+#define CL_HPP_ENABLE_PROGRAM_CONSTRUCTION_FROM_ARRAY_COMPATIBILITY 1
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 
 void	fprintBstr(FILE *fp, char *S, unsigned char *A, unsigned long long L);
 
 unsigned char entropy_input[48];
 unsigned char seed[KATNUM][48];
 
+//GLOBAL VARIABLES
+cl_int err;
+const cl_uint DATA_SIZE = 4096;
+cl_platform_id platform_id;
+cl_device_id device_id;
+cl_context context;
+cl_command_queue commands;
+cl_program program;
+
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
+cl_kernel kernel_gaussian_elimination;
+#endif
+
+#ifdef EVAL_KERNEL
+cl_kernel kernel_eval;
+#endif
+
+#ifdef SYNDROME_KERNEL
+cl_kernel kernel_syndrome;
+#endif
+
+//eval
+cl_mem buffer_f_in;
+cl_mem buffer_a_in;
+cl_mem buffer_r_out;
+gf *ptr_f_in;
+gf *ptr_a_in;
+gf *ptr_r_out;
+cl_mem pt_list_eval[3];
+
+//syndrome
+cl_mem buffer_pk_in;
+cl_mem buffer_e_in;
+cl_mem buffer_s_out;
+unsigned char *ptr_pk_in;
+unsigned char *ptr_e_in;
+unsigned char *ptr_s_out;
+cl_mem pt_list_syndrome[3];
+
+//Gaussian Elimination
+cl_mem buffer_mat_in;
+cl_mem buffer_mat_out;
+unsigned char *ptr_mat_in;
+unsigned char *ptr_mat_out;
+
 double sum_keygen, sum_enc, sum_dec;
 int times_keygen, times_enc, times_dec;
 
-int
-main()
+char cl_platform_vendor[1001];
+const char* target_device_name ="zcu102_base";
+cl_platform_id platforms[16];
+cl_uint platform_count;
+cl_uint platform_found = 0;
+cl_uint num_devices;
+cl_uint device_found = 0;
+cl_device_id devices[16];
+char cl_device_name[1001];
+
+cl_int status;
+int global_cnt = 0;
+
+cl_uint load_file_to_memory(const char *filename, char **result)
 {
+    cl_uint size = 0;
+    FILE *f = fopen(filename, "rb");
+    if (f == NULL) {
+        *result = NULL;
+        return -1; // -1 means file opening fail
+    }
+    fseek(f, 0, SEEK_END);
+    size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    *result = (char *)malloc(size+1);
+    if (size != fread(*result, sizeof(char), size, f)) {
+        free(*result);
+        return -2; // -2 means file reading fail
+    }
+    fclose(f);
+    (*result)[size] = 0;
+    return size;
+}
+
+void	fprintBstr(FILE *fp, char *S, unsigned char *A, unsigned long long L);
+
+
+unsigned char entropy_input[48];
+unsigned char seed[KATNUM][48];
+
+int
+main(int argc, char* argv[])
+{
+	//OpenCL Initialization code STARTS
+	// ------------------------------------------------------------------------------------
+	// Step 1: Get All PLATFORMS, then search for Target_Platform_Vendor (CL_PLATFORM_VENDOR)
+	// ------------------------device_------------------------------------------------------------
+
+	// Get the number of platforms
+	// ..................................................
+
+    err = clGetPlatformIDs(16, platforms, &platform_count);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("Error: Failed to find an OpenCL platform!\n");
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	printf("INFO: Found %d platforms\n", platform_count);
+	#endif
+
+
+
+	  // ....................................................................................
+	  // step 1:  Search for Platform (ex: Xilinx) using: CL_PLATFORM_VENDOR = Target_Platform_Vendor
+	  // Check if the current platform matches Target_Platform_Vendor
+	  // ................device_....................................................................
+
+	for (cl_uint iplat=0; iplat<platform_count; iplat++) {
+		err = clGetPlatformInfo(platforms[iplat], CL_PLATFORM_VENDOR, 1000, (void *)cl_platform_vendor,NULL);
+		#ifdef OCL_API_DEBUG
+		if (err != CL_SUCCESS) {
+			printf("Error: clGetPlatformInfo(CL_PLATFORM_VENDOR) failed!\n");
+			printf("Test failed\n");
+			return EXIT_FAILURE;
+		}
+		if (strcmp(cl_platform_vendor, "Xilinx") == 0) {
+			printf("INFO: Selected platform %d from %s\n", iplat, cl_platform_vendor);
+			platform_id = platforms[iplat];
+			platform_found = 1;
+		}
+		#endif
+	}
+	#ifdef OCL_API_DEBUG
+	if (!platform_found) {
+		printf("ERROR: Platform Xilinx not found. Exit.\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	   // ------------------------------------------------------------------------------------
+	   // Step 1:  Get All Devices for selected platform Target_Platform_ID
+	   //            then search for Xilinx platform (CL_DEVICE_TYPE_ACCELERATOR = Target_Device_Name)
+	   // ------------------------------------------------------------------------------------
+
+
+    err = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_ACCELERATOR, 16, devices, &num_devices);
+	#ifdef OCL_API_DEBUG
+	printf("INFO: Found %d devices\n", num_devices);
+	if (err != CL_SUCCESS) {
+		printf("ERROR: Failed to create a device group!\n");
+		printf("ERROR: Test failed\n");
+		return -1;
+	}
+	#endif
+	 // ------------------------------------------------------------------------------------
+	 // Step 1:  Search for CL_DEVICE_NAME = Target_Device_Name
+	 // ............................................................................
+
+   for (cl_uint i=0; i<num_devices; i++) {
+		err = clGetDeviceInfo(devices[i], CL_DEVICE_NAME, 1024, cl_device_name, 0);
+		#ifdef OCL_API_DEBUG
+		if (err != CL_SUCCESS) {
+			printf("Error: Failed to get device name for device %d!\n", i);
+			printf("Test failed\n");
+			return EXIT_FAILURE;
+		}
+		printf("CL_DEVICE_NAME %s\n", cl_device_name);
+		#endif
+
+
+
+	   // ............................................................................
+	   // Step 1: Check if the current device matches Target_Device_Name
+	   // ............................................................................
+
+	   if(strcmp(cl_device_name, target_device_name) == 0) {
+			device_id = devices[i];
+			device_found = 1;
+			#ifdef OCL_API_DEBUG
+			printf("Selected %s as the target device\n", cl_device_name);
+			#endif
+	   }
+	}
+
+
+	// ------------------------------------------------------------------------------------
+	// Step 1: Create Context
+	// ------------------------------------------------------------------------------------
+	context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (!context) {
+		printf("Error: Failed to create a compute context!\n");
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	// ------------------------------------------------------------------------------------
+	// Step 1: Create Command Queue
+	// ------------------------------------------------------------------------------------
+	commands = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+	#ifdef OCL_API_DEBUG
+	if (!commands) {
+		printf("Error: Failed to create a command commands!\n");
+		printf("Error: code %i\n",err);
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+   cl_int status;
+   unsigned char *kernelbinary;
+   char *xclbin = argv[1];
+
+   // ------------------------------------------------------------------
+   // Step 1: Load Binary File from a disk to Memory
+   // ------------------------------------------------------------------
+	#ifdef OCL_API_DEBUG
+    printf("INFO: loading xclbin %s\n", xclbin);
+	#endif
+    cl_uint n_i0 = load_file_to_memory(xclbin, (char **) &kernelbinary);
+	#ifdef OCL_API_DEBUG
+    if (n_i0 < 0) {
+	    printf("failed to load kernel from xclbin: %s\n", xclbin);
+	    printf("Test failed\n");
+	    return EXIT_FAILURE;
+    }
+	#endif
+
+
+
+	// ------------------------------------------------------------
+	// Step 1: Create a program using a Binary File
+	// ------------------------------------------------------------
+	size_t n0 = n_i0;
+	program = clCreateProgramWithBinary(context, 1, &device_id, &n0, (const unsigned char **) &kernelbinary, &status, &err);
+	free(kernelbinary);
+
+	// ============================================================================
+	// Step 2: Create Program and Kernels
+	// ============================================================================
+	//   o) Build a Program from a Binary File
+	//   o) Create Kernels
+	// ============================================================================
+	#ifdef OCL_API_DEBUG
+	if ((!program) || (err!=CL_SUCCESS)) {
+		printf("Error: Failed to create compute program from binary %d!\n", err);
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	// -------------------------------------------------------------
+	// Step 2: Build (compiles and links) a program executable from binary
+	// -------------------------------------------------------------
+	err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		size_t len;
+		char buffer[2048];
+
+		printf("Error: Failed to build program executable!\n");
+		clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
+		printf("%s\n", buffer);
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+	// -------------------------------------------------------------
+	// Step 2: Create Kernels
+	// -------------------------------------------------------------
+
+
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
+	kernel_gaussian_elimination = clCreateKernel(program, "gaussian_elimination_kernel", &err);
+	#ifdef OCL_API_DEBUG
+	if (!kernel_gaussian_elimination || err != CL_SUCCESS) {
+		printf("Error: Failed to create compute kernel_gaussian_elimination!\n");
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	buffer_mat_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char) * MAT_SIZE, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_a");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_mat_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(unsigned char) * MAT_SIZE, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_a");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(kernel_gaussian_elimination, 0, sizeof(cl_mem), &buffer_mat_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_a");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(kernel_gaussian_elimination, 1, sizeof(cl_mem), &buffer_mat_out);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_a");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_mat_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_mat_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char) * MAT_SIZE, 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map buffer_a");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_mat_out = (unsigned char *) clEnqueueMapBuffer(commands, buffer_mat_out, true, CL_MAP_READ, 0, sizeof(unsigned char) * MAT_SIZE, 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map buffer_a");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+#endif
+
+#ifdef EVAL_KERNEL
+	kernel_eval = clCreateKernel(program, "eval_kernel", &err);
+	#ifdef OCL_API_DEBUG
+	if (!kernel_eval || err != CL_SUCCESS) {
+		printf("Error: Failed to create compute kernel_eval!\n");
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	buffer_f_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(gf)*(SYS_T+1), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_f_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_a_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(gf)*SYS_N, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_a_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_r_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(gf)*SYS_N, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_r_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(kernel_eval, 0, sizeof(cl_mem), &buffer_f_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_a");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(kernel_eval, 1, sizeof(cl_mem), &buffer_a_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_a");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	err = clSetKernelArg(kernel_eval, 2, sizeof(cl_mem), &buffer_r_out);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_a");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_f_in = (gf *) clEnqueueMapBuffer(commands, buffer_f_in, true, CL_MAP_WRITE, 0, sizeof(gf)*(SYS_T+1), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map buffer_f");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_a_in = (gf *) clEnqueueMapBuffer(commands, buffer_a_in, true, CL_MAP_WRITE, 0, sizeof(gf)*SYS_N, 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map buffer_a");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	ptr_r_out = (gf *) clEnqueueMapBuffer(commands, buffer_r_out, true, CL_MAP_READ, 0, sizeof(gf)*SYS_N, 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map buffer_r_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	pt_list_eval[0] = buffer_f_in;
+	pt_list_eval[1] = buffer_a_in;
+	pt_list_eval[2] = buffer_r_out;
+
+
+#endif
+
+
+//TODO fix calls accordingly to kernel
+#ifdef SYNDROME_KERNEL
+	kernel_syndrome = clCreateKernel(program, "syndrome_kernel", &err);
+	#ifdef OCL_API_DEBUG
+	if (!kernel_syndrome || err != CL_SUCCESS) {
+		printf("Error: Failed to create compute kernel_syndrome!\n");
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	buffer_pk_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_pk_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_e_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*MAT_COLS, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_e_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_s_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(unsigned char)*SYND_BYTES, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_s_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(kernel_syndrome, 0, sizeof(cl_mem), &buffer_pk_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_pk_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(kernel_syndrome, 1, sizeof(cl_mem), &buffer_e_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_e_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	err = clSetKernelArg(kernel_syndrome, 2, sizeof(cl_mem), &buffer_s_out);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_s_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_pk_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_pk_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES, 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map buffer_pk_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_e_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_e_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS, 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map buffer_e_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	ptr_s_out = (unsigned char *) clEnqueueMapBuffer(commands, buffer_s_out, true, CL_MAP_READ, 0, sizeof(unsigned char)*SYND_BYTES, 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map buffer_s_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	pt_list_syndrome[0] = buffer_pk_in;
+	pt_list_syndrome[1] = buffer_e_in;
+	pt_list_syndrome[2] = buffer_s_out;
+
+
+#endif
+
+
+
+
     FILE                *fp_req, *fp_rsp;
     int                 ret_val;
     int i;
@@ -146,14 +682,60 @@ main()
         }
     }
 	
-    printf("\n\t**********TIMING RESULTS**********\t\n");    
-    printf("Elim kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_elim)*1000/times_elim);
-    printf("Eval kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_eval)*1000/times_eval);
-    printf("Syndrome kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_syndrome)*1000/(times_syndrome));
-    
-    printf("\nKeygen :Avg Execution time is: %0.3f miliseconds \n",(sum_keygen)*1000/times_keygen);
-    printf("Enc :Avg Execution time is: %0.3f miliseconds \n",(sum_enc)*1000/times_enc);
-    printf("Dec :Avg Execution time is: %0.3f miliseconds \n",(sum_dec)*1000/times_dec);
+
+	#ifdef TIME_MEASUREMENT
+	#ifdef GAUSSIAN_ELIMINATION_KERNEL
+	printf("\n\t**********TIMING RESULTS**********\t\n");    
+	printf("Elim kernel: OpenCl avg Execution time is: %0.3f miliseconds \n",(sum_elim / 1000000.0)/times_elim);
+	#endif
+
+	#ifdef EVAL_KERNEL
+	printf("Eval kernel: Avg Execution time is: %0.3f miliseconds \n",(sum_eval / 1000000.0)/times_eval);
+	#endif
+
+	#ifdef SYNDROME_KERNEL
+    printf("Syndrome kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome/1000000.0)/times_syndrome);
+	#endif
+
+	#ifdef KEM_PARTS_MEASUREMENT
+	printf("Keygen :Avg Execution time is: %0.3f miliseconds \n",(sum_keygen*1000)/times_keygen);
+	printf("Enc :Avg Execution time is: %0.3f miliseconds \n",(sum_enc*1000)/times_enc);
+	printf("Dec :Avg Execution time is: %0.3f miliseconds \n",(sum_dec*1000)/times_dec);
+	#endif
+	#endif
+
+	#ifdef GAUSSIAN_ELIMINATION_KERNEL
+	clReleaseKernel(kernel_gaussian_elimination);
+	clEnqueueUnmapMemObject(commands, buffer_mat_in, ptr_mat_in, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_mat_out, ptr_mat_out, 0, NULL, NULL);
+	#endif
+
+	#ifdef EVAL_KERNEL
+	clReleaseKernel(kernel_eval);
+	clEnqueueUnmapMemObject(commands, buffer_f_in, ptr_f_in, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_a_in, ptr_a_in, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_r_out, ptr_r_out, 0, NULL, NULL);
+	#endif
+
+	#ifdef SYNDROME_KERNEL
+	clReleaseKernel(kernel_syndrome);
+	clEnqueueUnmapMemObject(commands, buffer_pk_in, ptr_pk_in, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_e_in, ptr_e_in, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_s_out, ptr_s_out, 0, NULL, NULL);
+	#endif
+
+	#ifdef COMPOSEINV_KERNEL
+	clReleaseKernel(kernel_composeinv);
+	clEnqueueUnmapMemObject(commands, buffer_y_in, ptr_y_in, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_x_in, ptr_x_in, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_pi_in, ptr_pi_in, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_mats_out, ptr_mats_out, 0, NULL, NULL);
+#endif
+
+     clReleaseDevice(device_id);
+     clReleaseProgram(program);
+    clReleaseCommandQueue(commands);
+    clReleaseContext(context);
 
     return KAT_SUCCESS;
 }
