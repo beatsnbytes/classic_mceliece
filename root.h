@@ -9,8 +9,11 @@
 
 #include "gf.h"
 
-gf eval(gf *, gf);
+void eval(gf *, gf *, gf *);
 void root(gf *, gf *, gf *);
+
+extern double sum_eval;
+extern int times_eval;
 
 #endif
 
