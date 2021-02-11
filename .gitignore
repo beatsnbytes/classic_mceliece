@@ -1,0 +1,13 @@
+*.i
+*.o
+*.s
+*.req
+kat
+kat_kem.int
+kat_kem.req
+kat_kem.rsp
+timing_binaries/
+baseline_binaries_*/
+*.swp
+baseline_lvl5_arm
+baseline_lvl5_x86
