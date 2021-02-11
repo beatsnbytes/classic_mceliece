@@ -12,8 +12,12 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "gf.h"
+
+double sum_syndrome = 0;
+int times_syndrome = 0;
 
 static inline unsigned char same_mask(uint16_t x, uint16_t y)
 {
@@ -125,6 +129,16 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
   }
 #endif
 
+	struct timeval start_syndrome, end_syndrome;
+    gettimeofday(&start_syndrome, NULL);
+
 	syndrome(s, pk, e);
+
+	gettimeofday(&end_syndrome, 0);
+    long seconds = end_syndrome.tv_sec - start_syndrome.tv_sec;
+    long microseconds = end_syndrome.tv_usec - start_syndrome.tv_usec;
+    double elapsed_syndrome = seconds + microseconds*0.000001;
+	sum_syndrome += elapsed_syndrome;
+	times_syndrome = times_syndrome + 1;
 }
 
