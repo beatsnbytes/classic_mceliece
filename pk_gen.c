@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "controlbits.h"
 #include "uint64_sort.h"
@@ -14,6 +15,9 @@
 #include "benes.h"
 #include "root.h"
 #include "util.h"
+
+double sum_elim = 0.0;
+int times_elim = 0;
 
 /* input: secret key sk */
 /* output: public key pk */
@@ -87,6 +91,10 @@ int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi
 
 	}
 
+
+    	struct timeval start, end;
+    	gettimeofday(&start, NULL);
+
 	// gaussian elimination
 
 	for (i = 0; i < (PK_NROWS + 7) / 8; i++)
@@ -110,6 +118,14 @@ int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi
 
 		if ( ((mat[ row ][ i ] >> j) & 1) == 0 ) // return if not systematic
 		{
+
+			gettimeofday(&end, 0);
+			long seconds = end.tv_sec - start.tv_sec;
+			long microseconds = end.tv_usec - start.tv_usec;
+			double elapsed_elim = seconds + microseconds*0.000001;
+			sum_elim += elapsed_elim;
+			times_elim = times_elim + 1;
+
 			return -1;
 		}
 
@@ -126,6 +142,13 @@ int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi
 			}
 		}
 	}
+
+    	gettimeofday(&end, 0);
+    	long seconds = end.tv_sec - start.tv_sec;
+    	long microseconds = end.tv_usec - start.tv_usec;
+    	double elapsed_elim = seconds + microseconds*0.000001;
+	sum_elim += elapsed_elim;
+	times_elim = times_elim + 1;
 
 	for (i = 0; i < PK_NROWS; i++)
 		memcpy(pk + i*PK_ROW_BYTES, mat[i] + PK_NROWS/8, PK_ROW_BYTES);

@@ -3,6 +3,7 @@
 */
 
 #include <stdio.h>
+#include <sys/time.h>
 #include "decrypt.h"
 
 #include "params.h"
@@ -18,6 +19,10 @@
 /*         c, ciphertext */
 /* output: e, error vector */
 /* return: 0 for success; 1 for failure */
+
+double sum_synd= 0.0;
+int times_synd= 0;
+
 int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 {
 	int i, w = 0; 
@@ -44,7 +49,17 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 
 	support_gen(L, sk);
 
+	struct timeval start_synd, end_synd;
+    gettimeofday(&start_synd, NULL);
+
 	synd(s, g, L, r);
+
+	gettimeofday(&end_synd, 0);
+    long seconds = end_synd.tv_sec - start_synd.tv_sec;
+    long microseconds = end_synd.tv_usec - start_synd.tv_usec;
+    double elapsed_synd = seconds + microseconds*0.000001;
+	sum_synd += elapsed_synd;
+	times_synd = times_synd + 1;
 
 	bm(locator, s);
 
@@ -74,8 +89,17 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
     printf("\n");
   }
 #endif
-	
+	    
+	gettimeofday(&start_synd, NULL);
+
 	synd(s_cmp, g, L, e);
+
+	gettimeofday(&end_synd, 0);
+    seconds = end_synd.tv_sec - start_synd.tv_sec;
+    microseconds = end_synd.tv_usec - start_synd.tv_usec;
+    elapsed_synd = seconds + microseconds*0.000001;
+	sum_synd += elapsed_synd;
+	times_synd = times_synd + 1;
 
 	//
 
