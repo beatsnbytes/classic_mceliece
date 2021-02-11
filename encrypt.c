@@ -105,13 +105,13 @@ static void syndrome(unsigned char *s, const unsigned char *pk, unsigned char *e
 
 	for (i = 0; i < PK_NROWS; i++)	
 	{
-		for (j = 0; j < SYS_N/8; j++) 
+		for (j = 0; j < (SYS_N/8); j++) 
 			row[j] = 0;
 
 		for (j = 0; j < PK_ROW_BYTES; j++) 
 			row[ SYS_N/8 - PK_ROW_BYTES + j ] = pk_ptr[j];
 
-		row[i/8] |= 1 << (i%8);
+		row[i>>3] |= 1 << (i%8);
 		
 		b = 0;
 		for (j = 0; j < SYS_N/8; j++)
@@ -122,7 +122,7 @@ static void syndrome(unsigned char *s, const unsigned char *pk, unsigned char *e
 		b ^= b >> 1;
 		b &= 1;
 
-		s[ i/8 ] |= (b << (i%8));
+		s[ i>>3 ] |= (b << (i%8));
 
 		pk_ptr += PK_ROW_BYTES;
 	}

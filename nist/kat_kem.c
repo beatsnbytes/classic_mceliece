@@ -13,6 +13,7 @@
 #include "pk_gen.h"
 #include "root.h"
 #include "encrypt.h"
+#include "decrypt.h"
 
 #include <sys/time.h>
 
@@ -148,7 +149,7 @@ main()
 	
     printf("\n\t**********TIMING RESULTS**********\t\n");    
     printf("Elim kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_elim)*1000/times_elim);
-    printf("Eval kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_eval)*1000/times_eval);
+    printf("Synd kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_synd)*1000/times_synd);
     printf("Syndrome kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_syndrome)*1000/(times_syndrome));
     
     printf("\nKeygen :Avg Execution time is: %0.3f miliseconds \n",(sum_keygen)*1000/times_keygen);
