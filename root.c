@@ -7,6 +7,7 @@
 #include "gf.h"
 
 #include <stdio.h>
+#include <sys/time.h>
 
 /* input: polynomial f and field element a */
 /* return f(a) */
@@ -25,6 +26,7 @@ gf eval(gf *f, gf a)
 
 	return r;
 }
+
 
 /* input: polynomial f and list of field elements L */
 /* output: out = [ f(a) for a in L ] */
