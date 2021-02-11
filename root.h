@@ -9,7 +9,6 @@
 
 #include "gf.h"
 
-// void eval(gf *, gf *, gf *);
 gf eval(gf *, gf);
 void root(gf *, gf *, gf *);
 

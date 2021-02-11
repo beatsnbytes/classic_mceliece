@@ -16,7 +16,6 @@
 
 void store_gf(unsigned char *, gf);
 uint16_t load_gf(const unsigned char *);
-
 uint32_t load4(const unsigned char *);
 
 void store8(unsigned char *, uint64_t );
