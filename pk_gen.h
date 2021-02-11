@@ -10,8 +10,5 @@
 
 int pk_gen(unsigned char *, unsigned char *, uint32_t *, int16_t *);
 
-extern double sum_elim;
-extern int times_elim;
-
 #endif
 

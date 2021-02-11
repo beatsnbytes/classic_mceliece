@@ -12,12 +12,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <sys/time.h>
 
 #include "gf.h"
-
-double sum_syndrome = 0;
-int times_syndrome = 0;
 
 static inline unsigned char same_mask(uint16_t x, uint16_t y)
 {
@@ -98,7 +94,7 @@ static void syndrome(unsigned char *s, const unsigned char *pk, unsigned char *e
 	unsigned char b, row[SYS_N/8];
 	const unsigned char *pk_ptr = pk;
 
-	int i, j;
+	int i, j, tail = PK_NROWS % 8;
 
 	for (i = 0; i < SYND_BYTES; i++)
 		s[i] = 0;
@@ -110,6 +106,9 @@ static void syndrome(unsigned char *s, const unsigned char *pk, unsigned char *e
 
 		for (j = 0; j < PK_ROW_BYTES; j++) 
 			row[ SYS_N/8 - PK_ROW_BYTES + j ] = pk_ptr[j];
+
+		for (j = SYS_N/8-1; j >= SYS_N/8 - PK_ROW_BYTES; j--) 
+			row[ j ] = (row[ j ] << tail) | (row[j-1] >> (8-tail));
 
 		row[i/8] |= 1 << (i%8);
 		
@@ -143,16 +142,6 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
   }
 #endif
 
-	struct timeval start_syndrome, end_syndrome;
-    gettimeofday(&start_syndrome, NULL);
-
 	syndrome(s, pk, e);
-
-	gettimeofday(&end_syndrome, 0);
-    long seconds = end_syndrome.tv_sec - start_syndrome.tv_sec;
-    long microseconds = end_syndrome.tv_usec - start_syndrome.tv_usec;
-    double elapsed_syndrome = seconds + microseconds*0.000001;
-	sum_syndrome += elapsed_syndrome;
-	times_syndrome = times_syndrome + 1;
 }
 

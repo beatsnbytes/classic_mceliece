@@ -6,7 +6,7 @@
 
 #include "params.h"
 #include "root.h"
-#include <sys/time.h>
+
 #include <stdio.h>
 
 /* input: Goppa polynomial f, support L, received word r */

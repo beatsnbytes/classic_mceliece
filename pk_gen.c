@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <sys/time.h>
 
 #include "controlbits.h"
 #include "uint64_sort.h"
@@ -16,15 +15,14 @@
 #include "root.h"
 #include "util.h"
 
-double sum_elim = 0.0;
-int times_elim = 0;
-
 /* input: secret key sk */
 /* output: public key pk */
 int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi)
 {
+	unsigned char *pk_ptr = pk;
+
 	int i, j, k;
-	int row, c;
+	int row, c, tail;
 
 	uint64_t buf[ 1 << GFBITS ];
 
@@ -91,10 +89,6 @@ int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi
 
 	}
 
-
-    	struct timeval start, end;
-    	gettimeofday(&start, NULL);
-
 	// gaussian elimination
 
 	for (i = 0; i < (PK_NROWS + 7) / 8; i++)
@@ -118,14 +112,6 @@ int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi
 
 		if ( ((mat[ row ][ i ] >> j) & 1) == 0 ) // return if not systematic
 		{
-
-			gettimeofday(&end, 0);
-			long seconds = end.tv_sec - start.tv_sec;
-			long microseconds = end.tv_usec - start.tv_usec;
-			double elapsed_elim = seconds + microseconds*0.000001;
-			sum_elim += elapsed_elim;
-			times_elim = times_elim + 1;
-
 			return -1;
 		}
 
@@ -143,15 +129,15 @@ int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi
 		}
 	}
 
-    	gettimeofday(&end, 0);
-    	long seconds = end.tv_sec - start.tv_sec;
-    	long microseconds = end.tv_usec - start.tv_usec;
-    	double elapsed_elim = seconds + microseconds*0.000001;
-	sum_elim += elapsed_elim;
-	times_elim = times_elim + 1;
+	tail = PK_NROWS % 8;
 
 	for (i = 0; i < PK_NROWS; i++)
-		memcpy(pk + i*PK_ROW_BYTES, mat[i] + PK_NROWS/8, PK_ROW_BYTES);
+	{
+		for (j = (PK_NROWS - 1)/8; j < SYS_N/8 - 1; j++)
+			*pk_ptr++ = (mat[i][j] >> tail) | (mat[i][j+1] << (8-tail));
+
+		*pk_ptr++ = (mat[i][j] >> tail);
+	}
 
 	return 0;
 }

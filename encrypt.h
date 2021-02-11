@@ -8,8 +8,5 @@
 
 void encrypt(unsigned char *, const unsigned char *, unsigned char *);
 
-extern double sum_syndrome;
-extern int times_syndrome;
-
 #endif
 
