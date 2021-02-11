@@ -9,7 +9,9 @@
 
 #include "gf.h"
 
-void eval(gf *, gf *, gf *);
+//void eval_sw_host(gf *, gf *, gf *);
+//void eval_host(gf *, gf *, gf *);
+gf eval(gf *, gf);
 void root(gf *, gf *, gf *);
 
 extern double sum_eval;

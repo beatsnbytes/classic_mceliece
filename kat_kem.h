@@ -10,7 +10,7 @@ extern cl_kernel kernel_gf_sq;
 extern cl_kernel kernel_gaussian_elimination;
 extern cl_kernel kernel_eval;
 extern cl_kernel kernel_syndrome;
-extern cl_kernel kernel_composeinv;
+extern cl_kernel kernel_synd;
 extern cl_program program;
 extern cl_context context;
 extern cl_uint DATA_SIZE;
@@ -44,14 +44,15 @@ extern cl_mem buffer_mat_out;
 extern unsigned char *ptr_mat_in;
 extern unsigned char *ptr_mat_out;
 
-//composeinv
-extern cl_mem buffer_y_in;
-extern cl_mem buffer_x_in;
-extern cl_mem buffer_pi_in;
-extern cl_mem buffer_mats_out;
-extern uint32_t *ptr_y_in;
-extern uint32_t *ptr_x_in;
-extern uint32_t *ptr_pi_in;
-extern uint32_t *ptr_mats_out;
-extern cl_mem pt_list_composeinv[4];
+//synd
+extern cl_mem buffer_out_out;
+extern cl_mem buffer_f_in;
+extern cl_mem buffer_L_in;
+extern cl_mem buffer_r_in;
+extern gf *ptr_out_out;
+extern gf *ptr_f_in;
+extern gf *ptr_L_in;
+extern unsigned char *ptr_r_in;
+extern cl_mem pt_list_synd[4];
+
 

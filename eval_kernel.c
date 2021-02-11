@@ -6,9 +6,9 @@
 
 void eval_kernel(gf *f_in, gf *a_in, gf *r_out)
 {
-#pragma HLS INTERFACE m_axi     port=f_in   offset=slave bundle=gmem1
-#pragma HLS INTERFACE m_axi     port=a_in   offset=slave bundle=gmem
-#pragma HLS INTERFACE m_axi     port=r_out  offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi     port=f_in   offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi     port=a_in   offset=slave bundle=gmem1
+#pragma HLS INTERFACE m_axi     port=r_out  offset=slave bundle=gmem2
 #pragma HLS INTERFACE s_axilite port=f_in               bundle=control
 #pragma HLS INTERFACE s_axilite port=a_in               bundle=control
 #pragma HLS INTERFACE s_axilite port=r_out              bundle=control
@@ -32,10 +32,12 @@ void eval_kernel(gf *f_in, gf *a_in, gf *r_out)
 //#pragma HLS ARRAY_PARTITION variable=local_r cyclic factor=3
 
 	LOOP_LOAD_FROM_BRAM_F:for (i=0;i<=SYS_T;i++){
+	#pragma HLS PIPELINE II=1
 		local_f[i] = *(f_in+i);
 	}
 
 	LOOP_LOAD_FROM_BRAM_A:for (i=0;i<SYS_N;i++){
+	#pragma HLS PIPELINE II=1
 //		#pragma HLS unroll factor=2
 		local_a[i] = *(a_in+i);
 	}

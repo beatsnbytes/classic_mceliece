@@ -10,5 +10,8 @@
 
 void synd(gf *, gf *, gf *, unsigned char *);
 
+extern double sum_synd;
+extern int times_synd;
+
 #endif
 

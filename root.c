@@ -2,10 +2,14 @@
   This file is for evaluating a polynomial at one or more field elements
 */
 
+#include <CL/opencl.h>
+#include <CL/cl_ext.h>
 #include "root.h"
 #include "params.h"
 #include "gf.h"
+#include "kat_kem.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
 
@@ -14,7 +18,7 @@ int times_eval=0;
 
 /* input: polynomial f and field element a */
 /* return f(a) */
-void eval(gf *f, gf *a, gf* out)
+void eval_sw_host(gf *f, gf *a, gf* out)
 {
 
 	int i, j, k;
@@ -52,26 +56,111 @@ void eval(gf *f, gf *a, gf* out)
 
 		out[k]=r;
 	}
-
-	//return r;
 }
+
+
+gf eval(gf *f, gf a)
+{
+        int i;
+        gf r;
+
+        r = f[ SYS_T ];
+
+        for (i = SYS_T-1; i >= 0; i--)
+        {
+                r = gf_mul(r, a);
+                r = gf_add(r, f[i]);
+        }
+
+        return r;
+}
+
+
+#ifdef EVAL_KERNEL
+void eval_host(gf *f, gf *a, gf *out)
+{
+
+	#ifdef TIME_MEASUREMENT
+	cl_event event;
+	#endif
+	
+	memcpy(ptr_f_in, f, sizeof(gf)*(SYS_T+1));
+	memcpy(ptr_a_in, a, sizeof(gf)*SYS_N);
+
+
+
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)3, pt_list_eval, 0, 0, NULL, NULL);
+	#ifdef OCL_API_DEBUG
+    if (err != CL_SUCCESS) {
+    	printf("FAILED to enqueue buffer_mat\n");
+    	return EXIT_FAILURE;
+    }
+	#endif
+
+	#ifdef TIME_MEASUREMENT
+    err = clEnqueueTask(commands, kernel_eval, 0, NULL, &event);
+	#endif
+	#ifndef TIME_MEASUREMENT
+    err = clEnqueueTask(commands, kernel_eval, 0, NULL, NULL);
+	#endif
+	#ifdef OCL_API_DEBUG
+    if (err != CL_SUCCESS) {
+    	printf("FAILED to execute kernel\n");
+    	return EXIT_FAILURE;
+    }
+	#endif
+
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_eval[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
+	#ifdef OCL_API_DEBUG
+    if (err != CL_SUCCESS) {
+    	printf("FAILED to enqueue bufer_res\n");
+    	return EXIT_FAILURE;
+    }
+	#endif
+
+#ifdef TIME_MEASUREMENT
+	clWaitForEvents(1, &event);
+#endif
+    clFinish(commands);
+
+
+    memcpy(out, ptr_r_out, sizeof(gf)*SYS_N);
+
+	#ifdef FUNC_CORRECTNESS
+    gf validate_mat[SYS_N];
+    eval_sw_host(f, a, validate_mat);
+    for (int i=0;i<SYS_N;i++){
+        if (validate_mat[i] != *(out+i)){\
+        	printf("\nERROR: Expected %d, got %d\n", validate_mat[i], *(out+i));
+        }
+    }
+	#endif
+
+
+	#ifdef TIME_MEASUREMENT
+	cl_ulong time_start;
+	cl_ulong time_end;
+
+	clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
+	clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
+
+	double nanoSeconds = time_end-time_start;
+	sum_eval += nanoSeconds;
+	times_eval = times_eval + 1;
+	#endif
+
+}
+#endif
+
 
 /* input: polynomial f and list of field elements L */
 /* output: out = [ f(a) for a in L ] */
 void root(gf *out, gf *f, gf *L)
 {
+	int i;
 
+    for (i = 0; i < SYS_N; i++)
+            out[i] = eval(f, L[i]);
 
-	struct timeval start, end;
-    gettimeofday(&start, NULL);
-
-	eval(f, L, out);
-
-	gettimeofday(&end, 0);
-    long seconds = end.tv_sec - start.tv_sec;
-    long microseconds = end.tv_usec - start.tv_usec;
-    double elapsed_eval = seconds + microseconds*0.000001;
-	sum_eval += elapsed_eval;
-	times_eval = times_eval + 1;
 }
 

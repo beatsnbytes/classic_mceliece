@@ -29,15 +29,15 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]) {
 	#ifdef TIME_MEASUREMENT
 	cl_event event;
 	#endif
-	memcpy(ptr_mat_in, mat, sizeof(unsigned char) * MAT_SIZE);
-
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_in, 0, 0, NULL, NULL);
-	#ifdef OCL_API_DEBUG
-    if (err != CL_SUCCESS) {
-    	printf("FAILED to enqueue buffer_mat\n");
-    	return EXIT_FAILURE;
-    }
-	#endif
+//	memcpy(ptr_mat_in, mat, sizeof(unsigned char) * MAT_SIZE);
+//
+//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_in, 0, 0, NULL, NULL);
+//	#ifdef OCL_API_DEBUG
+//    if (err != CL_SUCCESS) {
+//    	printf("FAILED to enqueue buffer_mat\n");
+//    	return EXIT_FAILURE;
+//    }
+//	#endif
 
 	#ifdef TIME_MEASUREMENT
     err = clEnqueueTask(commands, kernel_gaussian_elimination, 0, NULL, &event);
@@ -64,6 +64,8 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]) {
     clWaitForEvents(1, &event);
 	#endif
     clFinish(commands);
+
+
 
     //TODO Fix func correctness of gauss elim
 	#ifdef FUNC_CORRECTNESS
@@ -109,7 +111,7 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]) {
 
 // Code that contains the call to gaussian elimination hw kernel
 #ifdef GAUSSIAN_ELIMINATION_KERNEL
-int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm)
+int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi)
 {
 	int i, j, k;
 	int row, c;
@@ -125,8 +127,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm)
 	gf inv[ SYS_N ];
 
 	//Allocate 4KB aligned memory for mat
-	unsigned char *mat = (unsigned char *)malloc(MAT_ROWS * MAT_COLS * sizeof(unsigned char));
-
+//	unsigned char *mat = (unsigned char *)malloc(MAT_ROWS * MAT_COLS * sizeof(unsigned char));
 
 	g[ SYS_T ] = 1;
 
@@ -157,7 +158,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm)
 
 	for (i = 0; i < PK_NROWS; i++)
 	for (j = 0; j < SYS_N/8; j++)
-		mat[i][j] = 0;
+		*(ptr_mat_in + i*MAT_COLS + j) = 0;
 
 	for (i = 0; i < SYS_T; i++)
 	{
@@ -173,7 +174,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm)
 			b |= (inv[j+1] >> k) & 1; b <<= 1;
 			b |= (inv[j+0] >> k) & 1;
 
-			*(mat + (i*GFBITS + k)*MAT_COLS +j/8) = b;
+			*(ptr_mat_in + (i*GFBITS + k)*MAT_COLS +j/8) = b;
 		}
 
 		for (j = 0; j < SYS_N; j++)
@@ -181,27 +182,35 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm)
 
 	}
 
+	//
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_in, 0, 0, NULL, NULL);
+	#ifdef OCL_API_DEBUG
+    if (err != CL_SUCCESS) {
+    	printf("FAILED to enqueue buffer_mat\n");
+    	return EXIT_FAILURE;
+    }
+	#endif
+	//
+
 	// gaussian elimination
-	gaussian_elimination_host(mat);
+	gaussian_elimination_host(ptr_mat_in);
 
 	// If the matrix was not systematic repeat the process
-	if (*mat == 255){
-		free(mat);
+	if (*ptr_mat_in == 255){
 		return -1;
 	}
 
-	for (i = 0; i < PK_NROWS; i++)
-		memcpy(pk + i*PK_ROW_BYTES, (mat + i*MAT_COLS) + PK_NROWS/8, PK_ROW_BYTES);
+	for (i = 0; i < PK_NROWS; i++){
+		memcpy(pk + i*PK_ROW_BYTES, (ptr_mat_in + i*MAT_COLS) + PK_NROWS/8, PK_ROW_BYTES);
+	}
 
-	free(mat);
 	return 0;
-
 }
 #endif
 
 /* input: secret key sk */
 /* output: public key pk */
-int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi)
+int pk_gen_sw_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi)
 {
 	int i, j, k;
 	int row, c;
@@ -276,7 +285,7 @@ int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi
 	for (i = 0; i < (PK_NROWS + 7) / 8; i++)
 	for (j = 0; j < 8; j++)
 	{
-		row = i*8 + j;			
+		row = i*8 + j;
 
 		if (row >= PK_NROWS)
 			break;
@@ -316,4 +325,5 @@ int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi
 
 	return 0;
 }
+
 

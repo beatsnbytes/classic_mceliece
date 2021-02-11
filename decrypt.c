@@ -18,6 +18,8 @@
 /*         c, ciphertext */
 /* output: e, error vector */
 /* return: 0 for success; 1 for failure */
+
+
 int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 {
 	int i, w = 0; 
@@ -44,7 +46,7 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 
 	support_gen(L, sk);
 
-	synd(s, g, L, r);
+	synd_host(s, g, L, r);
 
 	bm(locator, s);
 
@@ -75,7 +77,7 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
   }
 #endif
 	
-	synd(s_cmp, g, L, e);
+	synd_host(s_cmp, g, L, e);
 
 	//
 

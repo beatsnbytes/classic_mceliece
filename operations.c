@@ -134,8 +134,15 @@ int crypto_kem_keypair
 		for (i = 0; i < (1 << GFBITS); i++) 
 			perm[i] = load4(rp + i*4); 
 
-		if (pk_gen(pk, skp - IRR_BYTES, perm, pi))
+		#ifdef GAUSSIAN_ELIMINATION_KERNEL
+		if (pk_gen_host(pk, skp - IRR_BYTES, perm, pi))
 			continue;
+		#endif
+
+		#ifndef GAUSSIAN_ELIMINATION_KERNEL
+		if (pk_gen_sw_host(pk, skp - IRR_BYTES, perm, pi))
+			continue;
+		#endif
 
 		controlbitsfrompermutation(skp, pi, GFBITS, 1 << GFBITS);
 		skp += COND_BYTES;

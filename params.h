@@ -39,8 +39,11 @@
 //#define EVAL_KERNEL
 #undef EVAL_KERNEL
 
-//#define SYNDROME_KERNEL
-#undef SYNDROME_KERNEL
+#define SYNDROME_KERNEL
+//#undef SYNDROME_KERNEL
+
+#define SYND_KERNEL
+//#undef SYND_KERNEL
 
 
 #endif

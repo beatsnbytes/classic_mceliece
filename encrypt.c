@@ -3,16 +3,21 @@
 */
 
 #include "encrypt.h"
-
+#include <CL/opencl.h>
+#include <CL/cl_ext.h>
 #include "util.h"
 #include "params.h"
 #include "randombytes.h"
+#include "kat_kem.h"
+#include <sys/time.h>
+#include "crypto_kem.h"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include <sys/time.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
 #include "gf.h"
 
@@ -93,7 +98,7 @@ static void gen_e(unsigned char *e)
 
 /* input: public key pk, error vector e */
 /* output: syndrome s */
-static void syndrome(unsigned char *s, const unsigned char *pk, unsigned char *e)
+static void syndrome_sw_host(unsigned char *s, const unsigned char *pk, unsigned char *e)
 {
 	unsigned char b, row[SYS_N/8];
 	const unsigned char *pk_ptr = pk;
@@ -127,6 +132,88 @@ static void syndrome(unsigned char *s, const unsigned char *pk, unsigned char *e
 		pk_ptr += PK_ROW_BYTES;
 	}
 }
+
+/* input: public key pk, error vector e */
+/* output: syndrome s */
+#ifdef SYNDROME_KERNEL
+void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
+{
+
+	#ifdef TIME_MEASUREMENT
+	cl_event event;
+	#endif
+
+	memcpy(ptr_pk_in, pk, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES);
+	memcpy(ptr_e_in, e, sizeof(unsigned char)*MAT_COLS);
+
+
+
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)3, pt_list_syndrome, 0, 0, NULL, NULL);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to enqueue pt_list_syndrome\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	#ifdef TIME_MEASUREMENT
+	err = clEnqueueTask(commands, kernel_syndrome, 0, NULL, &event);
+	#endif
+	#ifndef TIME_MEASUREMENT
+	err = clEnqueueTask(commands, kernel_syndrome, 0, NULL, NULL);
+	#endif
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to execute kernel\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to enqueue bufer_res\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	#ifdef TIME_MEASUREMENT
+	clWaitForEvents(1, &event);
+	#endif
+	clFinish(commands);
+
+
+	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES);
+
+	#ifdef FUNC_CORRECTNESS
+	unsigned char validate_mat[SYND_BYTES];
+	syndrome_sw_host(validate_mat, pk, e);
+	for (int i=0;i<SYND_BYTES;i++){
+		if (validate_mat[i] != *(s+i)){\
+			printf("\nERROR: Expected %d, got %d\n", validate_mat[i], *(s+i));
+		}
+	}
+	#endif
+
+
+	#ifdef TIME_MEASUREMENT
+	cl_ulong time_start;
+	cl_ulong time_end;
+
+	clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
+	clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
+
+	double nanoSeconds = time_end-time_start;
+	sum_syndrome += nanoSeconds;
+	times_syndrome = times_syndrome + 1;
+//	printf("Syndrome kernel: OpenCl Execution time is: %0.3f milliseconds \n",nanoSeconds / 1000000.0);
+	#endif
+
+}
+#endif
+
+
+
 
 void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
 {
