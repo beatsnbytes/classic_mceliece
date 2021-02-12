@@ -839,17 +839,16 @@ main(int argc, char* argv[])
 	printf("Eval kernel: Avg Execution time is: %0.3f miliseconds \n",(sum_eval / 1000000.0)/times_eval);
 	#endif
 
+	#ifdef SYND_KERNEL
+	printf("Synd kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_synd/1000000.0)/times_synd);
+	#endif
+
 	#ifdef SYNDROME_KERNEL
     printf("Syndrome kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome/1000000.0)/times_syndrome);
 	#endif
 
-	#ifdef SYNDROME_KERNEL
-	printf("Synd kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_synd/1000000.0)/times_synd);
-	#endif
-
 	#ifdef KEM_PARTS_MEASUREMENT
 	printf("Keygen :Avg Execution time is: %0.3f miliseconds \n",(sum_keygen*1000)/times_keygen);
-	printf("Enc :Avg Execution time is: %0.3f miliseconds \n",(sum_enc*1000)/times_enc);
 	printf("Enc :Avg Execution time is: %0.3f miliseconds \n",(sum_enc*1000)/times_enc);
 	printf("Dec :Avg Execution time is: %0.3f miliseconds \n",(sum_dec*1000)/times_dec);
 	#endif

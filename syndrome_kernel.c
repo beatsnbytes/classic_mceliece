@@ -50,7 +50,7 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 		local_s[i] = 0;
 	}
 
-	LOOP_MAIN:for (i = 0; i < PK_NROWS; i++)
+	LOOP_MAIN:for (uint i = 0; i < PK_NROWS; i++)
 	{
 //		#pragma HLS PIPELINE
 //		#pragma HLS unroll factor=2
@@ -71,20 +71,21 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 
 
 
-		row[i>>3] |= 1 << (i%8);
+		row[i>>3] |= 1 << (i%(uint)8);
 
 		b = 0;
-		LOOP_B_COMPUTE:for (j = 0; j < MAT_COLS; j++)
+		LOOP_B_COMPUTE:for (j = 0; j < MAT_COLS; j++){
 			#pragma HLS PIPELINE
 			#pragma HLS unroll factor=16
 			b ^= row[j] & local_e[j];
+		}
 
 		b ^= b >> 4;
 		b ^= b >> 2;
 		b ^= b >> 1;
 		b &= 1;
 
-		local_s[ i>>3 ] |= (b << (i%8));
+		local_s[ i>>3 ] |= (b << (i%(uint)8));
 
 	}
 

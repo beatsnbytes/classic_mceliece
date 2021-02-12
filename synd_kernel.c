@@ -25,7 +25,7 @@ gf gf_mul(gf in0, gf in1)
 
 
 	for (i = 1; i < GFBITS; i++){
-//	#pragma HLS latency max=3 //This might hurt the frequency
+	#pragma HLS unroll factor=4
 		tmp ^= (t0 * (t1 & (1 << i)));
 	}
 
@@ -70,6 +70,7 @@ gf gf_inv(gf in)
 
 	gf out = in;
 
+
 	out = gf_sq(out);
 	tmp_11 = gf_mul(out, in); // 11
 
@@ -78,13 +79,24 @@ gf gf_inv(gf in)
 	tmp_1111 = gf_mul(out, tmp_11); // 1111
 
 	out = gf_sq(tmp_1111);
+
 	out = gf_sq(out);
 	out = gf_sq(out);
 	out = gf_sq(out);
+//	for(int i=0; i<3; i++){
+//	#pragma HLS PIPELINE
+//		out = gf_sq(out);
+//	}
+
 	out = gf_mul(out, tmp_1111); // 11111111
 
 	out = gf_sq(out);
 	out = gf_sq(out);
+//	for(int i=0; i<2; i++){
+//	#pragma HLS PIPELINE
+//		out = gf_sq(out);
+//	}
+
 	out = gf_mul(out, tmp_11); // 1111111111
 
 	out = gf_sq(out);
@@ -100,7 +112,6 @@ gf eval(gf *f, gf a)
 
         r = f[ SYS_T ];
 
-		#pragma HLS ARRAY_PARTITION variable=f cyclic factor=2
         for (i = SYS_T-1; i >= 0; i--)
         {
 		#pragma HLS PIPELINE II=3
@@ -136,8 +147,8 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	unsigned char local_r[MAT_COLS];
 
 	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=2
-	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=2
-//	#pragma HLS ARRAY_PARTITION variable=local_r cyclic factor=4 dim=2
+	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4
+//	#pragma HLS ARRAY_PARTITION variable=local_f cyclic factor=2
 
 	//READ into local vars
 
@@ -148,7 +159,7 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	LOOP_LOAD_FROM_BRAM_L:for (i=0;i<SYS_N;i++){
 	#pragma HLS PIPELINE II=1
-	#pragma HLS unroll factor=2
+	#pragma HLS unroll factor=4
 		local_L[i] = *(L_in+i);
 	}
 
@@ -160,12 +171,12 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	//READ into local vars END
 
 	LOOP_MAIN_OUTER:
-	for (i = 0; i < SYS_N; i++)
+	for (uint i = 0; i < SYS_N; i++)
 	{
-//		#pragma HLS PIPELINE
+		#pragma HLS PIPELINE
 
 
-		c = (local_r[i>>3] >> (i%8)) & 1;
+		c = (local_r[i>>3] >> (i%(uint)8)) & 1;
 
 		e = eval(local_f, local_L[i]);
 
@@ -181,9 +192,12 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 			if(i==0){
 				local_out[j] = gf_mul(e_inv, c);
 			}else{
-				local_out[j] = gf_add(local_out[j], gf_mul(e_inv, c));
+//				local_out[j] = gf_add(local_out[j], gf_mul(e_inv, c));
+				local_out[j] ^= gf_mul(e_inv, c);
+
 			}
 			e_inv = gf_mul(e_inv, local_L[i]);
+
 		}
 	}
 
