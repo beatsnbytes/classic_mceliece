@@ -14,6 +14,12 @@ extern int times_syndrome;
 extern double sum_syndrome_2;
 extern int times_syndrome_2;
 
+extern double sum_syndrome_3;
+extern int times_syndrome_3;
+
+extern double sum_syndrome_4;
+extern int times_syndrome_4;
+
 
 #endif
 

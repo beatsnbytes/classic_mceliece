@@ -29,9 +29,6 @@ gf gf_mul_kernel(gf in0, gf in1)
 	#pragma HLS unroll factor=4
 //#pragma HLS RESOURCE variable=tmp2 core=Mul_lut
 		tmp ^= (t0 * (t1 & (1 << i)));
-//		tmp1= (t1 & (1 << i));
-//		tmp2 =  t0 * tmp1;
-//		tmp ^= tmp2;
 	}
 
 	t = tmp & 0x7FC000;
@@ -113,7 +110,6 @@ gf eval_inner(gf *f, gf a)
 		#pragma HLS PIPELINE II=3
 		#pragma HLS unroll factor=2
                 r = gf_mul_kernel(r, a) ^ f[i];
-//                r = gf_add(r, f[i]);
         }
 
         return r;
@@ -147,7 +143,6 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=2
 	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4
 	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4
-//	#pragma HLS ARRAY_PARTITION variable=local_f cyclic factor=2
 
 	//READ into local vars
 
@@ -156,20 +151,34 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		local_f[i] = *(f_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_L:for (i=0;i<SYS_N;i++){
+	LOOP_LOAD_FROM_BRAM_L:for (i=0;i<SYS_N/2;i++){
 	#pragma HLS PIPELINE II=1
 	#pragma HLS unroll factor=4
 		local_L[i] = *(L_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_R:for (i=0;i<MAT_COLS;i++){
+//	LOOP_LOAD_FROM_BRAM_L:for (i=0;i<SYS_N/2;i++){
+//	#pragma HLS PIPELINE II=1
+//	#pragma HLS unroll factor=4
+//		local_L[i+SYS_N/2] = *(L_in+i);
+//	}
+
+
+
+	LOOP_LOAD_FROM_BRAM_R:for (i=0;i<MAT_COLS/2;i++){
 	#pragma HLS PIPELINE II=1
 		local_r[i] = *(r_in+i);
 	}
 
+//	LOOP_LOAD_FROM_BRAM_R:for (i=0;i<MAT_COLS/2;i++){
+//	#pragma HLS PIPELINE II=1
+//		local_r[i+MAT_COLS/2] = *(r_in+i);
+//	}
+
+
 	//READ into local vars END
 	LOOP_EVAL:
-	for(int i=0; i <SYS_N; i++){
+	for(int i=0; i <SYS_N/2; i++){
 	#pragma HLS PIPELINE
 		e_mat[i] = eval_inner(local_f, local_L[i]);
 	}
@@ -177,7 +186,7 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 
 	LOOP_MAIN_OUTER:
-	for (uint i = 0; i < SYS_N; i++)
+	for (uint i = 0; i < SYS_N/2; i++)
 	{
 		c = (local_r[i>>3] >> (i%(uint)8)) & 1;
 		e_inv = gf_inv_kernel(gf_mul_kernel(e_mat[i],e_mat[i]));
