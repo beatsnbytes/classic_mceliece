@@ -27,15 +27,6 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=4 dim=2
 
 
-//	LOOP_LOAD_FROM_BRAM_PK:
-//	for(i=MAT_ROWS/2;i<MAT_ROWS;i++){
-//		for(j=0;j<PK_ROW_BYTES;j++){
-//			#pragma HLS PIPELINE
-//			#pragma HLS unroll factor=4
-//			local_pk[i][j] = *(pk_in_2+i*PK_ROW_BYTES+j);
-//		}
-//	}
-//
 	LOOP_LOAD_FROM_BRAM_PK:
 	for(i=0;i<MAT_ROWS/2;i++){
 		for(j=0;j<PK_ROW_BYTES;j++){
@@ -46,21 +37,12 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 	}
 
 
-
 	LOOP_LOAD_FROM_BRAM_E:for(i=0;i<MAT_COLS;i++){
 		#pragma HLS PIPELINE
 		#pragma HLS unroll factor=2
 		local_e[i] = *(e_in+i);
 	}
 
-////todo change array access to to make it half
-//	LOOP_INIT_S:for (i = SYND_BYTES/2; i < SYND_BYTES; i++){
-//		#pragma HLS PIPELINE
-//		#pragma HLS unroll factor=48
-//		local_s[i] = 0;
-//	}
-
-	//todo change array access to to make it half
 		LOOP_INIT_S:for (i = 0; i < SYND_BYTES/2; i++){
 			#pragma HLS PIPELINE
 			#pragma HLS unroll factor=4
@@ -91,8 +73,7 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 		 }
 
 
-
-		row[(i/8)+48] |= 1 << (i%(uint)8);
+		row[(i/8)+SYND_BYTES/2] |= 1 << (i%(uint)8);
 
 		b = 0;
 		LOOP_B_COMPUTE:for (j = 0; j < MAT_COLS; j++){
@@ -107,15 +88,10 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 		b ^= b >> 1;
 		b &= 1;
 
-		local_s[(i/8)+48] |= (b << (i%(uint)8));
+		local_s[(i/8)+SYND_BYTES/2] |= (b << (i%(uint)8));
 
 	}
 
-//	LOOP_WRITE_TO_BRAM_R:for (i=0;i<SYND_BYTES/2;i++){
-//		#pragma HLS PIPELINE
-//		#pragma HLS unroll factor=4
-//		*(s_out_2+i) = local_s[i+SYND_BYTES/2];
-//	}
 
 	LOOP_WRITE_TO_BRAM_R:for (i=0;i<SYND_BYTES/2;i++){
 		#pragma HLS PIPELINE

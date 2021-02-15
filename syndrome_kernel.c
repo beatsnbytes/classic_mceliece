@@ -15,7 +15,6 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 	#pragma HLS INTERFACE s_axilite port=return 		     bundle=control
 
 	unsigned char b, row[MAT_COLS];
-//	unsigned char b, row[PK_NROWS][MAT_COLS];
 
 	int i, j;
 	unsigned char local_pk[MAT_ROWS/2][PK_ROW_BYTES];
@@ -36,6 +35,7 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 			local_pk[i][j] = *(pk_in+i*PK_ROW_BYTES+j);
 		}
 	}
+
 
 	LOOP_LOAD_FROM_BRAM_E:for(i=0;i<MAT_COLS;i++){
 		#pragma HLS PIPELINE
@@ -75,9 +75,7 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 		 }
 
 
-
 		row[i>>3] |= 1 << (i%(uint)8);
-//		row[i][i>>3] |= 1 << (i%(uint)8);
 
 		b = 0;
 		LOOP_B_COMPUTE:for (j = 0; j < MAT_COLS; j++){
@@ -85,7 +83,6 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 			#pragma HLS unroll factor=2
 
 			b ^= row[j] & local_e[j];
-//			b ^= row[i][j] & local_e[j];
 		}
 
 		b ^= b >> 4;
