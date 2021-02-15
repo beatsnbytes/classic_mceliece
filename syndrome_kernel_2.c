@@ -4,12 +4,12 @@
 #include <string.h>
 //#include "ap_cint.h"
 
-void syndrome_kernel_2(unsigned char *pk_in_2, unsigned char *e_in, unsigned char *s_out)
+void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
 {
-	#pragma HLS INTERFACE m_axi     port=pk_in_2  offset=slave bundle=gmem3
+	#pragma HLS INTERFACE m_axi     port=pk_in    offset=slave bundle=gmem3
 	#pragma HLS INTERFACE m_axi     port=e_in     offset=slave bundle=gmem4
 	#pragma HLS INTERFACE m_axi     port=s_out    offset=slave bundle=gmem5
-    #pragma HLS INTERFACE s_axilite port=pk_in_2               bundle=control
+    #pragma HLS INTERFACE s_axilite port=pk_in                 bundle=control
 	#pragma HLS INTERFACE s_axilite port=e_in                  bundle=control
 	#pragma HLS INTERFACE s_axilite port=s_out                 bundle=control
 	#pragma HLS INTERFACE s_axilite port=return    		       bundle=control
@@ -21,20 +21,31 @@ void syndrome_kernel_2(unsigned char *pk_in_2, unsigned char *e_in, unsigned cha
 	unsigned char local_s[SYND_BYTES];
 	unsigned char local_e[MAT_COLS];
 
-	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=32 //40
-	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=32 //
-	#pragma HLS ARRAY_PARTITION variable=local_s cyclic factor=48  //96
-	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=32 dim=2
+	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=4 //40
+	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=4 //
+	#pragma HLS ARRAY_PARTITION variable=local_s cyclic factor=4  //96
+	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=4 dim=2
 
 
+//	LOOP_LOAD_FROM_BRAM_PK:
+//	for(i=MAT_ROWS/2;i<MAT_ROWS;i++){
+//		for(j=0;j<PK_ROW_BYTES;j++){
+//			#pragma HLS PIPELINE
+//			#pragma HLS unroll factor=4
+//			local_pk[i][j] = *(pk_in_2+i*PK_ROW_BYTES+j);
+//		}
+//	}
+//
 	LOOP_LOAD_FROM_BRAM_PK:
-	for(i=MAT_ROWS/2;i<MAT_ROWS;i++){
+	for(i=0;i<MAT_ROWS/2;i++){
 		for(j=0;j<PK_ROW_BYTES;j++){
 			#pragma HLS PIPELINE
 			#pragma HLS unroll factor=4
-			local_pk[i][j] = *(pk_in_2+i*PK_ROW_BYTES+j);
+			local_pk[i][j] = *(pk_in+i*PK_ROW_BYTES+j);
 		}
 	}
+
+
 
 	LOOP_LOAD_FROM_BRAM_E:for(i=0;i<MAT_COLS;i++){
 		#pragma HLS PIPELINE
@@ -42,16 +53,24 @@ void syndrome_kernel_2(unsigned char *pk_in_2, unsigned char *e_in, unsigned cha
 		local_e[i] = *(e_in+i);
 	}
 
-//todo change array access to to make it half
-	LOOP_INIT_S:for (i = SYND_BYTES/2; i < SYND_BYTES; i++){
-		#pragma HLS PIPELINE
-		#pragma HLS unroll factor=48
-		local_s[i] = 0;
-	}
+////todo change array access to to make it half
+//	LOOP_INIT_S:for (i = SYND_BYTES/2; i < SYND_BYTES; i++){
+//		#pragma HLS PIPELINE
+//		#pragma HLS unroll factor=48
+//		local_s[i] = 0;
+//	}
+
+	//todo change array access to to make it half
+		LOOP_INIT_S:for (i = 0; i < SYND_BYTES/2; i++){
+			#pragma HLS PIPELINE
+			#pragma HLS unroll factor=4
+			local_s[i+SYND_BYTES/2] = 0;
+		}
+
 
 
 	LOOP_MAIN:
-	for (uint i = PK_NROWS/2; i < PK_NROWS; i++)
+	for (uint i = 0; i < PK_NROWS/2; i++)
 	{
 
 //		#pragma HLS PIPELINE
@@ -61,7 +80,7 @@ void syndrome_kernel_2(unsigned char *pk_in_2, unsigned char *e_in, unsigned cha
 		 LOOP_ROW_MAT:
 		 for ( j = 0; j <(SYS_N/8); j++) {
 			#pragma HLS PIPELINE
-			#pragma HLS unroll factor=32
+			#pragma HLS unroll factor=2
 
 			 if(idx<(SYS_N/8 - PK_ROW_BYTES)){
 				 row[j] = 0;
@@ -73,16 +92,14 @@ void syndrome_kernel_2(unsigned char *pk_in_2, unsigned char *e_in, unsigned cha
 
 
 
-		row[i>>3] |= 1 << (i%(uint)8);
-//		row[i][i>>3] |= 1 << (i%(uint)8);
+		row[(i/8)+48] |= 1 << (i%(uint)8);
 
 		b = 0;
 		LOOP_B_COMPUTE:for (j = 0; j < MAT_COLS; j++){
 			#pragma HLS PIPELINE
-			#pragma HLS unroll factor=32
+			#pragma HLS unroll factor=2
 
 			b ^= row[j] & local_e[j];
-//			b ^= row[i][j] & local_e[j];
 		}
 
 		b ^= b >> 4;
@@ -90,7 +107,7 @@ void syndrome_kernel_2(unsigned char *pk_in_2, unsigned char *e_in, unsigned cha
 		b ^= b >> 1;
 		b &= 1;
 
-		local_s[ i>>3 ] |= (b << (i%(uint)8));
+		local_s[(i/8)+48] |= (b << (i%(uint)8));
 
 	}
 
@@ -100,10 +117,10 @@ void syndrome_kernel_2(unsigned char *pk_in_2, unsigned char *e_in, unsigned cha
 //		*(s_out_2+i) = local_s[i+SYND_BYTES/2];
 //	}
 
-	LOOP_WRITE_TO_BRAM_R:for (i=SYND_BYTES/2;i<SYND_BYTES;i++){
+	LOOP_WRITE_TO_BRAM_R:for (i=0;i<SYND_BYTES/2;i++){
 		#pragma HLS PIPELINE
 		#pragma HLS unroll factor=4
-		*(s_out+i) = local_s[i];
+		*(s_out+i) = local_s[i+SYND_BYTES/2];
 	}
 
 }

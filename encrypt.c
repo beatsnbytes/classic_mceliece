@@ -146,10 +146,9 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	#endif
 
 	memcpy(ptr_pk_in, pk, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/2);
-	memcpy(ptr_e_in, e, sizeof(unsigned char)*MAT_COLS);
+	memcpy(ptr_pk_in_2, (pk + crypto_kem_PUBLICKEYBYTES/2), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/2);
 
-	//TODO copy at start of buffer to half it down
-	memcpy((ptr_pk_in_2 + crypto_kem_PUBLICKEYBYTES/2), (pk + crypto_kem_PUBLICKEYBYTES/2), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/2);
+	memcpy(ptr_e_in, e, sizeof(unsigned char)*MAT_COLS);
 
 
 	err = clEnqueueMigrateMemObjects(commands, (cl_uint)3, pt_list_syndrome, 0, 0, NULL, NULL);
@@ -192,13 +191,13 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	}
 	#endif
 
-//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome_2[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
-//	#ifdef OCL_API_DEBUG
-//	if (err != CL_SUCCESS) {
-//		printf("FAILED to enqueue bufer_res\n");
-//		return EXIT_FAILURE;
-//	}
-//	#endif
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome_2[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to enqueue bufer_res\n");
+		return EXIT_FAILURE;
+	}
+	#endif
 
 	#ifdef TIME_MEASUREMENT
 	clWaitForEvents(1, &event);
@@ -207,18 +206,18 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	clFinish(commands);
 
 
-	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES);
-//	memcpy((s+ SYND_BYTES/2), ptr_s_out_2, sizeof(unsigned char)*SYND_BYTES/2);
+	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES/2);
+	memcpy((s+ SYND_BYTES/2), ptr_s_out_2, sizeof(unsigned char)*SYND_BYTES/2);
 
-//	#ifdef FUNC_CORRECTNESS
-//	unsigned char validate_mat[SYND_BYTES];
-//	syndrome_sw_host(validate_mat, pk, e);
-//	for (int i=0;i<SYND_BYTES;i++){
-//		if (validate_mat[i] != *(s+i)){\
-//			printf("\nERROR in %d: Expected %d, got %d\n", i, validate_mat[i], *(s+i));
-//		}
-//	}
-//	#endif
+	#ifdef FUNC_CORRECTNESS
+	unsigned char validate_mat[SYND_BYTES];
+	syndrome_sw_host(validate_mat, pk, e);
+	for (int i=0;i<SYND_BYTES;i++){
+		if (validate_mat[i] != *(s+i)){\
+			printf("\nERROR in %d: Expected %d, got %d\n", i, validate_mat[i], *(s+i));
+		}
+	}
+	#endif
 
 
 	#ifdef TIME_MEASUREMENT
@@ -263,6 +262,7 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
     printf("\n");
   }
 #endif
+
 
 	#ifdef SYNDROME_KERNEL
 	syndrome_host(s, pk, e);
