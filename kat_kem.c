@@ -65,6 +65,7 @@ cl_kernel kernel_eval;
 
 #ifdef SYNDROME_KERNEL
 cl_kernel kernel_syndrome;
+cl_kernel kernel_syndrome_2;
 #endif
 
 #ifdef SYND_KERNEL
@@ -88,6 +89,15 @@ unsigned char *ptr_pk_in;
 unsigned char *ptr_e_in;
 unsigned char *ptr_s_out;
 cl_mem pt_list_syndrome[3];
+
+cl_mem buffer_pk_in_2;
+cl_mem buffer_e_in_2;
+cl_mem buffer_s_out_2;
+unsigned char *ptr_pk_in_2;
+unsigned char *ptr_e_in_2;
+unsigned char *ptr_s_out_2;
+cl_mem pt_list_syndrome_2[3];
+
 
 //Gaussian Elimination
 cl_mem buffer_mat_in;
@@ -260,7 +270,7 @@ main(int argc, char* argv[])
 	// ------------------------------------------------------------------------------------
 	// Step 1: Create Command Queue
 	// ------------------------------------------------------------------------------------
-	commands = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &err);
+	commands = clCreateCommandQueue(context, device_id, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &err);
 	#ifdef OCL_API_DEBUG
 	if (!commands) {
 		printf("Error: Failed to create a command commands!\n");
@@ -493,7 +503,6 @@ main(int argc, char* argv[])
 #endif
 
 
-//TODO fix calls accordingly to kernel
 #ifdef SYNDROME_KERNEL
 	kernel_syndrome = clCreateKernel(program, "syndrome_kernel", &err);
 	#ifdef OCL_API_DEBUG
@@ -505,7 +514,7 @@ main(int argc, char* argv[])
 	#endif
 
 
-	buffer_pk_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES, NULL, &err);
+	buffer_pk_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/2, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to create buffer_pk_in");
@@ -554,7 +563,7 @@ main(int argc, char* argv[])
 	}
 	#endif
 
-	ptr_pk_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_pk_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES, 0, NULL, NULL, &err);
+	ptr_pk_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_pk_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/2, 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("ERROR : %d\n", err);
@@ -585,6 +594,87 @@ main(int argc, char* argv[])
 	pt_list_syndrome[0] = buffer_pk_in;
 	pt_list_syndrome[1] = buffer_e_in;
 	pt_list_syndrome[2] = buffer_s_out;
+
+
+#endif
+
+
+//
+
+#ifdef SYNDROME_KERNEL
+	kernel_syndrome_2 = clCreateKernel(program, "syndrome_kernel_2", &err);
+	#ifdef OCL_API_DEBUG
+	if (!kernel_syndrome || err != CL_SUCCESS) {
+		printf("Error: Failed to create compute kernel_syndrome!\n");
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	buffer_pk_in_2 = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_pk_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+//	buffer_s_out_2 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(unsigned char)*SYND_BYTES/2, NULL, &err);
+//	#ifdef OCL_API_DEBUG
+//	if (err != CL_SUCCESS) {
+//		printf("FAILED to create buffer_s_out");
+//		return EXIT_FAILURE;
+//	}
+//	#endif
+
+	err = clSetKernelArg(kernel_syndrome_2, 0, sizeof(cl_mem), &buffer_pk_in_2);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_pk_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(kernel_syndrome_2, 1, sizeof(cl_mem), &buffer_e_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_e_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	err = clSetKernelArg(kernel_syndrome_2, 2, sizeof(cl_mem), &buffer_s_out);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_s_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_pk_in_2 = (unsigned char *) clEnqueueMapBuffer(commands, buffer_pk_in_2, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES, 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map buffer_pk_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+//	ptr_s_out_2 = (unsigned char *) clEnqueueMapBuffer(commands, buffer_s_out_2, true, CL_MAP_READ, 0, sizeof(unsigned char)*SYND_BYTES/2, 0, NULL, NULL, &err);
+//	#ifdef OCL_API_DEBUG
+//	if (err != CL_SUCCESS) {
+//		printf("ERROR : %d\n", err);
+//		printf("FAILED to enqueue map buffer_s_out");
+//		return EXIT_FAILURE;
+//	}
+//	#endif
+
+	pt_list_syndrome_2[0] = buffer_pk_in_2;
+	pt_list_syndrome_2[1] = buffer_e_in;
+	pt_list_syndrome_2[2] = buffer_s_out;
 
 
 #endif
@@ -845,6 +935,7 @@ main(int argc, char* argv[])
 
 	#ifdef SYNDROME_KERNEL
     printf("Syndrome kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome/1000000.0)/times_syndrome);
+    printf("Syndrome_2 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_2/1000000.0)/times_syndrome_2);
 	#endif
 
 	#ifdef KEM_PARTS_MEASUREMENT
@@ -858,13 +949,6 @@ main(int argc, char* argv[])
 	clReleaseKernel(kernel_gaussian_elimination);
 	clEnqueueUnmapMemObject(commands, buffer_mat_in, ptr_mat_in, 0, NULL, NULL);
 	clEnqueueUnmapMemObject(commands, buffer_mat_out, ptr_mat_out, 0, NULL, NULL);
-	#endif
-
-	#ifdef EVAL_KERNEL
-	clReleaseKernel(kernel_eval);
-	clEnqueueUnmapMemObject(commands, buffer_f_in, ptr_f_in, 0, NULL, NULL);
-	clEnqueueUnmapMemObject(commands, buffer_a_in, ptr_a_in, 0, NULL, NULL);
-	clEnqueueUnmapMemObject(commands, buffer_r_out, ptr_r_out, 0, NULL, NULL);
 	#endif
 
 	#ifdef SYNDROME_KERNEL

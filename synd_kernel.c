@@ -3,16 +3,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-gf gf_add(gf in0, gf in1)
+gf gf_add_kernel(gf in0, gf in1)
 {
 	return in0 ^ in1;
 }
 
-gf gf_mul(gf in0, gf in1)
+gf gf_mul_kernel(gf in0, gf in1)
 {
 	int i;
 
 	uint32_t tmp;
+//	, tmp1, tmp2;
 	uint32_t t0;
 	uint32_t t1;
 	uint32_t t;
@@ -26,7 +27,11 @@ gf gf_mul(gf in0, gf in1)
 
 	for (i = 1; i < GFBITS; i++){
 	#pragma HLS unroll factor=4
+//#pragma HLS RESOURCE variable=tmp2 core=Mul_lut
 		tmp ^= (t0 * (t1 & (1 << i)));
+//		tmp1= (t1 & (1 << i));
+//		tmp2 =  t0 * tmp1;
+//		tmp ^= tmp2;
 	}
 
 	t = tmp & 0x7FC000;
@@ -40,7 +45,7 @@ gf gf_mul(gf in0, gf in1)
 	return tmp & ((1 << GFBITS)-1);
 }
 
-static inline gf gf_sq(gf in)
+static inline gf gf_sq_kernel(gf in)
 {
 	const uint32_t B[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF};
 
@@ -63,7 +68,7 @@ static inline gf gf_sq(gf in)
 	return x & ((1 << GFBITS)-1);
 }
 
-gf gf_inv(gf in)
+gf gf_inv_kernel(gf in)
 {
 	gf tmp_11;
 	gf tmp_1111;
@@ -71,41 +76,32 @@ gf gf_inv(gf in)
 	gf out = in;
 
 
-	out = gf_sq(out);
-	tmp_11 = gf_mul(out, in); // 11
+	out = gf_sq_kernel(out);
+	tmp_11 = gf_mul_kernel(out, in); // 11
 
-	out = gf_sq(tmp_11);
-	out = gf_sq(out);
-	tmp_1111 = gf_mul(out, tmp_11); // 1111
+	out = gf_sq_kernel(tmp_11);
+	out = gf_sq_kernel(out);
+	tmp_1111 = gf_mul_kernel(out, tmp_11); // 1111
 
-	out = gf_sq(tmp_1111);
+	out = gf_sq_kernel(tmp_1111);
 
-	out = gf_sq(out);
-	out = gf_sq(out);
-	out = gf_sq(out);
-//	for(int i=0; i<3; i++){
-//	#pragma HLS PIPELINE
-//		out = gf_sq(out);
-//	}
+	out = gf_sq_kernel(out);
+	out = gf_sq_kernel(out);
+	out = gf_sq_kernel(out);
 
-	out = gf_mul(out, tmp_1111); // 11111111
+	out = gf_mul_kernel(out, tmp_1111); // 11111111
 
-	out = gf_sq(out);
-	out = gf_sq(out);
-//	for(int i=0; i<2; i++){
-//	#pragma HLS PIPELINE
-//		out = gf_sq(out);
-//	}
+	out = gf_sq_kernel(out);
+	out = gf_sq_kernel(out);
+	out = gf_mul_kernel(out, tmp_11); // 1111111111
 
-	out = gf_mul(out, tmp_11); // 1111111111
+	out = gf_sq_kernel(out);
+	out = gf_mul_kernel(out, in); // 11111111111
 
-	out = gf_sq(out);
-	out = gf_mul(out, in); // 11111111111
-
-	return gf_sq(out); // 111111111110
+	return gf_sq_kernel(out); // 111111111110
 }
 
-gf eval(gf *f, gf a)
+gf eval_inner(gf *f, gf a)
 {
         int i;
         gf r;
@@ -116,7 +112,7 @@ gf eval(gf *f, gf a)
         {
 		#pragma HLS PIPELINE II=3
 		#pragma HLS unroll factor=2
-                r = gf_mul(r, a) ^ f[i];
+                r = gf_mul_kernel(r, a) ^ f[i];
 //                r = gf_add(r, f[i]);
         }
 
@@ -146,8 +142,11 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	gf tmp_mul_1, tmp_mul_2;
 	unsigned char local_r[MAT_COLS];
 
+	gf e_mat[SYS_N];
+
 	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=2
 	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4
+	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4
 //	#pragma HLS ARRAY_PARTITION variable=local_f cyclic factor=2
 
 	//READ into local vars
@@ -169,34 +168,34 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	}
 
 	//READ into local vars END
+	LOOP_EVAL:
+	for(int i=0; i <SYS_N; i++){
+	#pragma HLS PIPELINE
+		e_mat[i] = eval_inner(local_f, local_L[i]);
+	}
+
+
 
 	LOOP_MAIN_OUTER:
 	for (uint i = 0; i < SYS_N; i++)
 	{
-		#pragma HLS PIPELINE
-
-
 		c = (local_r[i>>3] >> (i%(uint)8)) & 1;
-
-		e = eval(local_f, local_L[i]);
-
-		e_inv = gf_inv(gf_mul(e,e));
+		e_inv = gf_inv_kernel(gf_mul_kernel(e_mat[i],e_mat[i]));
 
 		LOOP_MAIN_INNER:
-		for (j = 0; j < 2*SYS_T; j++)
+		for (int j = 0; j < 2*SYS_T; j++)
 		{
 		#pragma HLS DEPENDENCE inter variable=local_out false
 		#pragma HLS PIPELINE II=2
 		#pragma HLS unroll factor=2
 
 			if(i==0){
-				local_out[j] = gf_mul(e_inv, c);
+				local_out[j] = gf_mul_kernel(e_inv, c);
 			}else{
-//				local_out[j] = gf_add(local_out[j], gf_mul(e_inv, c));
-				local_out[j] ^= gf_mul(e_inv, c);
+				local_out[j] ^= gf_mul_kernel(e_inv, c);
 
 			}
-			e_inv = gf_mul(e_inv, local_L[i]);
+			e_inv = gf_mul_kernel(e_inv, local_L[i]);
 
 		}
 	}

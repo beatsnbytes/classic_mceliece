@@ -11,5 +11,9 @@ void encrypt(unsigned char *, const unsigned char *, unsigned char *);
 extern double sum_syndrome;
 extern int times_syndrome;
 
+extern double sum_syndrome_2;
+extern int times_syndrome_2;
+
+
 #endif
 

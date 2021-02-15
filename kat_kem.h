@@ -10,6 +10,7 @@ extern cl_kernel kernel_gf_sq;
 extern cl_kernel kernel_gaussian_elimination;
 extern cl_kernel kernel_eval;
 extern cl_kernel kernel_syndrome;
+extern cl_kernel kernel_syndrome_2;
 extern cl_kernel kernel_synd;
 extern cl_program program;
 extern cl_context context;
@@ -30,6 +31,7 @@ extern gf *ptr_a_in;
 extern gf *ptr_r_out;
 extern cl_mem pt_list_eval[3];
 
+//syndrome
 extern cl_mem buffer_pk_in;
 extern cl_mem buffer_e_in;
 extern cl_mem buffer_s_out;
@@ -37,6 +39,14 @@ extern unsigned char *ptr_pk_in;
 extern unsigned char *ptr_e_in;
 extern unsigned char *ptr_s_out;
 extern cl_mem pt_list_syndrome[3];
+
+extern cl_mem buffer_pk_in_2;
+extern cl_mem buffer_e_in_2;
+extern cl_mem buffer_s_out_2;
+extern unsigned char *ptr_pk_in_2;
+extern unsigned char *ptr_e_in_2;
+extern unsigned char *ptr_s_out_2;
+extern cl_mem pt_list_syndrome_2[3];
 
 //elim
 extern cl_mem buffer_mat_in;

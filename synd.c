@@ -30,6 +30,9 @@
 double sum_synd=0.0;
 int times_synd=0;
 
+double sum_synd_t=0.0;
+int times_synd_t=0;
+
 void synd_sw_host(gf *out, gf* f , gf *L, unsigned char *r)
 {
 	int i, j;
@@ -60,7 +63,7 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 {
 
 #ifdef TIME_MEASUREMENT
-	cl_event event;
+	cl_event event, event_t;
 #endif
 
 	memcpy(ptr_f_in, f, sizeof(gf)*(SYS_T+1));
@@ -71,7 +74,7 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 	gf *out_validate = (gf *)malloc(sizeof(gf)*2*SYS_T);
 #endif
 
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)3, &pt_list_synd[1], 0, 0, NULL, NULL);
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)3, &pt_list_synd[1], 0, 0, NULL, &event_t);
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
     	printf("FAILED to enqueue input buffers\n");
@@ -121,15 +124,23 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     memcpy(out, ptr_out_out, sizeof(gf)*2*SYS_T);
 
 	#ifdef TIME_MEASUREMENT
-	cl_ulong time_start;
-	cl_ulong time_end;
+	cl_ulong time_start, time_start_t;
+	cl_ulong time_end, time_end_t;
 
 	clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
 	clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
 
+	clGetEventProfilingInfo(event_t, CL_PROFILING_COMMAND_START, sizeof(time_start_t), &time_start_t, NULL);
+	clGetEventProfilingInfo(event_t, CL_PROFILING_COMMAND_END, sizeof(time_end_t), &time_end_t, NULL);
+
 	double nanoSeconds = time_end-time_start;
 	sum_synd += nanoSeconds;
 	times_synd = times_synd + 1;
+
+	double nanoSeconds_t = time_end_t-time_start_t;
+	sum_synd_t += nanoSeconds_t;
+	times_synd_t = times_synd_t + 1;
+//	printf("Syndr kernel_t: OpenCl Data movement time is: %0.3f milliseconds \n",nanoSeconds_t / 1000000.0);
 	#endif
 
 
