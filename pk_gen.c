@@ -68,24 +68,24 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]) {
 
 
     //TODO Fix func correctness of gauss elim
-	#ifdef FUNC_CORRECTNESS
-//    unsigned char *validate_mat = (unsigned char *)malloc(MAT_ROWS * MAT_COLS * sizeof(unsigned char));
-    unsigned char validate_mat[MAT_ROWS][MAT_COLS];
-	for (int i=0;i<MAT_ROWS;i++){
-		for(int j=0;j<MAT_COLS;j++){
-			validate_mat[i][j] = *(*mat+i*MAT_COLS+j);
-		}
-	}
-
-	gaussian_elimination_sw(validate_mat);
-	for (int i=0;i<MAT_ROWS;i++){
-		for(int j=0;j<MAT_COLS;j++){
-			if (validate_mat[i][j] != *(ptr_mat_out+i*MAT_COLS+j)){\
-				printf("\nERROR: Expected %d, got %d\n", validate_mat[i][j], *(ptr_mat_out+i*MAT_COLS+j));
-			}
-		}
-	}
-	#endif
+//	#ifdef FUNC_CORRECTNESS
+////    unsigned char *validate_mat = (unsigned char *)malloc(MAT_ROWS * MAT_COLS * sizeof(unsigned char));
+//    unsigned char validate_mat[MAT_ROWS][MAT_COLS];
+//	for (int i=0;i<MAT_ROWS;i++){
+//		for(int j=0;j<MAT_COLS;j++){
+//			validate_mat[i][j] = *(*mat+i*MAT_COLS+j);
+//		}
+//	}
+//
+//	gaussian_elimination_sw(validate_mat);
+//	for (int i=0;i<MAT_ROWS;i++){
+//		for(int j=0;j<MAT_COLS;j++){
+//			if (validate_mat[i][j] != *(ptr_mat_out+i*MAT_COLS+j)){\
+//				printf("\nERROR: Expected %d, got %d\n", validate_mat[i][j], *(ptr_mat_out+i*MAT_COLS+j));
+//			}
+//		}
+//	}
+//	#endif
 
     memcpy(mat, ptr_mat_out, sizeof(unsigned char) * MAT_SIZE);
 

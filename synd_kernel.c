@@ -134,9 +134,8 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	gf e, e_inv, c;
 	gf local_out[2*SYS_T];
 	gf local_f[SYS_T+1];
-	gf local_L[SYS_N];
-	gf tmp_mul_1, tmp_mul_2;
-	unsigned char local_r[MAT_COLS];
+	gf local_L[SYS_N/2];
+	unsigned char local_r[MAT_COLS/2];
 
 	gf e_mat[SYS_N];
 
@@ -157,23 +156,11 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		local_L[i] = *(L_in+i);
 	}
 
-//	LOOP_LOAD_FROM_BRAM_L:for (i=0;i<SYS_N/2;i++){
-//	#pragma HLS PIPELINE II=1
-//	#pragma HLS unroll factor=4
-//		local_L[i+SYS_N/2] = *(L_in+i);
-//	}
-
-
 
 	LOOP_LOAD_FROM_BRAM_R:for (i=0;i<MAT_COLS/2;i++){
 	#pragma HLS PIPELINE II=1
 		local_r[i] = *(r_in+i);
 	}
-
-//	LOOP_LOAD_FROM_BRAM_R:for (i=0;i<MAT_COLS/2;i++){
-//	#pragma HLS PIPELINE II=1
-//		local_r[i+MAT_COLS/2] = *(r_in+i);
-//	}
 
 
 	//READ into local vars END

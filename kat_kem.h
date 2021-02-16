@@ -14,6 +14,7 @@ extern cl_kernel kernel_syndrome_2;
 extern cl_kernel kernel_syndrome_3;
 extern cl_kernel kernel_syndrome_4;
 extern cl_kernel kernel_synd;
+extern cl_kernel kernel_synd_2;
 extern cl_program program;
 extern cl_context context;
 extern cl_uint DATA_SIZE;
@@ -82,5 +83,15 @@ extern gf *ptr_f_in;
 extern gf *ptr_L_in;
 extern unsigned char *ptr_r_in;
 extern cl_mem pt_list_synd[4];
+
+extern cl_mem buffer_out_out_2;
+extern cl_mem buffer_f_in_2;
+extern cl_mem buffer_L_in_2;
+extern cl_mem buffer_r_in_2;
+extern gf *ptr_out_out_2;
+extern gf *ptr_f_in_2;
+extern gf *ptr_L_in_2;
+extern unsigned char *ptr_r_in_2;
+extern cl_mem pt_list_synd_2[4];
 
 

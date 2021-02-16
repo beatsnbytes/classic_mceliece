@@ -901,7 +901,7 @@ main(int argc, char* argv[])
 	}
 	#endif
 
-	buffer_L_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(gf)*SYS_N, NULL, &err);
+	buffer_L_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(gf)*SYS_N/2, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to create buffer_L_in");
@@ -909,7 +909,7 @@ main(int argc, char* argv[])
 	}
 	#endif
 
-	buffer_r_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*MAT_COLS, NULL, &err);
+	buffer_r_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*MAT_COLS/2, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to create buffer_r_in");
@@ -968,7 +968,7 @@ main(int argc, char* argv[])
 	}
 	#endif
 
-	ptr_L_in = (gf *) clEnqueueMapBuffer(commands, buffer_L_in, true, CL_MAP_WRITE, 0, sizeof(gf)*SYS_N, 0, NULL, NULL, &err);
+	ptr_L_in = (gf *) clEnqueueMapBuffer(commands, buffer_L_in, true, CL_MAP_WRITE, 0, sizeof(gf)*SYS_N/2, 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("ERROR : %d\n", err);
@@ -978,7 +978,7 @@ main(int argc, char* argv[])
 	#endif
 
 
-	ptr_r_in = (gf *) clEnqueueMapBuffer(commands, buffer_r_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS, 0, NULL, NULL, &err);
+	ptr_r_in = (gf *) clEnqueueMapBuffer(commands, buffer_r_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS/2, 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("ERROR : %d\n", err);
@@ -998,7 +998,7 @@ main(int argc, char* argv[])
 //#2
 
 #ifdef SYND_KERNEL
-	kernel_synd = clCreateKernel(program, "synd_kernel_2", &err);
+	kernel_synd_2 = clCreateKernel(program, "synd_kernel_2", &err);
 	#ifdef OCL_API_DEBUG
 	if (!kernel_synd || err != CL_SUCCESS) {
 		printf("Error: Failed to create compute kernel_synd!\n");
@@ -1039,7 +1039,7 @@ main(int argc, char* argv[])
 	}
 	#endif
 
-	err = clSetKernelArg(kernel_synd, 0, sizeof(cl_mem), &buffer_out_out_2);
+	err = clSetKernelArg(kernel_synd_2, 0, sizeof(cl_mem), &buffer_out_out_2);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to set kernel arguments for buffer_out_out");
@@ -1047,7 +1047,7 @@ main(int argc, char* argv[])
 	}
 	#endif
 
-	err = clSetKernelArg(kernel_synd, 1, sizeof(cl_mem), &buffer_f_in);
+	err = clSetKernelArg(kernel_synd_2, 1, sizeof(cl_mem), &buffer_f_in);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to set kernel arguments for buffer_f_in");
@@ -1055,7 +1055,7 @@ main(int argc, char* argv[])
 	}
 	#endif
 
-	err = clSetKernelArg(kernel_synd, 2, sizeof(cl_mem), &buffer_L_in_2);
+	err = clSetKernelArg(kernel_synd_2, 2, sizeof(cl_mem), &buffer_L_in_2);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to set kernel arguments for buffer_L_in");
@@ -1064,7 +1064,7 @@ main(int argc, char* argv[])
 	#endif
 
 
-	err = clSetKernelArg(kernel_synd, 3, sizeof(cl_mem), &buffer_r_in_2);
+	err = clSetKernelArg(kernel_synd_2, 3, sizeof(cl_mem), &buffer_r_in_2);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to set kernel arguments for buffer_r_in");
@@ -1250,6 +1250,7 @@ main(int argc, char* argv[])
 
 	#ifdef SYND_KERNEL
 	printf("Synd kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_synd/1000000.0)/times_synd);
+	printf("Synd_2 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_synd_2/1000000.0)/times_synd_2);
 	#endif
 
 	#ifdef SYNDROME_KERNEL
