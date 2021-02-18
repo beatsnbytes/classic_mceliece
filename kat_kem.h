@@ -66,6 +66,8 @@ extern unsigned char *ptr_pk_in_4;
 extern unsigned char *ptr_e_in_4;
 extern unsigned char *ptr_s_out_4;
 extern cl_mem pt_list_syndrome_4[3];
+extern cl_mem pt_list_syndrome_combined[5];
+extern cl_mem pt_list_syndrome_combined_out[4];
 
 //elim
 extern cl_mem buffer_mat_in;
@@ -83,6 +85,8 @@ extern gf *ptr_f_in;
 extern gf *ptr_L_in;
 extern unsigned char *ptr_r_in;
 extern cl_mem pt_list_synd[4];
+extern cl_mem pt_list_synd_combined[5];
+extern cl_mem pt_list_synd_combined_out[2];
 
 extern cl_mem buffer_out_out_2;
 extern cl_mem buffer_f_in_2;

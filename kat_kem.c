@@ -92,6 +92,8 @@ unsigned char *ptr_pk_in;
 unsigned char *ptr_e_in;
 unsigned char *ptr_s_out;
 cl_mem pt_list_syndrome[3];
+cl_mem pt_list_syndrome_combined[5];
+cl_mem pt_list_syndrome_combined_out[4];
 
 cl_mem buffer_pk_in_2;
 cl_mem buffer_e_in_2;
@@ -135,6 +137,8 @@ gf *ptr_f_in;
 gf *ptr_L_in;
 unsigned char *ptr_r_in;
 cl_mem pt_list_synd[4];
+cl_mem pt_list_synd_combined[5];
+cl_mem pt_list_synd_combined_out[2];
 //#2
 cl_mem buffer_out_out_2;
 cl_mem buffer_f_in_2;
@@ -651,6 +655,15 @@ main(int argc, char* argv[])
 	}
 	#endif
 
+
+//	buffer_e_in_2 = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*MAT_COLS, NULL, &err);
+//	#ifdef OCL_API_DEBUG
+//	if (err != CL_SUCCESS) {
+//		printf("FAILED to create buffer_e_in");
+//		return EXIT_FAILURE;
+//	}
+//	#endif
+
 	buffer_s_out_2 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(unsigned char)*SYND_BYTES/4, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
@@ -693,6 +706,14 @@ main(int argc, char* argv[])
 	}
 	#endif
 
+//	ptr_e_in_2 = (unsigned char *) clEnqueueMapBuffer(commands, buffer_e_in_2, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS, 0, NULL, NULL, &err);
+//	#ifdef OCL_API_DEBUG
+//	if (err != CL_SUCCESS) {
+//		printf("ERROR : %d\n", err);
+//		printf("FAILED to enqueue map buffer_e_in");
+//		return EXIT_FAILURE;
+//	}
+//	#endif
 
 	ptr_s_out_2 = (unsigned char *) clEnqueueMapBuffer(commands, buffer_s_out_2, true, CL_MAP_READ, 0, sizeof(unsigned char)*SYND_BYTES/4, 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
@@ -731,6 +752,14 @@ main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 		#endif
+
+//		buffer_e_in_3 = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*MAT_COLS, NULL, &err);
+//		#ifdef OCL_API_DEBUG
+//		if (err != CL_SUCCESS) {
+//			printf("FAILED to create buffer_e_in");
+//			return EXIT_FAILURE;
+//		}
+//		#endif
 
 		buffer_s_out_3 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(unsigned char)*SYND_BYTES/4, NULL, &err);
 		#ifdef OCL_API_DEBUG
@@ -774,6 +803,15 @@ main(int argc, char* argv[])
 		}
 		#endif
 
+//		ptr_e_in_3 = (unsigned char *) clEnqueueMapBuffer(commands, buffer_e_in_3, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS, 0, NULL, NULL, &err);
+//		#ifdef OCL_API_DEBUG
+//		if (err != CL_SUCCESS) {
+//			printf("ERROR : %d\n", err);
+//			printf("FAILED to enqueue map buffer_e_in");
+//			return EXIT_FAILURE;
+//		}
+//		#endif
+
 
 		ptr_s_out_3 = (unsigned char *) clEnqueueMapBuffer(commands, buffer_s_out_3, true, CL_MAP_READ, 0, sizeof(unsigned char)*SYND_BYTES/4, 0, NULL, NULL, &err);
 		#ifdef OCL_API_DEBUG
@@ -812,6 +850,14 @@ main(int argc, char* argv[])
 				return EXIT_FAILURE;
 			}
 			#endif
+
+//			buffer_e_in_4 = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*MAT_COLS, NULL, &err);
+//			#ifdef OCL_API_DEBUG
+//			if (err != CL_SUCCESS) {
+//				printf("FAILED to create buffer_e_in");
+//				return EXIT_FAILURE;
+//			}
+//			#endif
 
 			buffer_s_out_4 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(unsigned char)*SYND_BYTES/4, NULL, &err);
 			#ifdef OCL_API_DEBUG
@@ -855,6 +901,15 @@ main(int argc, char* argv[])
 			}
 			#endif
 
+//			ptr_e_in_4 = (unsigned char *) clEnqueueMapBuffer(commands, buffer_e_in_4, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS, 0, NULL, NULL, &err);
+//			#ifdef OCL_API_DEBUG
+//			if (err != CL_SUCCESS) {
+//				printf("ERROR : %d\n", err);
+//				printf("FAILED to enqueue map buffer_e_in");
+//				return EXIT_FAILURE;
+//			}
+//			#endif
+
 
 			ptr_s_out_4 = (unsigned char *) clEnqueueMapBuffer(commands, buffer_s_out_4, true, CL_MAP_READ, 0, sizeof(unsigned char)*SYND_BYTES/4, 0, NULL, NULL, &err);
 			#ifdef OCL_API_DEBUG
@@ -868,6 +923,20 @@ main(int argc, char* argv[])
 			pt_list_syndrome_4[0] = buffer_pk_in_4;
 			pt_list_syndrome_4[1] = buffer_e_in;
 			pt_list_syndrome_4[2] = buffer_s_out_4;
+
+
+			pt_list_syndrome_combined[0]= buffer_pk_in;
+			pt_list_syndrome_combined[1]= buffer_e_in;
+			pt_list_syndrome_combined[2]= buffer_pk_in_2;
+			pt_list_syndrome_combined[3]= buffer_pk_in_3;
+			pt_list_syndrome_combined[4]= buffer_pk_in_4;
+
+			pt_list_syndrome_combined_out[0]= buffer_s_out;
+			pt_list_syndrome_combined_out[1]= buffer_s_out_2;
+			pt_list_syndrome_combined_out[2]= buffer_s_out_3;
+			pt_list_syndrome_combined_out[3]= buffer_s_out_4;
+
+
 
 
 		#endif
@@ -978,7 +1047,7 @@ main(int argc, char* argv[])
 	#endif
 
 
-	ptr_r_in = (gf *) clEnqueueMapBuffer(commands, buffer_r_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS/2, 0, NULL, NULL, &err);
+	ptr_r_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_r_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS/2, 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("ERROR : %d\n", err);
@@ -991,6 +1060,7 @@ main(int argc, char* argv[])
 	pt_list_synd[1] = buffer_f_in;
 	pt_list_synd[2] = buffer_L_in;
 	pt_list_synd[3] = buffer_r_in;
+
 
 
 #endif
@@ -1100,7 +1170,7 @@ main(int argc, char* argv[])
 	#endif
 
 
-	ptr_r_in_2 = (gf *) clEnqueueMapBuffer(commands, buffer_r_in_2, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS/2, 0, NULL, NULL, &err);
+	ptr_r_in_2 = (unsigned char *) clEnqueueMapBuffer(commands, buffer_r_in_2, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS/2, 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("ERROR : %d\n", err);
@@ -1113,6 +1183,17 @@ main(int argc, char* argv[])
 	pt_list_synd_2[1] = buffer_f_in;
 	pt_list_synd_2[2] = buffer_L_in_2;
 	pt_list_synd_2[3] = buffer_r_in_2;
+
+//	cl_mem pt_list_synd_combined[5];
+	pt_list_synd_combined[0]=buffer_f_in;
+	pt_list_synd_combined[1]=buffer_L_in;
+	pt_list_synd_combined[2]=buffer_r_in;
+	pt_list_synd_combined[3]=buffer_L_in_2;
+	pt_list_synd_combined[4]=buffer_r_in_2;
+
+//	cl_mem pt_list_synd_combined_out[2];
+	pt_list_synd_combined_out[0] = buffer_out_out;
+	pt_list_synd_combined_out[1] = buffer_out_out_2;
 
 
 #endif
@@ -1195,46 +1276,52 @@ main(int argc, char* argv[])
         fprintBstr(fp_rsp, "pk = ", pk, crypto_kem_PUBLICKEYBYTES);
         fprintBstr(fp_rsp, "sk = ", sk, crypto_kem_SECRETKEYBYTES);
         
-        gettimeofday(&start_enc, NULL);
-        ret_val = crypto_kem_enc(ct, ss, pk);
-
-        gettimeofday(&end_enc, 0);
-        long seconds_enc = end_enc.tv_sec - start_enc.tv_sec;
-        long microseconds_enc = end_enc.tv_usec - start_enc.tv_usec;
-        double elapsed_enc = seconds_enc + microseconds_enc*0.000001;
-        sum_enc += elapsed_enc;
-        times_enc = times_enc + 1;
-
-        if (ret_val != 0) {
-        // if ( (ret_val = crypto_kem_enc(ct, ss, pk)) != 0) {
-            fprintf(stderr, "crypto_kem_enc returned <%d>\n", ret_val);
-            return KAT_CRYPTO_FAILURE;
-        }
-        fprintBstr(fp_rsp, "ct = ", ct, crypto_kem_CIPHERTEXTBYTES);
-        fprintBstr(fp_rsp, "ss = ", ss, crypto_kem_BYTES);
+        //
+//         for(int t=0; t<10; t++){
+        //
         
-        fprintf(fp_rsp, "\n");
- 
-        gettimeofday(&start_dec, NULL);
-        ret_val =  crypto_kem_dec(ss1, ct, sk);
+			gettimeofday(&start_enc, NULL);
+			ret_val = crypto_kem_enc(ct, ss, pk);
 
-        gettimeofday(&end_dec, 0);
-        long seconds_dec = end_dec.tv_sec - start_dec.tv_sec;
-        long microseconds_dec = end_dec.tv_usec - start_dec.tv_usec;
-        double elapsed_dec = seconds_dec + microseconds_dec*0.000001;
-        sum_dec += elapsed_dec;
-        times_dec = times_dec + 1;
+			gettimeofday(&end_enc, 0);
+			long seconds_enc = end_enc.tv_sec - start_enc.tv_sec;
+			long microseconds_enc = end_enc.tv_usec - start_enc.tv_usec;
+			double elapsed_enc = seconds_enc + microseconds_enc*0.000001;
+			sum_enc += elapsed_enc;
+			times_enc = times_enc + 1;
 
-	    if (ret_val != 0) {
-//        if ( (ret_val = crypto_kem_dec(ss1, ct, sk)) != 0) {
-            fprintf(stderr, "crypto_kem_dec returned <%d>\n", ret_val);
-            return KAT_CRYPTO_FAILURE;
-        }
-        
-        if ( memcmp(ss, ss1, crypto_kem_BYTES) ) {
-            fprintf(stderr, "crypto_kem_dec returned bad 'ss' value\n");
-            return KAT_CRYPTO_FAILURE;
-        }
+			if (ret_val != 0) {
+			// if ( (ret_val = crypto_kem_enc(ct, ss, pk)) != 0) {
+				fprintf(stderr, "crypto_kem_enc returned <%d>\n", ret_val);
+				return KAT_CRYPTO_FAILURE;
+			}
+			fprintBstr(fp_rsp, "ct = ", ct, crypto_kem_CIPHERTEXTBYTES);
+			fprintBstr(fp_rsp, "ss = ", ss, crypto_kem_BYTES);
+
+			fprintf(fp_rsp, "\n");
+
+			gettimeofday(&start_dec, NULL);
+			ret_val =  crypto_kem_dec(ss1, ct, sk);
+
+			gettimeofday(&end_dec, 0);
+			long seconds_dec = end_dec.tv_sec - start_dec.tv_sec;
+			long microseconds_dec = end_dec.tv_usec - start_dec.tv_usec;
+			double elapsed_dec = seconds_dec + microseconds_dec*0.000001;
+			sum_dec += elapsed_dec;
+			times_dec = times_dec + 1;
+
+			if (ret_val != 0) {
+	//        if ( (ret_val = crypto_kem_dec(ss1, ct, sk)) != 0) {
+				fprintf(stderr, "crypto_kem_dec returned <%d>\n", ret_val);
+				return KAT_CRYPTO_FAILURE;
+			}
+
+			if ( memcmp(ss, ss1, crypto_kem_BYTES) ) {
+				fprintf(stderr, "crypto_kem_dec returned bad 'ss' value\n");
+				return KAT_CRYPTO_FAILURE;
+			}
+
+//        }//t
     }
 	
 
@@ -1251,6 +1338,7 @@ main(int argc, char* argv[])
 	#ifdef SYND_KERNEL
 	printf("Synd kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_synd/1000000.0)/times_synd);
 	printf("Synd_2 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_synd_2/1000000.0)/times_synd_2);
+	printf("All Synd kernels :Avg Execution time is: %0.3f miliseconds \n", ((sum_synd + sum_synd_2)/2000000.0)/(times_synd_2));
 	#endif
 
 	#ifdef SYNDROME_KERNEL
@@ -1258,7 +1346,10 @@ main(int argc, char* argv[])
     printf("Syndrome_2 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_2/1000000.0)/times_syndrome_2);
     printf("Syndrome_3 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_3/1000000.0)/times_syndrome_3);
     printf("Syndrome_4 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_4/1000000.0)/times_syndrome_4);
+    printf("All Syndrome kernels :Avg Execution time is: %0.3f miliseconds \n", ((sum_syndrome + sum_syndrome_2 + sum_syndrome_3 + sum_syndrome_4)/4000000.0)/(times_syndrome_4));
 	#endif
+
+//    printf("Syndrome kernels Execution time is: %0.3f miliseconds \n", (sum_tmp*1000)/times_tmp);
 
 	#ifdef KEM_PARTS_MEASUREMENT
 	printf("Keygen :Avg Execution time is: %0.3f miliseconds \n",(sum_keygen*1000)/times_keygen);

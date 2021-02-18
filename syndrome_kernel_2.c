@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-//#include "ap_cint.h"
+#include "ap_cint.h"
 
 void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
 {
@@ -16,7 +16,7 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 
 	unsigned char b, row[MAT_COLS];
 
-	int i, j;
+
 	unsigned char local_pk[MAT_ROWS/4][PK_ROW_BYTES];
 	//todo canbe synd/2
 	unsigned char local_s[SYND_BYTES];
@@ -29,8 +29,8 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 
 
 	LOOP_LOAD_FROM_BRAM_PK:
-	for(i=0;i<MAT_ROWS/4;i++){
-		for(j=0;j<PK_ROW_BYTES;j++){
+	for(uint i=0;i<MAT_ROWS/4;i++){
+		for(uint j=0;j<PK_ROW_BYTES;j++){
 			#pragma HLS PIPELINE
 			#pragma HLS unroll factor=4
 			local_pk[i][j] = *(pk_in+i*PK_ROW_BYTES+j);
@@ -38,13 +38,13 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 	}
 
 
-	LOOP_LOAD_FROM_BRAM_E:for(i=0;i<MAT_COLS;i++){
+	LOOP_LOAD_FROM_BRAM_E:for(unsigned int i=0;i<MAT_COLS;i++){
 		#pragma HLS PIPELINE
 		#pragma HLS unroll factor=2
 		local_e[i] = *(e_in+i);
 	}
 
-		LOOP_INIT_S:for (i = 0; i < SYND_BYTES/4; i++){
+		LOOP_INIT_S:for (unsigned int i = 0; i < SYND_BYTES/4; i++){
 			#pragma HLS PIPELINE
 			#pragma HLS unroll factor=24
 			local_s[i+SYND_BYTES/4] = 0;
@@ -56,28 +56,27 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 	for (uint i = 0; i < PK_NROWS/4; i++)
 	{
 
-//		#pragma HLS PIPELINE
-//		#pragma HLS unroll factor=2
-
-		 int idx=0;
+//		 uint9 idx=0;
 		 LOOP_ROW_MAT:
-		 for ( j = 0; j <(SYS_N/8); j++) {
+		 for ( uint9 j = 0; j <(MAT_COLS); j++) {
+//			#pragma HLS DEPENDENCE variable=row inter false
 			#pragma HLS PIPELINE
 			#pragma HLS unroll factor=32
 
-			 if(idx<(SYS_N/8 - PK_ROW_BYTES)){
+			 if(j<(MAT_COLS - PK_ROW_BYTES)){
 				 row[j] = 0;
 			 }else{
-				 row[j] = local_pk[i][j-(SYS_N/8 - PK_ROW_BYTES)];
+
+				 row[j] = local_pk[i][j-(MAT_COLS - PK_ROW_BYTES)];
 			 }
-			 idx++;
+//			 idx++;
 		 }
 
 
-		row[(i/8)+SYND_BYTES/4] |= 1 << (i%(uint)8);
+		row[(i>>3)+SYND_BYTES/4] |= 1 << (i%8);
 
 		b = 0;
-		LOOP_B_COMPUTE:for (j = 0; j < MAT_COLS; j++){
+		LOOP_B_COMPUTE:for (uint j = 0; j < MAT_COLS; j++){
 			#pragma HLS PIPELINE
 			#pragma HLS unroll factor=32
 
@@ -89,15 +88,15 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 		b ^= b >> 1;
 		b &= 1;
 
-		local_s[(i/8)+SYND_BYTES/4] |= (b << (i%(uint)8));
+		local_s[(i>>3)+SYND_BYTES/4] |= (b << (i%8));
 
 	}
 
 
-	LOOP_WRITE_TO_BRAM_R:for (i=0;i<SYND_BYTES/4;i++){
+	LOOP_WRITE_TO_BRAM_R:for (unsigned int i=SYND_BYTES/4;i<SYND_BYTES/2;i++){
 		#pragma HLS PIPELINE
 		#pragma HLS unroll factor=4
-		*(s_out+i) = local_s[i+SYND_BYTES/4];
+		*(s_out+i) = local_s[i];
 	}
 
 }

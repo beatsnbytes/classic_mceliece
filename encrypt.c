@@ -30,6 +30,9 @@ int times_syndrome_3 = 0;
 double sum_syndrome_4 = 0;
 int times_syndrome_4 = 0;
 
+double sum_tmp = 0;
+int times_tmp = 0;
+
 static inline unsigned char same_mask(uint16_t x, uint16_t y)
 {
 	uint32_t mask;
@@ -146,54 +149,31 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 {
 
 	#ifdef TIME_MEASUREMENT
-	cl_event events[4];
+	cl_event events_enq[4], events_migr[4];
 	#endif
 
-	memcpy(ptr_pk_in, pk, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-	memcpy(ptr_pk_in_2, (pk + crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-	memcpy(ptr_pk_in_3, (pk + 2*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-	memcpy(ptr_pk_in_4, (pk + 3*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+//	memcpy(ptr_pk_in, pk, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+//	memcpy(ptr_pk_in_2, (pk + crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+//	memcpy(ptr_pk_in_3, (pk + 2*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+//	memcpy(ptr_pk_in_4, (pk + 3*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+//
+//	memcpy(ptr_e_in, e, sizeof(unsigned char)*MAT_COLS);
+//
+//
+//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)5, pt_list_syndrome_combined, 0, 0, NULL, NULL);
+//	#ifdef OCL_API_DEBUG
+//	if (err != CL_SUCCESS) {
+//		printf("FAILED to enqueue pt_list_syndrome\n");
+//		return EXIT_FAILURE;
+//	}
+//	#endif
 
-	memcpy(ptr_e_in, e, sizeof(unsigned char)*MAT_COLS);
-
-
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)3, pt_list_syndrome, 0, 0, NULL, NULL);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to enqueue pt_list_syndrome\n");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)3, pt_list_syndrome_2, 0, 0, NULL, NULL);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to enqueue pt_list_syndrome\n");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)3, pt_list_syndrome_3, 0, 0, NULL, NULL);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to enqueue pt_list_syndrome\n");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)3, pt_list_syndrome_4, 0, 0, NULL, NULL);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to enqueue pt_list_syndrome\n");
-		return EXIT_FAILURE;
-	}
-	#endif
 
 	#ifdef TIME_MEASUREMENT
-	err = clEnqueueTask(commands, kernel_syndrome, 0, NULL, &events[0]);
-	err = clEnqueueTask(commands, kernel_syndrome_2, 0, NULL, &events[1]);
-	err = clEnqueueTask(commands, kernel_syndrome_3, 0, NULL, &events[2]);
-	err = clEnqueueTask(commands, kernel_syndrome_4, 0, NULL, &events[3]);
+	err = clEnqueueTask(commands, kernel_syndrome, 0, NULL, &events_enq[0]);
+	err = clEnqueueTask(commands, kernel_syndrome_2, 0, NULL, &events_enq[1]);
+	err = clEnqueueTask(commands, kernel_syndrome_3, 0, NULL, &events_enq[2]);
+	err = clEnqueueTask(commands, kernel_syndrome_4, 0, NULL, &events_enq[3]);
 	#endif
 	#ifndef TIME_MEASUREMENT
 	err = clEnqueueTask(commands, kernel_syndrome, 0, NULL, NULL);
@@ -205,56 +185,67 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	}
 	#endif
 
-	//#1
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to enqueue bufer_res\n");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	//#2
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome_2[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to enqueue bufer_res\n");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	//#3
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome_3[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to enqueue bufer_res\n");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	//#4
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome_4[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to enqueue bufer_res\n");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	#ifdef TIME_MEASUREMENT
-	//todo can I remove them?
-	clWaitForEvents(1, &events[0]);
-	clWaitForEvents(1, &events[1]);
-	clWaitForEvents(1, &events[2]);
-	clWaitForEvents(1, &events[3]);
-	#endif
 	clFinish(commands);
 
 
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)4, &pt_list_syndrome_combined_out, CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, &events_migr[0]);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to enqueue bufer_res\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+//	//#1
+//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, &events_migr[0]);
+//	#ifdef OCL_API_DEBUG
+//	if (err != CL_SUCCESS) {
+//		printf("FAILED to enqueue bufer_res\n");
+//		return EXIT_FAILURE;
+//	}
+//	#endif
+//
+//	//#2
+//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome_2[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, &events_migr[1]);
+//	#ifdef OCL_API_DEBUG
+//	if (err != CL_SUCCESS) {
+//		printf("FAILED to enqueue bufer_res\n");
+//		return EXIT_FAILURE;
+//	}
+//	#endif
+//
+//	//#3
+//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome_3[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, &events_migr[2]);
+//	#ifdef OCL_API_DEBUG
+//	if (err != CL_SUCCESS) {
+//		printf("FAILED to enqueue bufer_res\n");
+//		return EXIT_FAILURE;
+//	}
+//	#endif
+//
+//	//#4
+//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome_4[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, &events_migr[3]);
+//	#ifdef OCL_API_DEBUG
+//	if (err != CL_SUCCESS) {
+//		printf("FAILED to enqueue bufer_res\n");
+//		return EXIT_FAILURE;
+//	}
+//	#endif
+
+//	clFinish(commands);
+
+
+//	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES);
+	clWaitForEvents(1, &events_migr[0]);
 	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES/4);
-	memcpy((s+ SYND_BYTES/4), ptr_s_out_2, sizeof(unsigned char)*SYND_BYTES/4);
-	memcpy((s+ 2*SYND_BYTES/4), ptr_s_out_3, sizeof(unsigned char)*SYND_BYTES/4);
-	memcpy((s+ 3*SYND_BYTES/4), ptr_s_out_4, sizeof(unsigned char)*SYND_BYTES/4);
+//	clWaitForEvents(1, &events_migr[1]);
+	memcpy((s+ SYND_BYTES/4), (ptr_s_out_2 + SYND_BYTES/4), sizeof(unsigned char)*SYND_BYTES/4);
+//	clWaitForEvents(1, &events_migr[2]);
+	memcpy((s+ 2*SYND_BYTES/4), (ptr_s_out_3+ 2*SYND_BYTES/4), sizeof(unsigned char)*SYND_BYTES/4);
+//	clWaitForEvents(1, &events_migr[3]);
+	memcpy((s+ 3*SYND_BYTES/4), (ptr_s_out_4+ 3*SYND_BYTES/4), sizeof(unsigned char)*SYND_BYTES/4);
+
+
 
 //	#ifdef FUNC_CORRECTNESS
 //	unsigned char validate_mat[SYND_BYTES];
@@ -271,17 +262,17 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	cl_ulong time_start, time_start_2, time_start_3, time_start_4;
 	cl_ulong time_end, time_end_2, time_end_3, time_end_4;
 	//#1
-	clGetEventProfilingInfo(events[0], CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
-	clGetEventProfilingInfo(events[0], CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
+	clGetEventProfilingInfo(events_enq[0], CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
+	clGetEventProfilingInfo(events_enq[0], CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
 	//#2
-	clGetEventProfilingInfo(events[1], CL_PROFILING_COMMAND_START, sizeof(time_start_2), &time_start_2, NULL);
-	clGetEventProfilingInfo(events[1], CL_PROFILING_COMMAND_END, sizeof(time_end_2), &time_end_2, NULL);
+	clGetEventProfilingInfo(events_enq[1], CL_PROFILING_COMMAND_START, sizeof(time_start_2), &time_start_2, NULL);
+	clGetEventProfilingInfo(events_enq[1], CL_PROFILING_COMMAND_END, sizeof(time_end_2), &time_end_2, NULL);
 	//#3
-	clGetEventProfilingInfo(events[2], CL_PROFILING_COMMAND_START, sizeof(time_start_3), &time_start_3, NULL);
-	clGetEventProfilingInfo(events[2], CL_PROFILING_COMMAND_END, sizeof(time_end_3), &time_end_3, NULL);
+	clGetEventProfilingInfo(events_enq[2], CL_PROFILING_COMMAND_START, sizeof(time_start_3), &time_start_3, NULL);
+	clGetEventProfilingInfo(events_enq[2], CL_PROFILING_COMMAND_END, sizeof(time_end_3), &time_end_3, NULL);
 	//#4
-	clGetEventProfilingInfo(events[3], CL_PROFILING_COMMAND_START, sizeof(time_start_4), &time_start_4, NULL);
-	clGetEventProfilingInfo(events[3], CL_PROFILING_COMMAND_END, sizeof(time_end_4), &time_end_4, NULL);
+	clGetEventProfilingInfo(events_enq[3], CL_PROFILING_COMMAND_START, sizeof(time_start_4), &time_start_4, NULL);
+	clGetEventProfilingInfo(events_enq[3], CL_PROFILING_COMMAND_END, sizeof(time_end_4), &time_end_4, NULL);
 
 	double nanoSeconds = time_end-time_start;
 	sum_syndrome += nanoSeconds;
@@ -299,6 +290,11 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	sum_syndrome_4 += nanoSeconds_4;
 	times_syndrome_4 = times_syndrome_4 + 1;
 
+//	printf("Syndrome_1 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome/1000000.0)/times_syndrome);
+//	printf("Syndrome_2 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_2/1000000.0)/times_syndrome_2);
+//	printf("Syndrome_3 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_3/1000000.0)/times_syndrome_3);
+//	printf("Syndrome_4 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_4/1000000.0)/times_syndrome_4);
+
 	#endif
 
 }
@@ -310,6 +306,23 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
 {
 	gen_e(e);
+
+//	//put migrate here to hide latency
+	memcpy(ptr_pk_in, pk, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+	memcpy(ptr_pk_in_2, (pk + crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+	memcpy(ptr_pk_in_3, (pk + 2*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+	memcpy(ptr_pk_in_4, (pk + 3*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+
+	memcpy(ptr_e_in, e, sizeof(unsigned char)*MAT_COLS);
+
+
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)5, pt_list_syndrome_combined, 0, 0, NULL, NULL);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to enqueue pt_list_syndrome\n");
+		return EXIT_FAILURE;
+	}
+	#endif
 
 #ifdef KAT
   {

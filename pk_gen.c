@@ -29,6 +29,8 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]) {
 	#ifdef TIME_MEASUREMENT
 	cl_event event;
 	#endif
+
+
 //	memcpy(ptr_mat_in, mat, sizeof(unsigned char) * MAT_SIZE);
 //
 //	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_in, 0, 0, NULL, NULL);

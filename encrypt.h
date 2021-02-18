@@ -20,6 +20,8 @@ extern int times_syndrome_3;
 extern double sum_syndrome_4;
 extern int times_syndrome_4;
 
+extern double sum_tmp;
+extern int times_tmp;
 
 #endif
 
