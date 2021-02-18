@@ -152,21 +152,21 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	cl_event events_enq[4], events_migr[4];
 	#endif
 
-//	memcpy(ptr_pk_in, pk, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-//	memcpy(ptr_pk_in_2, (pk + crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-//	memcpy(ptr_pk_in_3, (pk + 2*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-//	memcpy(ptr_pk_in_4, (pk + 3*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-//
-//	memcpy(ptr_e_in, e, sizeof(unsigned char)*MAT_COLS);
-//
-//
-//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)5, pt_list_syndrome_combined, 0, 0, NULL, NULL);
-//	#ifdef OCL_API_DEBUG
-//	if (err != CL_SUCCESS) {
-//		printf("FAILED to enqueue pt_list_syndrome\n");
-//		return EXIT_FAILURE;
-//	}
-//	#endif
+	memcpy(ptr_pk_in, pk, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+	memcpy(ptr_pk_in_2, (pk + crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+	memcpy(ptr_pk_in_3, (pk + 2*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+	memcpy(ptr_pk_in_4, (pk + 3*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+
+	memcpy(ptr_e_in, e, sizeof(unsigned char)*MAT_COLS);
+
+
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)5, pt_list_syndrome_combined, 0, 0, NULL, NULL);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to enqueue pt_list_syndrome\n");
+		return EXIT_FAILURE;
+	}
+	#endif
 
 
 	#ifdef TIME_MEASUREMENT
@@ -188,22 +188,22 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	clFinish(commands);
 
 
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)4, &pt_list_syndrome_combined_out, CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, &events_migr[0]);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to enqueue bufer_res\n");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-//	//#1
-//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, &events_migr[0]);
+//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)4, &pt_list_syndrome_combined_out, CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
 //	#ifdef OCL_API_DEBUG
 //	if (err != CL_SUCCESS) {
 //		printf("FAILED to enqueue bufer_res\n");
 //		return EXIT_FAILURE;
 //	}
 //	#endif
+
+	//#1
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to enqueue bufer_res\n");
+		return EXIT_FAILURE;
+	}
+	#endif
 //
 //	//#2
 //	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome_2[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, &events_migr[1]);
@@ -232,30 +232,30 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 //	}
 //	#endif
 
-//	clFinish(commands);
+	clFinish(commands);
 
 
-//	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES);
-	clWaitForEvents(1, &events_migr[0]);
-	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES/4);
-//	clWaitForEvents(1, &events_migr[1]);
-	memcpy((s+ SYND_BYTES/4), (ptr_s_out_2 + SYND_BYTES/4), sizeof(unsigned char)*SYND_BYTES/4);
-//	clWaitForEvents(1, &events_migr[2]);
-	memcpy((s+ 2*SYND_BYTES/4), (ptr_s_out_3+ 2*SYND_BYTES/4), sizeof(unsigned char)*SYND_BYTES/4);
-//	clWaitForEvents(1, &events_migr[3]);
-	memcpy((s+ 3*SYND_BYTES/4), (ptr_s_out_4+ 3*SYND_BYTES/4), sizeof(unsigned char)*SYND_BYTES/4);
+	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES);
+////	clWaitForEvents(1, &events_migr[0]);
+//	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES/4);
+////	clWaitForEvents(1, &events_migr[1]);
+//	memcpy((s+ SYND_BYTES/4), (ptr_s_out_2 + SYND_BYTES/4), sizeof(unsigned char)*SYND_BYTES/4);
+////	clWaitForEvents(1, &events_migr[2]);
+//	memcpy((s+ 2*SYND_BYTES/4), (ptr_s_out_3+ 2*SYND_BYTES/4), sizeof(unsigned char)*SYND_BYTES/4);
+////	clWaitForEvents(1, &events_migr[3]);
+//	memcpy((s+ 3*SYND_BYTES/4), (ptr_s_out_4+ 3*SYND_BYTES/4), sizeof(unsigned char)*SYND_BYTES/4);
 
 
 
-//	#ifdef FUNC_CORRECTNESS
-//	unsigned char validate_mat[SYND_BYTES];
-//	syndrome_sw_host(validate_mat, pk, e);
-//	for (int i=0;i<SYND_BYTES;i++){
-//		if (validate_mat[i] != *(s+i)){\
-//			printf("\nERROR in %d: Expected %d, got %d\n", i, validate_mat[i], *(s+i));
-//		}
-//	}
-//	#endif
+	#ifdef FUNC_CORRECTNESS
+	unsigned char validate_mat[SYND_BYTES];
+	syndrome_sw_host(validate_mat, pk, e);
+	for (int i=0;i<SYND_BYTES;i++){
+		if (validate_mat[i] != *(s+i)){\
+			printf("\nERROR in %d: Expected %d, got %d\n", i, validate_mat[i], *(s+i));
+		}
+	}
+	#endif
 
 
 	#ifdef TIME_MEASUREMENT
@@ -307,22 +307,6 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
 {
 	gen_e(e);
 
-//	//put migrate here to hide latency
-	memcpy(ptr_pk_in, pk, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-	memcpy(ptr_pk_in_2, (pk + crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-	memcpy(ptr_pk_in_3, (pk + 2*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-	memcpy(ptr_pk_in_4, (pk + 3*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-
-	memcpy(ptr_e_in, e, sizeof(unsigned char)*MAT_COLS);
-
-
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)5, pt_list_syndrome_combined, 0, 0, NULL, NULL);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to enqueue pt_list_syndrome\n");
-		return EXIT_FAILURE;
-	}
-	#endif
 
 #ifdef KAT
   {
