@@ -25,7 +25,7 @@ gf gf_mul_kernel(gf in0, gf in1)
 
 	tmp = t0 * (t1 & 1);
 
-	for (uint4 i = 1; i < GFBITS; i++){
+	for (uint i = 1; i < GFBITS; i++){//4
 	#pragma HLS unroll factor=4
 //#pragma HLS RESOURCE variable=tmp2 core=Mul_lut
 		tmp ^= (t0 * (t1 & (1 << i)));
@@ -145,19 +145,19 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	//READ into local vars
 
-	LOOP_LOAD_FROM_BRAM_F:for (i=0;i<=SYS_T;i++){
+	LOOP_LOAD_FROM_BRAM_F:for (uint i=0;i<=SYS_T;i++){
 	#pragma HLS PIPELINE II=1
 		local_f[i] = *(f_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_L:for (i=0;i<SYS_N/2;i++){
+	LOOP_LOAD_FROM_BRAM_L:for (uint i=0;i<SYS_N/2;i++){
 	#pragma HLS PIPELINE II=1
 	#pragma HLS unroll factor=4
 		local_L[i] = *(L_in+i);
 	}
 
 
-	LOOP_LOAD_FROM_BRAM_R:for (i=0;i<MAT_COLS/2;i++){
+	LOOP_LOAD_FROM_BRAM_R:for (uint i=0;i<MAT_COLS/2;i++){
 	#pragma HLS PIPELINE II=1
 	#pragma HLS unroll factor=2
 		local_r[i] = *(r_in+i);
@@ -166,7 +166,7 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	//READ into local vars END
 	LOOP_EVAL:
-	for(uint11 i=0; i <SYS_N/2; i++){
+	for(uint i=0; i <SYS_N/2; i++){//11
 	#pragma HLS PIPELINE
 		e_mat[i] = eval_inner(local_f, local_L[i]);
 	}
@@ -174,13 +174,13 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 
 	LOOP_MAIN_OUTER:
-	for (uint11 i = 0; i < SYS_N/2; i++) //11
+	for (uint i = 0; i < SYS_N/2; i++) //11
 	{
 		c = (local_r[i>>3] >> (i%8)) & 1;
 		e_inv = gf_inv_kernel(gf_mul_kernel(e_mat[i],e_mat[i]));
 
 		LOOP_MAIN_INNER:
-		for (uint8 j = 0; j < 2*SYS_T; j++) //8
+		for (uint j = 0; j < 2*SYS_T; j++) //8
 		{
 		#pragma HLS DEPENDENCE inter variable=local_out false
 		#pragma HLS PIPELINE II=2
@@ -199,7 +199,7 @@ void synd_kernel(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	//WRITE to local memory
 
-	LOOP_WRITE_TO_BRAM_OUT:for(i=0;i<(2*SYS_T);i++){
+	LOOP_WRITE_TO_BRAM_OUT:for(uint i=0;i<(2*SYS_T);i++){
 	#pragma HLS PIPELINE II=1
 	#pragma HLS unroll factor=2
 		*(out_out+i) = local_out[i];

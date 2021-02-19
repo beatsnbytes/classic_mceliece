@@ -1281,7 +1281,7 @@ main(int argc, char* argv[])
         fprintBstr(fp_rsp, "sk = ", sk, crypto_kem_SECRETKEYBYTES);
         
         //
-         for(int t=0; t<10; t++){
+//         for(int t=0; t<10; t++){
         //
 			gettimeofday(&start_enc, NULL);
 			ret_val = crypto_kem_enc(ct, ss, pk);
@@ -1324,7 +1324,7 @@ main(int argc, char* argv[])
 				return KAT_CRYPTO_FAILURE;
 			}
 
-        }//t
+//        }//t
     }
 	
 

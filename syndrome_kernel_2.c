@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "ap_cint.h"
+//#include "ap_cint.h"
 
 void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
 {
@@ -22,15 +22,15 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 	unsigned char local_s[SYND_BYTES];
 	unsigned char local_e[MAT_COLS];
 
-	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=32 //40
-	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=32 //
+	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=64 //40
+	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=64 //
 	#pragma HLS ARRAY_PARTITION variable=local_s cyclic factor=24  //96
-	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=32 dim=2
+	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=64 dim=2
 
 
 	LOOP_LOAD_FROM_BRAM_PK:
-	for(uint i=0;i<MAT_ROWS/4;i++){
-		for(uint j=0;j<PK_ROW_BYTES;j++){
+	for(int i=0;i<MAT_ROWS/4;i++){
+		for(int j=0;j<PK_ROW_BYTES;j++){
 			#pragma HLS PIPELINE
 			#pragma HLS unroll factor=4
 			local_pk[i][j] = *(pk_in+i*PK_ROW_BYTES+j);
@@ -53,15 +53,15 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 
 
 	LOOP_MAIN:
-	for (uint i = 0; i < PK_NROWS/4; i++)
+	for (int i = 0; i < PK_NROWS/4; i++)
 	{
-
+	#pragma HLS PIPELINE
 //		 uint9 idx=0;
 		 LOOP_ROW_MAT:
-		 for ( uint9 j = 0; j <(MAT_COLS); j++) {
+		 for ( uint j = 0; j <(MAT_COLS); j++) {
 //			#pragma HLS DEPENDENCE variable=row inter false
 			#pragma HLS PIPELINE
-			#pragma HLS unroll factor=32
+			#pragma HLS unroll factor=64
 
 			 if(j<(MAT_COLS - PK_ROW_BYTES)){
 				 row[j] = 0;
@@ -78,7 +78,7 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 		b = 0;
 		LOOP_B_COMPUTE:for (uint j = 0; j < MAT_COLS; j++){
 			#pragma HLS PIPELINE
-			#pragma HLS unroll factor=32
+			#pragma HLS unroll factor=64
 
 			b ^= row[j] & local_e[j];
 		}

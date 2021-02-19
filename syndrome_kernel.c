@@ -20,15 +20,15 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 	unsigned char local_s[SYND_BYTES/4];
 	unsigned char local_e[MAT_COLS];
 
-	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=32
-	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=32
+	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=64
+	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=64
 	#pragma HLS ARRAY_PARTITION variable=local_s cyclic factor=24
-	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=32 dim=2
+	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=64 dim=2
 
 
 	LOOP_LOAD_FROM_BRAM_PK:
-	for(uint i=0;i<MAT_ROWS/4;i++){
-		for(uint j=0;j<PK_ROW_BYTES;j++){
+	for(int i=0;i<MAT_ROWS/4;i++){
+		for(int j=0;j<PK_ROW_BYTES;j++){
 			#pragma HLS PIPELINE
 			#pragma HLS unroll factor=4
 			local_pk[i][j] = *(pk_in+i*PK_ROW_BYTES+j);
@@ -52,34 +52,33 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 
 
 	LOOP_MAIN:
-	for (uint i = 0; i < PK_NROWS/4; i++)
+	for (int i = 0; i < PK_NROWS/4; i++)
 	{
+	#pragma HLS DEPENDENCE variable=row inter RAW true
+	#pragma HLS PIPELINE
 
-//		 uint9 idx=0;
+
 		 LOOP_ROW_MAT:
-		 for ( uint9 j = 0; j <(MAT_COLS); j++) {
-			#pragma HLS DEPENDENCE variable=row inter false
+		 for ( uint j = 0; j <(MAT_COLS); j++) {
+//			#pragma HLS DEPENDENCE variable=row inter false
 			#pragma HLS PIPELINE
-			#pragma HLS unroll factor=32
-//			#pragma HLS LATENCY min=40
+			#pragma HLS unroll factor=64
 
 			 if(j<(MAT_COLS - PK_ROW_BYTES)){
 				 row[j] = 0;
 			 }else{
 				 row[j] = local_pk[i][j-(MAT_COLS - PK_ROW_BYTES)];
 			 }
-//			 idx++;
+
 		 }
 
 
 		row[i>>3] |= 1 << (i%8);
 
 		b = 0;
-		LOOP_B_COMPUTE:for (uint9 j = 0; j < MAT_COLS; j++){
-		#pragma HLS DEPENDENCE variable=row inter false
-		#pragma HLS DEPENDENCE variable=local_e inter false
-		#pragma HLS PIPELINE
-		#pragma HLS unroll factor=32
+		LOOP_B_COMPUTE:for (uint j = 0; j < MAT_COLS; j++){
+			#pragma HLS PIPELINE
+			#pragma HLS unroll factor=64
 
 			b ^= row[j] & local_e[j];
 		}
