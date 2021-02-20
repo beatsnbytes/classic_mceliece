@@ -932,8 +932,8 @@ main(int argc, char* argv[])
 			pt_list_syndrome_combined[0]= buffer_pk_in;
 			pt_list_syndrome_combined[1]= buffer_e_in;
 			pt_list_syndrome_combined[2]= buffer_pk_in_2;
-			pt_list_syndrome_combined[3]= buffer_pk_in_3;
-			pt_list_syndrome_combined[4]= buffer_pk_in_4;
+			pt_list_syndrome_combined[3]= buffer_pk_in_3; //not for 4-version
+			pt_list_syndrome_combined[4]= buffer_pk_in_4; //not for 4-version
 
 //			pt_list_syndrome_combined_out[0]= buffer_s_out;
 //			pt_list_syndrome_combined_out[1]= buffer_s_out_2;
@@ -1350,9 +1350,10 @@ main(int argc, char* argv[])
     printf("Syndrome_3 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_3/1000000.0)/times_syndrome_3);
     printf("Syndrome_4 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_4/1000000.0)/times_syndrome_4);
     printf("All Syndrome kernels :Avg Execution time is: %0.3f miliseconds \n", ((sum_syndrome + sum_syndrome_2 + sum_syndrome_3 + sum_syndrome_4)/4000000.0)/(times_syndrome_4));
+//    printf("All Syndrome kernels :Avg Execution time is: %0.3f miliseconds \n", ((sum_syndrome + sum_syndrome_2)/2000000.0)/(times_syndrome_2));
 	#endif
 
-//    printf("Syndrome kernels Execution time is: %0.3f miliseconds \n", (sum_tmp*1000)/times_tmp);
+    printf("Parallel Execution time is: %0.3f miliseconds \n", (sum_par*1000)/times_par);
 
 	#ifdef KEM_PARTS_MEASUREMENT
 	printf("Keygen :Avg Execution time is: %0.3f miliseconds \n",(sum_keygen*1000)/times_keygen);

@@ -8,10 +8,13 @@
 
 #include "gf.h"
 
-int pk_gen(unsigned char *, unsigned char *, uint32_t *, int16_t *);
+int pk_gen(unsigned char *, unsigned char *, uint32_t *, int16_t *, unsigned char *, unsigned char *);
 
 extern double sum_elim;
 extern int times_elim;
+
+extern double sum_par;
+extern int times_par;
 
 #endif
 

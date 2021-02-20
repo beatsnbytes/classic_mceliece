@@ -28,6 +28,7 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=64 dim=2
 
 
+
 	LOOP_LOAD_FROM_BRAM_PK:
 	for(int i=0;i<MAT_ROWS/4;i++){
 		for(int j=0;j<PK_ROW_BYTES;j++){
@@ -56,6 +57,7 @@ void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 	for (int i = 0; i < PK_NROWS/4; i++)
 	{
 	#pragma HLS PIPELINE
+//#pragma HLS unroll factor=2
 //		 uint9 idx=0;
 		 LOOP_ROW_MAT:
 		 for ( uint j = 0; j <(MAT_COLS); j++) {

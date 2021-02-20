@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "ap_cint.h"
+//#include "ap_cint.h"
 
 void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
 {
@@ -56,13 +56,14 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 	{
 	#pragma HLS DEPENDENCE variable=row inter RAW true
 	#pragma HLS PIPELINE
+//	#pragma HLS unroll factor=2
 
 
 		 LOOP_ROW_MAT:
 		 for ( uint j = 0; j <(MAT_COLS); j++) {
 //			#pragma HLS DEPENDENCE variable=row inter false
 			#pragma HLS PIPELINE
-			#pragma HLS unroll factor=64
+			#pragma HLS unroll factor=32
 
 			 if(j<(MAT_COLS - PK_ROW_BYTES)){
 				 row[j] = 0;
@@ -78,7 +79,7 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 		b = 0;
 		LOOP_B_COMPUTE:for (uint j = 0; j < MAT_COLS; j++){
 			#pragma HLS PIPELINE
-			#pragma HLS unroll factor=64
+			#pragma HLS unroll factor=32
 
 			b ^= row[j] & local_e[j];
 		}

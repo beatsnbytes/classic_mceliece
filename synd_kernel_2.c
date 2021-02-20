@@ -2,7 +2,7 @@
 #include "gf.h"
 #include <stdlib.h>
 #include <string.h>
-#include "ap_cint.h"
+//#include "ap_cint.h"
 
 gf gf_add_kernel_2(gf in0, gf in1)
 {
@@ -26,7 +26,7 @@ gf gf_mul_kernel_2(gf in0, gf in1)
 	tmp = t0 * (t1 & 1);
 
 
-	for (uint4 i = 1; i < GFBITS; i++){
+	for (uint i = 1; i < GFBITS; i++){ //4
 	#pragma HLS unroll factor=4
 //#pragma HLS RESOURCE variable=tmp2 core=Mul_lut
 		tmp ^= (t0 * (t1 & (1 << i)));
@@ -170,7 +170,7 @@ void synd_kernel_2(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	//READ into local vars END
 	LOOP_EVAL:
-	for(uint12 i=SYS_N/2; i <SYS_N; i++){
+	for(uint i=SYS_N/2; i <SYS_N; i++){
 	#pragma HLS PIPELINE
 		e_mat[i] = eval_inner_2(local_f, local_L[i]);
 	}
@@ -178,13 +178,13 @@ void synd_kernel_2(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 
 	LOOP_MAIN_OUTER:
-	for (uint12 i = SYS_N/2; i < SYS_N; i++)
+	for (uint i = SYS_N/2; i < SYS_N; i++) //12
 	{
 		c = (local_r[i>>3] >> (i%8)) & 1;
 		e_inv = gf_inv_kernel_2(gf_mul_kernel_2(e_mat[i],e_mat[i]));
 
 		LOOP_MAIN_INNER:
-		for (uint8 j = 0; j < 2*SYS_T; j++)
+		for (uint j = 0; j < 2*SYS_T; j++)//8
 		{
 		#pragma HLS DEPENDENCE inter variable=local_out false
 		#pragma HLS PIPELINE II=2

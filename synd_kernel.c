@@ -2,7 +2,7 @@
 #include "gf.h"
 #include <stdlib.h>
 #include <string.h>
-#include "ap_cint.h"
+//#include "ap_cint.h"
 
 gf gf_add_kernel(gf in0, gf in1)
 {

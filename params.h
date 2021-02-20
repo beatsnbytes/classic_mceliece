@@ -21,8 +21,8 @@
 
 //Custom definitions
 
-#define FUNC_CORRECTNESS
-//#undef FUNC_CORRECTNESS
+//#define FUNC_CORRECTNESS
+#undef FUNC_CORRECTNESS
 
 #define TIME_MEASUREMENT
 //#undef TIME_MEASUREMENT
@@ -36,11 +36,11 @@
 #define GAUSSIAN_ELIMINATION_KERNEL
 //#undef GAUSSIAN_ELIMINATION_KERNEL
 
-#define SYNDROME_KERNEL
-//#undef SYNDROME_KERNEL
+//#define SYNDROME_KERNEL
+#undef SYNDROME_KERNEL
 
-#define SYND_KERNEL
-//#undef SYND_KERNEL
+//#define SYND_KERNEL
+#undef SYND_KERNEL
 
 
 #endif
