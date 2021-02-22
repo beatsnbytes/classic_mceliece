@@ -168,6 +168,7 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	}
 	#endif
 
+	clFinish(commands);
 
 	#ifdef TIME_MEASUREMENT
 	err = clEnqueueTask(commands, kernel_syndrome, 0, NULL, &events_enq[0]);
@@ -187,14 +188,6 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 
 	clFinish(commands);
 
-
-//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)4, &pt_list_syndrome_combined_out, CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
-//	#ifdef OCL_API_DEBUG
-//	if (err != CL_SUCCESS) {
-//		printf("FAILED to enqueue bufer_res\n");
-//		return EXIT_FAILURE;
-//	}
-//	#endif
 
 	//#1
 	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome[2], CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
@@ -231,8 +224,10 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 //		return EXIT_FAILURE;
 //	}
 //	#endif
-
 	clFinish(commands);
+//	clFinish(commands_2);
+//	clFinish(commands_3);
+//	clFinish(commands_4);
 
 
 	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES);
@@ -290,10 +285,10 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	sum_syndrome_4 += nanoSeconds_4;
 	times_syndrome_4 = times_syndrome_4 + 1;
 
-	printf("Syndrome_1 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome/1000000.0)/times_syndrome);
-	printf("Syndrome_2 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_2/1000000.0)/times_syndrome_2);
-	printf("Syndrome_3 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_3/1000000.0)/times_syndrome_3);
-	printf("Syndrome_4 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_4/1000000.0)/times_syndrome_4);
+//	printf("Syndrome_1 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome/1000000.0)/times_syndrome);
+//	printf("Syndrome_2 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_2/1000000.0)/times_syndrome_2);
+//	printf("Syndrome_3 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_3/1000000.0)/times_syndrome_3);
+//	printf("Syndrome_4 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_4/1000000.0)/times_syndrome_4);
 
 	#endif
 

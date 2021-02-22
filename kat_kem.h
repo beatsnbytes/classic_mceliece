@@ -20,6 +20,9 @@ extern cl_context context;
 extern cl_uint DATA_SIZE;
 extern cl_int err;
 extern cl_command_queue commands;
+extern cl_command_queue commands_2;
+extern cl_command_queue commands_3;
+extern cl_command_queue commands_4;
 extern cl_mem buffer_in0;
 extern cl_mem buffer_in1;
 extern cl_mem buffer_output;
@@ -72,8 +75,10 @@ extern cl_mem pt_list_syndrome_combined_out[4];
 //elim
 extern cl_mem buffer_mat_in;
 extern cl_mem buffer_mat_out;
+extern cl_mem buffer_success_info;
 extern unsigned char *ptr_mat_in;
 extern unsigned char *ptr_mat_out;
+extern unsigned char *success_info_host_ptr;
 
 //synd
 extern cl_mem buffer_out_out;

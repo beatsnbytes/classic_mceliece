@@ -226,7 +226,7 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]) {
     	return EXIT_FAILURE;
     }
 	#endif
-
+    clFinish(commands);
 
 	#ifdef TIME_MEASUREMENT
     err = clEnqueueTask(commands, kernel_gaussian_elimination, 0, NULL, &event);
@@ -242,7 +242,7 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]) {
 	#endif
 
 
-//    clFinish(commands);
+    clFinish(commands);
 
 	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_out, CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
 	#ifdef OCL_API_DEBUG
@@ -306,6 +306,7 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]) {
 int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi, unsigned char * sk_initial,  unsigned char * seed_initial)
 {
 	int i, j, k, c;
+	int failed_buf=0;
 
 	uint64_t buf[ 1 << GFBITS ];
 
@@ -334,8 +335,9 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 	uint64_sort(buf, 1 << GFBITS);
 
 	for (i = 1; i < (1 << GFBITS); i++)
-		if ((buf[i-1] >> 31) == (buf[i] >> 31))
+		if ((buf[i-1] >> 31) == (buf[i] >> 31)){
 			return -1;
+		}
 
 	for (i = 0; i < (1 << GFBITS); i++) pi[i] = buf[i] & GFMASK;
 	for (i = 0; i < SYS_N;         i++) L[i] = bitrev(pi[i]);
@@ -385,7 +387,6 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 //	}
 
 
-//	unsigned char * mat_result = (unsigned char *)malloc(MAT_ROWS * MAT_COLS * sizeof(unsigned char));
 	unsigned char * sk_parallel = (unsigned char *)malloc(sizeof(unsigned char) * crypto_kem_SECRETKEYBYTES);;
 	int16_t * pi_parallel= (int16_t *)malloc(sizeof(uint16_t) * (1<<GFBITS));
 
@@ -395,15 +396,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 
 
 
-//	//Send data and enqueue kernel
-//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_in, 0, 0, NULL, NULL);
-//	#ifdef OCL_API_DEBUG
-//    if (err != CL_SUCCESS) {
-//    	printf("FAILED to enqueue buffer_mat\n");
-//    	return EXIT_FAILURE;
-//    }
-//	#endif
-//	struct timeval start_par, end_par;
+	struct timeval start_par, end_par;
 
 	do
 	{
@@ -417,6 +410,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 	    }
 		#endif
 
+		clFinish(commands);
 
 	    err = clEnqueueTask(commands, kernel_gaussian_elimination, 0, NULL, &event);
 
@@ -427,16 +421,6 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 
 	    parallel_sw_part(sk_parallel, seed_initial, ptr_mat_in, pi_parallel);
 
-//	    //send the matrix preemptively?
-//		//Send data and enqueue kernel
-//		err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_in, 0, 0, NULL, NULL);
-//		#ifdef OCL_API_DEBUG
-//	    if (err != CL_SUCCESS) {
-//	    	printf("FAILED to enqueue buffer_mat\n");
-//	    	return EXIT_FAILURE;
-//	    }
-//		#endif
-
 		gettimeofday(&end_par, 0);
 		long seconds_par = end_par.tv_sec - start_par.tv_sec;
 		long microseconds_par = end_par.tv_usec - start_par.tv_usec;
@@ -444,14 +428,29 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 		sum_par += elapsed_par;
 		times_par = times_par + 1;
 
-	    //subbuffer for checking if i need to copy or not?
-		err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_out, CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
+		clFinish(commands);
+
+//	    //subbuffer for checking if i need to copy or not?
+//		err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_out, CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
+//		#ifdef OCL_API_DEBUG
+//	    if (err != CL_SUCCESS) {
+//	    	printf("FAILED to enqueue bufer_res\n");
+//	    	return EXIT_FAILURE;
+//	    }
+//		#endif
+
+
+	    //
+		err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_success_info, CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
 		#ifdef OCL_API_DEBUG
 	    if (err != CL_SUCCESS) {
-	    	printf("FAILED to enqueue bufer_res\n");
+	    	printf("FAILED to enqueue buffer success info\n");
 	    	return EXIT_FAILURE;
 	    }
 		#endif
+	    //
+
+
 	    clFinish(commands);
 
 		cl_ulong time_start;
@@ -465,8 +464,17 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 		times_elim = times_elim + 1;
 
 
-	}while(*ptr_mat_out==255);
+//	}while(*ptr_mat_out==255);
+	}while(*success_info_host_ptr==255);
 
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_out, CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
+	#ifdef OCL_API_DEBUG
+    if (err != CL_SUCCESS) {
+    	printf("FAILED to enqueue bufer_res\n");
+    	return EXIT_FAILURE;
+    }
+	#endif
+	clFinish(commands);
 
 
 	for (i = 0; i < PK_NROWS; i++){

@@ -86,6 +86,7 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     }
 	#endif
 
+    clFinish(commands);
 
 	#ifdef TIME_MEASUREMENT
     err = clEnqueueTask(commands, kernel_synd, 0, NULL, &events_enq[0]);

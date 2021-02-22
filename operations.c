@@ -136,23 +136,13 @@ int crypto_kem_keypair
 
 
 		#ifdef GAUSSIAN_ELIMINATION_KERNEL
-			pk_gen_host(pk, skp - IRR_BYTES, perm, pi, sk, seed);
+			if (pk_gen_host(pk, skp - IRR_BYTES, perm, pi, sk, seed))
+				continue;
 		#endif
 		#ifndef GAUSSIAN_ELIMINATION_KERNEL
 		if (pk_gen_sw_host(pk, skp - IRR_BYTES, perm, pi))
 			continue;
 		#endif
-
-
-//		#ifdef GAUSSIAN_ELIMINATION_KERNEL
-//		if (pk_gen_host(pk, skp - IRR_BYTES, perm, pi))
-//			continue;
-//		#endif
-//
-//		#ifndef GAUSSIAN_ELIMINATION_KERNEL
-//		if (pk_gen_sw_host(pk, skp - IRR_BYTES, perm, pi))
-//			continue;
-//		#endif
 
 		controlbitsfrompermutation(skp, pi, GFBITS, 1 << GFBITS);
 		skp += COND_BYTES;
