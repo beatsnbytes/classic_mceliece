@@ -47,12 +47,12 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 	support_gen(L, sk);
 
 
-	#ifdef SYND_KERNEL
-	synd_host(s, g, L, r);
-	#endif
-	#ifndef SYND_KERNEL
+//	#ifdef SYND_KERNEL
+//	synd_host(s, g, L, r);
+//	#endif
+//	#ifndef SYND_KERNEL
 	synd_sw_host(s, g, L, r);
-	#endif
+//	#endif
 
 	bm(locator, s);
 
@@ -83,12 +83,12 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
   }
 #endif
 	
-	#ifdef SYND_KERNEL
-	synd_host(s_cmp, g, L, e);
-	#endif
-	#ifndef SYND_KERNEL
+//	#ifdef SYND_KERNEL
+//	synd_host(s_cmp, g, L, e);
+//	#endif
+//	#ifndef SYND_KERNEL
 	synd_sw_host(s_cmp, g, L, e);
-	#endif
+//	#endif
 
 
 	check = w;

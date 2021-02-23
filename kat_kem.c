@@ -176,33 +176,6 @@ cl_device_id devices[16];
 char cl_device_name[1001];
 
 cl_int status;
-int global_cnt = 0;
-
-double sum_total=0;
-double sum1_total=0;
-int times_total=0;
-double mean_total=0;
-double elapsed_total[1000];
-double std_dev_total=0;
-double variance_total=0;
-
-double sum1_keygen=0;
-double mean_keygen=0;
-double elapsed_keygen[1000];
-double std_dev_keygen=0;
-double variance_keygen=0;
-
-double sum1_enc=0;
-double mean_enc=0;
-double elapsed_enc[1000];
-double std_dev_enc=0;
-double variance_enc=0;
-
-double sum1_dec=0;
-double mean_dec=0;
-double elapsed_dec[1000];
-double std_dev_dec=0;
-double variance_dec=0;
 
 cl_uint load_file_to_memory(const char *filename, char **result)
 {
@@ -353,35 +326,35 @@ main(int argc, char* argv[])
 	#endif
 
 
-//	commands_2 = clCreateCommandQueue(context, device_id, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &err);
-//	#ifdef OCL_API_DEBUG
-//	if (!commands) {
-//		printf("Error: Failed to create a command commands!\n");
-//		printf("Error: code %i\n",err);
-//		printf("Test failed\n");
-//		return EXIT_FAILURE;
-//	}
-//	#endif
-//
-//	commands_3 = clCreateCommandQueue(context, device_id, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &err);
-//	#ifdef OCL_API_DEBUG
-//	if (!commands) {
-//		printf("Error: Failed to create a command commands!\n");
-//		printf("Error: code %i\n",err);
-//		printf("Test failed\n");
-//		return EXIT_FAILURE;
-//	}
-//	#endif
-//
-//	commands_4 = clCreateCommandQueue(context, device_id, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &err);
-//	#ifdef OCL_API_DEBUG
-//	if (!commands) {
-//		printf("Error: Failed to create a command commands!\n");
-//		printf("Error: code %i\n",err);
-//		printf("Test failed\n");
-//		return EXIT_FAILURE;
-//	}
-//	#endif
+	commands_2 = clCreateCommandQueue(context, device_id, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &err);
+	#ifdef OCL_API_DEBUG
+	if (!commands) {
+		printf("Error: Failed to create a command commands!\n");
+		printf("Error: code %i\n",err);
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	commands_3 = clCreateCommandQueue(context, device_id, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &err);
+	#ifdef OCL_API_DEBUG
+	if (!commands) {
+		printf("Error: Failed to create a command commands!\n");
+		printf("Error: code %i\n",err);
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	commands_4 = clCreateCommandQueue(context, device_id, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &err);
+	#ifdef OCL_API_DEBUG
+	if (!commands) {
+		printf("Error: Failed to create a command commands!\n");
+		printf("Error: code %i\n",err);
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
 
 
 
@@ -1026,16 +999,10 @@ main(int argc, char* argv[])
 
 
 			pt_list_syndrome_combined[0]= buffer_pk_in;
-			pt_list_syndrome_combined[1]= buffer_e_in;
-			pt_list_syndrome_combined[2]= buffer_pk_in_2;
-			pt_list_syndrome_combined[3]= buffer_pk_in_3; //not for 4-version
-			pt_list_syndrome_combined[4]= buffer_pk_in_4; //not for 4-version
-
-//			pt_list_syndrome_combined_out[0]= buffer_s_out;
-//			pt_list_syndrome_combined_out[1]= buffer_s_out_2;
-//			pt_list_syndrome_combined_out[2]= buffer_s_out_3;
-//			pt_list_syndrome_combined_out[3]= buffer_s_out_4;
-
+			pt_list_syndrome_combined[1]= buffer_pk_in_2;
+			pt_list_syndrome_combined[2]= buffer_pk_in_3;
+			pt_list_syndrome_combined[3]= buffer_pk_in_4;
+			pt_list_syndrome_combined[4]= buffer_e_in;
 
 
 
@@ -1312,7 +1279,7 @@ main(int argc, char* argv[])
     unsigned char *pk = 0;
     unsigned char *sk = 0;
 
-    struct timeval start_keygen, end_keygen, start_enc, end_enc, start_dec, end_dec, start_total, end_total;
+    struct timeval start_keygen, end_keygen, start_enc, end_enc, start_dec, end_dec;
 
     for (i=0; i<48; i++)
         entropy_input[i] = i;
@@ -1364,13 +1331,11 @@ main(int argc, char* argv[])
         gettimeofday(&end_keygen, 0);
         long seconds_keygen = end_keygen.tv_sec - start_keygen.tv_sec;
         long microseconds_keygen = end_keygen.tv_usec - start_keygen.tv_usec;
-//        double elapsed_keygen = seconds_keygen + microseconds_keygen*0.000001;
-    	elapsed_keygen[i] = (seconds_keygen + microseconds_keygen*0.000001)*1000.0;
-        sum_keygen += elapsed_keygen[i];
+        double elapsed_keygen = seconds_keygen + microseconds_keygen*0.000001;
+        sum_keygen += elapsed_keygen;
         times_keygen = times_keygen + 1;
 
         if (ret_val != 0) {
-        // if ( (ret_val = crypto_kem_keypair(pk, sk)) != 0) {
             fprintf(stderr, "crypto_kem_keypair returned <%d>\n", ret_val);
             return KAT_CRYPTO_FAILURE;
         }
@@ -1386,13 +1351,11 @@ main(int argc, char* argv[])
 			gettimeofday(&end_enc, 0);
 			long seconds_enc = end_enc.tv_sec - start_enc.tv_sec;
 			long microseconds_enc = end_enc.tv_usec - start_enc.tv_usec;
-//			double elapsed_enc = seconds_enc + microseconds_enc*0.000001;
-			elapsed_enc[i] = (seconds_enc + microseconds_enc*0.000001)*1000.0;
-			sum_enc += elapsed_enc[i];
+			double elapsed_enc = seconds_enc + microseconds_enc*0.000001;
+			sum_enc += elapsed_enc;
 			times_enc = times_enc + 1;
 
 			if (ret_val != 0) {
-			// if ( (ret_val = crypto_kem_enc(ct, ss, pk)) != 0) {
 				fprintf(stderr, "crypto_kem_enc returned <%d>\n", ret_val);
 				return KAT_CRYPTO_FAILURE;
 			}
@@ -1407,13 +1370,11 @@ main(int argc, char* argv[])
 			gettimeofday(&end_dec, 0);
 			long seconds_dec = end_dec.tv_sec - start_dec.tv_sec;
 			long microseconds_dec = end_dec.tv_usec - start_dec.tv_usec;
-//			double elapsed_dec = seconds_dec + microseconds_dec*0.000001;
-			elapsed_dec[i] = (seconds_dec + microseconds_dec*0.000001)*1000.0;
-			sum_dec += elapsed_dec[i];
+			double elapsed_dec = seconds_dec + microseconds_dec*0.000001;
+			sum_dec += elapsed_dec;
 			times_dec = times_dec + 1;
 
 			if (ret_val != 0) {
-	//        if ( (ret_val = crypto_kem_dec(ss1, ct, sk)) != 0) {
 				fprintf(stderr, "crypto_kem_dec returned <%d>\n", ret_val);
 				return KAT_CRYPTO_FAILURE;
 			}
@@ -1424,67 +1385,9 @@ main(int argc, char* argv[])
 			}
 
 //        }//t
-	        printf("\nidx=%d\n", i);
-
-			long seconds_total = end_dec.tv_sec - start_keygen.tv_sec;
-			long microseconds_total = end_dec.tv_usec - start_keygen.tv_usec;
-			elapsed_total[i] = (seconds_total + microseconds_total*0.000001)*1000.0;
-			sum_total += elapsed_total[i];
-			times_total = times_total + 1;
-
 
     }
 	
-
-
-    mean_total = sum_total/(float)times_total;
-    for(int i=0;i<times_total;i++){
-    	sum1_total = sum1_total + pow((elapsed_total[i] - mean_total), 2);
-    }
-    variance_total = sum1_total / (float)times_total;
-    std_dev_total = sqrt(variance_total);
-
-    printf("\nAverage of time measurement over %d iterations %.3f\n", times_total, mean_total);
-    printf("\nVariance of time measurement over %d iterations %.3f\n", times_total, variance_total);
-    printf("\nStd_dev of time measurement over %d iterations %.3f\n", times_total, std_dev_total);
-    ////////
-    mean_keygen = sum_keygen/(float)times_keygen;
-    for(int i=0;i<times_keygen;i++){
-    	sum1_keygen = sum1_keygen + pow((elapsed_keygen[i] - mean_keygen), 2);
-    }
-    variance_keygen = sum1_keygen / (float)times_keygen;
-    std_dev_keygen = sqrt(variance_keygen);
-
-    printf("\nkeygen Average of time measurement over %d iterations %.3f\n", times_keygen, mean_keygen);
-    printf("\nkeygen Variance of time measurement over %d iterations %.3f\n", times_keygen, variance_keygen);
-    printf("\nkeygen Std_dev of time measurement over %d iterations %.3f\n", times_keygen, std_dev_keygen);
-    ////////
-    mean_enc = sum_enc/(float)times_enc;
-    for(int i=0;i<times_enc;i++){
-    	sum1_enc = sum1_enc + pow((elapsed_enc[i] - mean_enc), 2);
-    }
-    variance_enc = sum1_enc / (float)times_enc;
-    std_dev_enc = sqrt(variance_enc);
-
-    printf("\nenc Average of time measurement over %d iterations %.3f\n", times_enc, mean_enc);
-    printf("\nenc Variance of time measurement over %d iterations %.3f\n", times_enc, variance_enc);
-    printf("\nenc Std_dev of time measurement over %d iterations %.3f\n", times_enc, std_dev_enc);
-
-
-   ////////
-    mean_dec = sum_dec/(float)times_dec;
-    for(int i=0;i<times_dec;i++){
-    	sum1_dec = sum1_dec + pow((elapsed_dec[i] - mean_dec), 2);
-    }
-    variance_dec = sum1_dec / (float)times_dec;
-    std_dev_dec = sqrt(variance_dec);
-
-    printf("\ndec Average of time measurement over %d iterations %.3f\n", times_dec, mean_dec);
-    printf("\ndec Variance of time measurement over %d iterations %.3f\n", times_dec, variance_dec);
-    printf("\ndec Std_dev of time measurement over %d iterations %.3f\n", times_dec, std_dev_dec);
-
-
-
 
 #ifdef TIME_MEASUREMENT
 	#ifdef GAUSSIAN_ELIMINATION_KERNEL

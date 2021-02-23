@@ -92,7 +92,7 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 
 	}
 
-	LOOP_WRITE_TO_BRAM_R:for (unsigned int i=0;i<SYND_BYTES;i++){
+	LOOP_WRITE_TO_BRAM_R:for (unsigned int i=0;i<SYND_BYTES/4;i++){
 		#pragma HLS PIPELINE ΙΙ=1
 		#pragma HLS unroll factor=4
 		*(s_out+i) = local_s[i];

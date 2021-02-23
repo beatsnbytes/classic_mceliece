@@ -29,7 +29,7 @@ void syndrome_kernel_4(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 	LOOP_LOAD_FROM_BRAM_PK:
 	for(int i=0;i<MAT_ROWS/4;i++){
 		for(int j=0;j<PK_ROW_BYTES;j++){
-			#pragma HLS PIPELINE
+			#pragma HLS PIPELINE II=1
 			#pragma HLS unroll factor=4
 			local_pk[i][j] = *(pk_in+i*PK_ROW_BYTES+j);
 		}
@@ -37,13 +37,13 @@ void syndrome_kernel_4(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 
 
 	LOOP_LOAD_FROM_BRAM_E:for(unsigned int i=0;i<MAT_COLS;i++){
-		#pragma HLS PIPELINE
+		#pragma HLS PIPELINE II=1
 		#pragma HLS unroll factor=2
 		local_e[i] = *(e_in+i);
 	}
 
 		LOOP_INIT_S:for (unsigned int i = 0; i < SYND_BYTES/4; i++){
-			#pragma HLS PIPELINE
+			#pragma HLS PIPELINE II=1
 			#pragma HLS unroll factor=24
 			local_s[i+3*SYND_BYTES/4] = 0;
 		}

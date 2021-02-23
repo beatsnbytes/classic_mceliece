@@ -1,5 +1,4 @@
 #include "operations.h"
-
 #include "controlbits.h"
 #include "randombytes.h"
 #include "crypto_hash.h"
@@ -10,8 +9,14 @@
 #include "pk_gen.h"
 #include "util.h"
 
+
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <CL/opencl.h>
+#include <CL/cl_ext.h>
+#include"kat_kem.h"
 
 int crypto_kem_enc(
        unsigned char *c,
@@ -23,7 +28,16 @@ int crypto_kem_enc(
 	unsigned char *e = two_e + 1;
 	unsigned char one_ec[ 1 + SYS_N/8 + (SYND_BYTES + 32) ] = {1};
 
+	//migrate pk to syndrome kernel now
+	memcpy(ptr_pk_in, pk, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+	memcpy(ptr_pk_in_2, (pk + crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+	memcpy(ptr_pk_in_3, (pk + 2*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+	memcpy(ptr_pk_in_4, (pk + 3*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
+	clEnqueueMigrateMemObjects(commands, (cl_uint)4, &pt_list_syndrome_combined[0], 0, 0, NULL, NULL); //&events_migr_tokern[0]
+
 	//
+
+
 
 	encrypt(c, pk, e);
 
