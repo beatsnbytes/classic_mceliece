@@ -12,6 +12,12 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <sys/time.h>
+
+double sum_encrypt=0.0;
+int times_encrypt=0;
+double sum_decrypt=0.0;
+int times_decrypt=0;
 
 int crypto_kem_enc(
        unsigned char *c,
@@ -24,8 +30,17 @@ int crypto_kem_enc(
 	unsigned char one_ec[ 1 + SYS_N/8 + (SYND_BYTES + 32) ] = {1};
 
 	//
+	struct timeval start_encrypt, end_encrypt;
+	gettimeofday(&start_encrypt, NULL);
 
 	encrypt(c, pk, e);
+
+	gettimeofday(&end_encrypt, 0);
+	long seconds = end_encrypt.tv_sec - start_encrypt.tv_sec;
+	long microseconds = end_encrypt.tv_usec - start_encrypt.tv_usec;
+	double elapsed_encrypt = seconds + microseconds*0.000001;
+	sum_encrypt += elapsed_encrypt;
+	times_encrypt = times_encrypt + 1;
 
 	crypto_hash_32b(c + SYND_BYTES, two_e, sizeof(two_e)); 
 
@@ -58,8 +73,17 @@ int crypto_kem_dec(
 	const unsigned char *s = sk + 40 + IRR_BYTES + COND_BYTES;
 
 	//
+	struct timeval start_decrypt, end_decrypt;
+	gettimeofday(&start_decrypt, NULL);
 
 	ret_decrypt = decrypt(e, sk + 40, c);
+
+	gettimeofday(&end_decrypt, 0);
+	long seconds = end_decrypt.tv_sec - start_decrypt.tv_sec;
+	long microseconds = end_decrypt.tv_usec - start_decrypt.tv_usec;
+	double elapsed_decrypt = seconds + microseconds*0.000001;
+	sum_decrypt += elapsed_decrypt;
+	times_decrypt = times_decrypt + 1;
 
 	crypto_hash_32b(conf, two_e, sizeof(two_e)); 
 
