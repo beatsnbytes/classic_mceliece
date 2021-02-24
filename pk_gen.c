@@ -406,21 +406,21 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 	    err = clEnqueueTask(commands, kernel_gaussian_elimination, 1, &event_mig_tokern, &event_enq);
 
 	    //Probably there is no need to move just the subbuffer since the parallel part is anyway longer then moving even the whole buffer
-//		err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_success_info, CL_MIGRATE_MEM_OBJECT_HOST, (cl_uint)1, &event_enq, &event_mig_tohost_subbuffer);
-//		#ifdef OCL_API_DEBUG
-//	    if (err != CL_SUCCESS) {
-//	    	printf("FAILED to enqueue buffer success info\n");
-//	    	return EXIT_FAILURE;
-//	    }
-//		#endif
-
-		err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_out, CL_MIGRATE_MEM_OBJECT_HOST, 1, &event_enq, &event_mig_tohost_buffer);
+		err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_success_info, CL_MIGRATE_MEM_OBJECT_HOST, 1, &event_enq, &event_mig_tohost_subbuffer);
 		#ifdef OCL_API_DEBUG
 	    if (err != CL_SUCCESS) {
-	    	printf("FAILED to enqueue bufer_res\n");
+	    	printf("FAILED to enqueue buffer success info\n");
 	    	return EXIT_FAILURE;
 	    }
 		#endif
+
+//		err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_out, CL_MIGRATE_MEM_OBJECT_HOST, 1, &event_enq, &event_mig_tohost_buffer);
+//		#ifdef OCL_API_DEBUG
+//	    if (err != CL_SUCCESS) {
+//	    	printf("FAILED to enqueue bufer_res\n");
+//	    	return EXIT_FAILURE;
+//	    }
+//		#endif
 
 
 		memcpy(sk_initial, sk_parallel, sizeof(unsigned char) * crypto_kem_SECRETKEYBYTES);
@@ -428,7 +428,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 
 	    parallel_sw_part(sk_parallel, seed_initial, ptr_mat_in, pi_parallel);
 
-	    clWaitForEvents(1, &event_mig_tohost_buffer);
+	    clWaitForEvents(1, &event_mig_tohost_subbuffer);
 
 //	#ifdef TIME_MEASUREMENT
 //	    printf("\nMigrate to kernel\n");
@@ -439,17 +439,18 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 //		cl_profile_print(&event_mig_tohost_buffer, 1);
 //	#endif
 
-	}while(*ptr_mat_out==255);
+//	}while(*ptr_mat_out==255);
+	}while(*success_info_host_ptr==255);
 
-//#ifdef TIME_MEASUREMENT
-//	printf("\npk_gen computation\n");
-//	gettimeofday(&end_elim, NULL);
-//	print_time(&start_elim, &end_elim);
-//#endif
+#ifdef TIME_MEASUREMENT
+	printf("\npk_gen computation\n");
+	gettimeofday(&end_elim, NULL);
+	print_time(&start_elim, &end_elim);
+#endif
 
-	for (i = 0; i < PK_NROWS; i++){
-		memcpy(pk + i*PK_ROW_BYTES, (ptr_mat_out + i*MAT_COLS) + PK_NROWS/8, PK_ROW_BYTES);
-	}
+//	for (i = 0; i < PK_NROWS; i++){
+//		memcpy(pk + i*PK_ROW_BYTES, (ptr_mat_out + i*MAT_COLS) + PK_NROWS/8, PK_ROW_BYTES);
+//	}
 
 
 	free(sk_parallel);

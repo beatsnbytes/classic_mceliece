@@ -69,7 +69,7 @@ extern unsigned char *ptr_pk_in_4;
 extern unsigned char *ptr_e_in_4;
 extern unsigned char *ptr_s_out_4;
 extern cl_mem pt_list_syndrome_4[3];
-extern cl_mem pt_list_syndrome_combined[5];
+extern cl_mem pt_list_syndrome_combined[2];
 extern cl_mem pt_list_syndrome_combined_out[4];
 
 //elim

@@ -83,12 +83,12 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
   }
 #endif
 	
-//	#ifdef SYND_KERNEL
-//	synd_host(s_cmp, g, L, e);
-//	#endif
-//	#ifndef SYND_KERNEL
+	#ifdef SYND_KERNEL
+	synd_host(s_cmp, g, L, e);
+	#endif
+	#ifndef SYND_KERNEL
 	synd_sw_host(s_cmp, g, L, e);
-//	#endif
+	#endif
 
 
 	check = w;

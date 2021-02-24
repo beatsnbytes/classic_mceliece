@@ -17,13 +17,13 @@ void syndrome_kernel_4(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 	unsigned char b, row[MAT_COLS];
 
 	unsigned char local_pk[MAT_ROWS/4][PK_ROW_BYTES];
-	unsigned char local_s[SYND_BYTES];
+	unsigned char local_s[SYND_BYTES/4];
 	unsigned char local_e[MAT_COLS];
 
-	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=32
-	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=32
+	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=64
+	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=64
 	#pragma HLS ARRAY_PARTITION variable=local_s cyclic factor=24
-	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=32 dim=2
+	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=64 dim=2
 
 
 	LOOP_LOAD_FROM_BRAM_PK:
@@ -31,7 +31,7 @@ void syndrome_kernel_4(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 		for(int j=0;j<PK_ROW_BYTES;j++){
 			#pragma HLS PIPELINE II=1
 			#pragma HLS unroll factor=4
-			local_pk[i][j] = *(pk_in+i*PK_ROW_BYTES+j);
+			local_pk[i][j] = *(pk_in+(PK_ROW_BYTES*3*MAT_ROWS/4)+i*PK_ROW_BYTES+j);
 		}
 	}
 
@@ -45,7 +45,8 @@ void syndrome_kernel_4(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 		LOOP_INIT_S:for (unsigned int i = 0; i < SYND_BYTES/4; i++){
 			#pragma HLS PIPELINE II=1
 			#pragma HLS unroll factor=24
-			local_s[i+3*SYND_BYTES/4] = 0;
+//			local_s[i+3*SYND_BYTES/4] = 0;
+			local_s[i] = 0;
 		}
 
 
@@ -83,7 +84,8 @@ void syndrome_kernel_4(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 		b ^= b >> 1;
 		b &= 1;
 
-		local_s[(i>>3)+3*SYND_BYTES/4] |= (b << (i%8));
+//		local_s[(i>>3)+3*SYND_BYTES/4] |= (b << (i%8));
+		local_s[(i>>3)] |= (b << (i%8));
 
 	}
 
@@ -91,7 +93,8 @@ void syndrome_kernel_4(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 	LOOP_WRITE_TO_BRAM_R:for (unsigned int i=3*SYND_BYTES/4;i<SYND_BYTES;i++){
 		#pragma HLS PIPELINE
 		#pragma HLS unroll factor=4
-		*(s_out+i) = local_s[i];
+//		*(s_out+i) = local_s[i];
+		*(s_out+i) = local_s[i-(3*SYND_BYTES/4)];
 	}
 
 }

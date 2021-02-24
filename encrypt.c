@@ -147,6 +147,7 @@ static void syndrome_sw_host(unsigned char *s, const unsigned char *pk, unsigned
 /* output: syndrome s */
 #ifdef SYNDROME_KERNEL
 void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
+//void syndrome_host(unsigned char *s, unsigned char *e)
 {
 
 	#ifdef TIME_MEASUREMENT
@@ -160,8 +161,7 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 
 	memcpy(ptr_e_in, e, sizeof(unsigned char)*MAT_COLS);
 
-
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome_combined[4], 0, 0, NULL, &events_migr_tokern[0]);
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome_combined[1], 0, 0, NULL, &events_migr_tokern[0]);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to enqueue pt_list_syndrome\n");
@@ -170,12 +170,11 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	#endif
 
 
-
 	#ifdef TIME_MEASUREMENT
 	err = clEnqueueTask(commands, kernel_syndrome, 1, &events_migr_tokern, &events_enq[0]);
 	err = clEnqueueTask(commands, kernel_syndrome_2, 1, &events_migr_tokern, &events_enq[1]);
-	err = clEnqueueTask(commands, kernel_syndrome_3, 1, &events_migr_tokern, &events_enq[2]);
-	err = clEnqueueTask(commands, kernel_syndrome_4, 1, &events_migr_tokern, &events_enq[3]);
+//	err = clEnqueueTask(commands, kernel_syndrome_3, 1, &events_migr_tokern, &events_enq[2]);
+//	err = clEnqueueTask(commands, kernel_syndrome_4, 1, &events_migr_tokern, &events_enq[3]);
 	#endif
 	#ifndef TIME_MEASUREMENT
 	err = clEnqueueTask(commands, kernel_syndrome, 0, NULL, NULL);
@@ -187,7 +186,7 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	}
 	#endif
 
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome[2], CL_MIGRATE_MEM_OBJECT_HOST, 4, &events_enq, &events_migr_tohost);
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome[2], CL_MIGRATE_MEM_OBJECT_HOST, 2, &events_enq, &events_migr_tohost);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to enqueue bufer_res\n");
@@ -197,63 +196,32 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 
 	clWaitForEvents(1, &events_migr_tohost);
 
-
 	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES);
 
 
 
 
-	#ifdef FUNC_CORRECTNESS
-	unsigned char validate_mat[SYND_BYTES];
-	syndrome_sw_host(validate_mat, pk, e);
-	for (int i=0;i<SYND_BYTES;i++){
-		if (validate_mat[i] != *(s+i)){\
-			printf("\nERROR in %d: Expected %d, got %d\n", i, validate_mat[i], *(s+i));
-		}
-	}
-	#endif
+
+
+//	#ifdef FUNC_CORRECTNESS
+//	unsigned char validate_mat[SYND_BYTES];
+//	syndrome_sw_host(validate_mat, pk, e);
+//	for (int i=0;i<SYND_BYTES;i++){
+//		if (validate_mat[i] != *(s+i)){\
+//			printf("\nERROR in %d: Expected %d, got %d\n", i, validate_mat[i], *(s+i));
+//		}
+//	}
+//	#endif
 
 #ifdef TIME_MEASUREMENT
 	printf("\nMigrate to kernel\n");
 	cl_profile_print(&events_migr_tokern[0], 1);
 	printf("\nEnqueue kernels\n");
-	cl_profile_print(&events_enq[0], 4);
+	cl_profile_print(&events_enq[0], 2);
 	printf("\nMigrate to host\n");
 	cl_profile_print(&events_migr_tohost, 1);
 #endif
 
-#ifdef TIME_MEASUREMENT
-//	cl_ulong time_start, time_start_2, time_start_3, time_start_4;
-//	cl_ulong time_end, time_end_2, time_end_3, time_end_4;
-//	//#1
-//	clGetEventProfilingInfo(events_enq[0], CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
-//	clGetEventProfilingInfo(events_enq[0], CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
-//	//#2
-//	clGetEventProfilingInfo(events_enq[1], CL_PROFILING_COMMAND_START, sizeof(time_start_2), &time_start_2, NULL);
-//	clGetEventProfilingInfo(events_enq[1], CL_PROFILING_COMMAND_END, sizeof(time_end_2), &time_end_2, NULL);
-//	//#3
-//	clGetEventProfilingInfo(events_enq[2], CL_PROFILING_COMMAND_START, sizeof(time_start_3), &time_start_3, NULL);
-//	clGetEventProfilingInfo(events_enq[2], CL_PROFILING_COMMAND_END, sizeof(time_end_3), &time_end_3, NULL);
-//	//#4
-//	clGetEventProfilingInfo(events_enq[3], CL_PROFILING_COMMAND_START, sizeof(time_start_4), &time_start_4, NULL);
-//	clGetEventProfilingInfo(events_enq[3], CL_PROFILING_COMMAND_END, sizeof(time_end_4), &time_end_4, NULL);
-//
-//	double nanoSeconds = time_end-time_start;
-//	sum_syndrome += nanoSeconds;
-//	times_syndrome = times_syndrome + 1;
-//
-//	double nanoSeconds_2 = time_end_2-time_start_2;
-//	sum_syndrome_2 += nanoSeconds_2;
-//	times_syndrome_2 = times_syndrome_2 + 1;
-//
-//	double nanoSeconds_3 = time_end_3-time_start_3;
-//	sum_syndrome_3 += nanoSeconds_3;
-//	times_syndrome_3 = times_syndrome_3 + 1;
-//
-//	double nanoSeconds_4 = time_end_4-time_start_4;
-//	sum_syndrome_4 += nanoSeconds_4;
-//	times_syndrome_4 = times_syndrome_4 + 1;
-#endif
 
 }
 #endif
@@ -263,8 +231,8 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 
 void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
 {
-	gen_e(e);
 
+	gen_e(e);
 
 #ifdef KAT
   {
@@ -284,6 +252,7 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
 
 	#ifdef SYNDROME_KERNEL
 	syndrome_host(s, pk, e);
+//	syndrome_host(s, e);
 	#endif
 	#ifndef SYNDROME_KERNEL
 	syndrome_sw_host(s, pk, e);
