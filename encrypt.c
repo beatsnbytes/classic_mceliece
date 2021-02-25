@@ -173,8 +173,8 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	#ifdef TIME_MEASUREMENT
 	err = clEnqueueTask(commands, kernel_syndrome, 1, &events_migr_tokern, &events_enq[0]);
 	err = clEnqueueTask(commands, kernel_syndrome_2, 1, &events_migr_tokern, &events_enq[1]);
-//	err = clEnqueueTask(commands, kernel_syndrome_3, 1, &events_migr_tokern, &events_enq[2]);
-//	err = clEnqueueTask(commands, kernel_syndrome_4, 1, &events_migr_tokern, &events_enq[3]);
+	err = clEnqueueTask(commands, kernel_syndrome_3, 1, &events_migr_tokern, &events_enq[2]);
+	err = clEnqueueTask(commands, kernel_syndrome_4, 1, &events_migr_tokern, &events_enq[3]);
 	#endif
 	#ifndef TIME_MEASUREMENT
 	err = clEnqueueTask(commands, kernel_syndrome, 0, NULL, NULL);
@@ -186,7 +186,7 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	}
 	#endif
 
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome[2], CL_MIGRATE_MEM_OBJECT_HOST, 2, &events_enq, &events_migr_tohost);
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome[2], CL_MIGRATE_MEM_OBJECT_HOST, 4, &events_enq, &events_migr_tohost);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to enqueue bufer_res\n");
@@ -202,7 +202,7 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 
 
 
-
+//probably func correctness is not valid now since I do not pass the pk matrix out of the fpga device
 //	#ifdef FUNC_CORRECTNESS
 //	unsigned char validate_mat[SYND_BYTES];
 //	syndrome_sw_host(validate_mat, pk, e);
@@ -213,14 +213,14 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 //	}
 //	#endif
 
-#ifdef TIME_MEASUREMENT
-	printf("\nMigrate to kernel\n");
-	cl_profile_print(&events_migr_tokern[0], 1);
-	printf("\nEnqueue kernels\n");
-	cl_profile_print(&events_enq[0], 2);
-	printf("\nMigrate to host\n");
-	cl_profile_print(&events_migr_tohost, 1);
-#endif
+//#ifdef TIME_MEASUREMENT
+//	printf("\nMigrate to kernel\n");
+//	cl_profile_print(&events_migr_tokern[0], 1);
+//	printf("\nEnqueue kernels\n");
+//	cl_profile_print(&events_enq[0], 2);
+//	printf("\nMigrate to host\n");
+//	cl_profile_print(&events_migr_tohost, 1);
+//#endif
 
 
 }
@@ -252,7 +252,6 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
 
 	#ifdef SYNDROME_KERNEL
 	syndrome_host(s, pk, e);
-//	syndrome_host(s, e);
 	#endif
 	#ifndef SYNDROME_KERNEL
 	syndrome_sw_host(s, pk, e);
@@ -260,6 +259,7 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
 
 #ifdef TIME_MEASUREMENT
 	gettimeofday(&end_syndrome, NULL);
+	printf("Syndrome kernel\n");
 	print_time(&start_syndrome, &end_syndrome);
 #endif
 

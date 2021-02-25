@@ -3,6 +3,7 @@
 */
 
 #include <stdio.h>
+#include <sys/time.h>
 #include "decrypt.h"
 
 #include "params.h"
@@ -46,13 +47,17 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 
 	support_gen(L, sk);
 
-
-//	#ifdef SYND_KERNEL
-//	synd_host(s, g, L, r);
-//	#endif
-//	#ifndef SYND_KERNEL
+  	struct timeval start_synd_1, end_synd_1;
+  	gettimeofday(&start_synd_1, NULL);
+	#ifdef SYND_KERNEL
+	synd_host(s, g, L, r);
+	#endif
+	#ifndef SYND_KERNEL
 	synd_sw_host(s, g, L, r);
-//	#endif
+	#endif
+	gettimeofday(&end_synd_1, NULL);
+	printf("Total synd\n");
+	print_time(&start_synd_1, &end_synd_1);
 
 	bm(locator, s);
 
@@ -83,13 +88,17 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
   }
 #endif
 	
+	struct timeval start_synd_2, end_synd_2;
+	gettimeofday(&start_synd_2, NULL);
 	#ifdef SYND_KERNEL
 	synd_host(s_cmp, g, L, e);
 	#endif
 	#ifndef SYND_KERNEL
 	synd_sw_host(s_cmp, g, L, e);
 	#endif
-
+	gettimeofday(&end_synd_2, NULL);
+	printf("Total synd");
+	print_time(&start_synd_2, &end_synd_2);
 
 	check = w;
 	check ^= SYS_T;

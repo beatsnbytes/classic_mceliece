@@ -63,7 +63,7 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 {
 
 #ifdef TIME_MEASUREMENT
-	cl_event events_enq[2], event_migr;
+	cl_event events_enq[2], event_migr_tohost, event_migr_tokern;
 #endif
 
 	memcpy(ptr_f_in, f, sizeof(gf)*(SYS_T+1));
@@ -74,11 +74,12 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 	memcpy(ptr_r_in, r, sizeof(unsigned char)*MAT_COLS/2);
 	memcpy(ptr_r_in_2, (r+MAT_COLS/2), sizeof(unsigned char)*MAT_COLS/2);
 
+
 //#ifdef FUNC_CORRECTNESS
 //	gf *out_validate = (gf *)malloc(sizeof(gf)*2*SYS_T);
 //#endif
 
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)5, &pt_list_synd_combined, 0, 0, NULL, NULL);
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)5, &pt_list_synd_combined, 0, 0, NULL, &event_migr_tokern);
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
     	printf("FAILED to enqueue input buffers\n");
@@ -86,11 +87,10 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     }
 	#endif
 
-    clFinish(commands);
 
 	#ifdef TIME_MEASUREMENT
-    err = clEnqueueTask(commands, kernel_synd, 0, NULL, &events_enq[0]);
-    err = clEnqueueTask(commands, kernel_synd_2, 0, NULL, &events_enq[1]);
+    err = clEnqueueTask(commands, kernel_synd, 1, &event_migr_tokern, &events_enq[0]);
+    err = clEnqueueTask(commands, kernel_synd_2, 1, &event_migr_tokern, &events_enq[1]);
 	#endif
 	#ifndef TIME_MEASUREMENT
     err = clEnqueueTask(commands, kernel_synd, 0, NULL, NULL);
@@ -102,8 +102,7 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     }
 	#endif
 
-    clFinish(commands);
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)2, &pt_list_synd_combined_out, CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)2, &pt_list_synd_combined_out, CL_MIGRATE_MEM_OBJECT_HOST, 2, &events_enq, &event_migr_tohost);
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
     	printf("FAILED to enqueue bufer_res\n");
@@ -111,15 +110,12 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     }
 	#endif
 
-    clFinish(commands);
+    clWaitForEvents(1, &event_migr_tohost);
 
 
-
-//todo port in hw kernel? inter kernel communication?
     for(int i=0; i<2*SYS_T; i++){
     	*(out+i) = *(ptr_out_out+i) ^ *(ptr_out_out_2+i);
     }
-
 
 //	#ifdef FUNC_CORRECTNESS
 ////    gf tmp;
@@ -134,26 +130,26 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 //	#endif
 
 
-	#ifdef TIME_MEASUREMENT
-	cl_ulong time_start, time_start_2;
-	cl_ulong time_end, time_end_2;
-
-	clGetEventProfilingInfo(events_enq[0], CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
-	clGetEventProfilingInfo(events_enq[0], CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
-
-	clGetEventProfilingInfo(events_enq[1], CL_PROFILING_COMMAND_START, sizeof(time_start_2), &time_start_2, NULL);
-	clGetEventProfilingInfo(events_enq[1], CL_PROFILING_COMMAND_END, sizeof(time_end_2), &time_end_2, NULL);
-
-	double nanoSeconds = time_end-time_start;
-	sum_synd += nanoSeconds;
-	times_synd = times_synd + 1;
-//	printf("Syndr kernel: OpenCl Execution time is: %0.3f milliseconds \n",nanoSeconds / 1000000.0);
-
-	double nanoSeconds_2 = time_end_2-time_start_2;
-	sum_synd_2 += nanoSeconds_2;
-	times_synd_2 = times_synd_2 + 1;
-//	printf("Syndr kernel_2: OpenCl Execution time is: %0.3f milliseconds \n",nanoSeconds_2 / 1000000.0);
-	#endif
+//	#ifdef TIME_MEASUREMENT
+//	cl_ulong time_start, time_start_2;
+//	cl_ulong time_end, time_end_2;
+//
+//	clGetEventProfilingInfo(events_enq[0], CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
+//	clGetEventProfilingInfo(events_enq[0], CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
+//
+//	clGetEventProfilingInfo(events_enq[1], CL_PROFILING_COMMAND_START, sizeof(time_start_2), &time_start_2, NULL);
+//	clGetEventProfilingInfo(events_enq[1], CL_PROFILING_COMMAND_END, sizeof(time_end_2), &time_end_2, NULL);
+//
+//	double nanoSeconds = time_end-time_start;
+//	sum_synd += nanoSeconds;
+//	times_synd = times_synd + 1;
+////	printf("Syndr kernel: OpenCl Execution time is: %0.3f milliseconds \n",nanoSeconds / 1000000.0);
+//
+//	double nanoSeconds_2 = time_end_2-time_start_2;
+//	sum_synd_2 += nanoSeconds_2;
+//	times_synd_2 = times_synd_2 + 1;
+////	printf("Syndr kernel_2: OpenCl Execution time is: %0.3f milliseconds \n",nanoSeconds_2 / 1000000.0);
+//	#endif
 
 
 }

@@ -74,7 +74,7 @@ void syndrome_kernel_4(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 		b = 0;
 		LOOP_B_COMPUTE:for (uint j = 0; j < MAT_COLS; j++){
 			#pragma HLS PIPELINE
-			#pragma HLS unroll factor=32
+			#pragma HLS unroll factor=64
 
 			b ^= row[j] & local_e[j];
 		}

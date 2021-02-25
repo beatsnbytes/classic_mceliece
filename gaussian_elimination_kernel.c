@@ -6,12 +6,14 @@
 
 //Using the same pointer for taking input and returning results
 
-void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out)
+void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, unsigned int *fail_flag)
 {
-	#pragma HLS INTERFACE m_axi     port=mat_in   offset=slave bundle=gmem
-	#pragma HLS INTERFACE m_axi     port=mat_out  offset=slave bundle=gmem
+	#pragma HLS INTERFACE m_axi     port=mat_in     offset=slave bundle=gmem
+	#pragma HLS INTERFACE m_axi     port=mat_out    offset=slave bundle=gmem1
+	#pragma HLS INTERFACE m_axi     port=fail_flag  offset=slave bundle=gmem
     #pragma HLS INTERFACE s_axilite port=mat_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=mat_out              bundle=control
+	#pragma HLS INTERFACE s_axilite port=fail_flag            bundle=control
 	#pragma HLS INTERFACE s_axilite port=return 		      bundle=control
 
 
@@ -27,16 +29,6 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out)
 	#pragma HLS ARRAY_PARTITION variable=tmpRow cyclic factor=4
 
 
-//	LOOP_READ_FROM_DRAM_PK:
-//	for(i=0;i<MAT_ROWS;i++){
-//		for(j=0;j<MAT_COLS;j++){
-////		#pragma HLS dependence variable=localMat inter false
-//		#pragma HLS PIPELINE II=1
-//		#pragma HLS unroll factor=2
-//			localMat[i][j] = *(mat_in+i*MAT_COLS+j);
-//		}
-//	}
-
 	LOOP_READ_FROM_DRAM_PK:
 	for(i=0;i<MAT_ROWS;i++){
 		for(j=0;j<MAT_COLS;j++){
@@ -47,7 +39,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out)
 	}
 
 
-
+	*fail_flag=0;
 	OUTER_LOOP_1:for (i = 0; i < MAT_ROWS/8; i++)
 	{
 	OUTER_LOOP_2:for (j = 0; j < 8; j++)
@@ -90,6 +82,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out)
 			if ( (( tmpRow[i] >> j) & 1) == 0 ) // return if not systematic
 			{
 				*mat_out = 255;
+				*fail_flag = 1;
 				return;
 			} else {
 				OUTER_LOOP_BACK_SUB:for (k = 0; k < MAT_ROWS; k++)
@@ -117,12 +110,22 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out)
 	}
 
 
+//	LOOP_WRITE_TO_DRAM_ALT:
+//	for(i=0;i<MAT_ROWS;i++){
+//		for(j=0;j<MAT_COLS;j++){
+//		#pragma HLS PIPELINE II=1
+//		#pragma HLS unroll factor=2
+//			*(mat_out+i*MAT_COLS+j) = localMat[i][j];
+//		}
+//	}
+
+
 	LOOP_WRITE_TO_DRAM_ALT:
 	for(i=0;i<MAT_ROWS;i++){
-		for(j=0;j<MAT_COLS;j++){
+		for(j=0;j<(PK_ROW_BYTES);j++){
 		#pragma HLS PIPELINE II=1
 		#pragma HLS unroll factor=2
-			*(mat_out+i*MAT_COLS+j) = localMat[i][j];
+			*(mat_out+i*(PK_ROW_BYTES)+j) = localMat[i][j + PK_NROWS/8];
 		}
 	}
 

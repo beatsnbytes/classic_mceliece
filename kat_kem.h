@@ -76,9 +76,11 @@ extern cl_mem pt_list_syndrome_combined_out[4];
 extern cl_mem buffer_mat_in;
 extern cl_mem buffer_mat_out;
 extern cl_mem buffer_success_info;
+extern cl_mem buffer_fail;
 extern unsigned char *ptr_mat_in;
 extern unsigned char *ptr_mat_out;
 extern unsigned char *success_info_host_ptr;
+extern unsigned int *ptr_fail;
 
 //synd
 extern cl_mem buffer_out_out;
