@@ -146,8 +146,8 @@ static void syndrome_sw_host(unsigned char *s, const unsigned char *pk, unsigned
 /* input: public key pk, error vector e */
 /* output: syndrome s */
 #ifdef SYNDROME_KERNEL
-void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
-//void syndrome_host(unsigned char *s, unsigned char *e)
+//void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
+void syndrome_host(unsigned char *s, unsigned char *e)
 {
 
 	#ifdef TIME_MEASUREMENT
@@ -245,23 +245,23 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
   }
 #endif
 
-#ifdef TIME_MEASUREMENT
-  	struct timeval start_syndrome, end_syndrome;
-  	gettimeofday(&start_syndrome, NULL);
-#endif
+//#ifdef TIME_MEASUREMENT
+//  	struct timeval start_syndrome, end_syndrome;
+//  	gettimeofday(&start_syndrome, NULL);
+//#endif
 
 	#ifdef SYNDROME_KERNEL
-	syndrome_host(s, pk, e);
+	syndrome_host(s, e);
 	#endif
 	#ifndef SYNDROME_KERNEL
 	syndrome_sw_host(s, pk, e);
 	#endif
 
-#ifdef TIME_MEASUREMENT
-	gettimeofday(&end_syndrome, NULL);
-	printf("Syndrome kernel\n");
-	print_time(&start_syndrome, &end_syndrome);
-#endif
+//#ifdef TIME_MEASUREMENT
+//	gettimeofday(&end_syndrome, NULL);
+//	printf("Syndrome kernel\n");
+//	print_time(&start_syndrome, &end_syndrome);
+//#endif
 
 }
 

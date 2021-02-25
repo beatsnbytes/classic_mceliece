@@ -512,7 +512,7 @@ main(int argc, char* argv[])
 	#endif
 
 
-	ptr_mat_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_mat_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char) * MAT_SIZE, 0, NULL, NULL, &err);
+	ptr_mat_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_mat_in, false, CL_MAP_WRITE, 0, sizeof(unsigned char) * MAT_SIZE, 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("ERROR : %d\n", err);
@@ -521,7 +521,7 @@ main(int argc, char* argv[])
 	}
 	#endif
 
-	ptr_mat_out = (unsigned char *) clEnqueueMapBuffer(commands, buffer_mat_out, true, CL_MAP_READ, 0, sizeof(unsigned char) * (MAT_ROWS*PK_ROW_BYTES), 0, NULL, NULL, &err);
+	ptr_mat_out = (unsigned char *) clEnqueueMapBuffer(commands, buffer_mat_out, false, CL_MAP_READ, 0, sizeof(unsigned char) * (MAT_ROWS*PK_ROW_BYTES), 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("ERROR : %d\n", err);
@@ -530,7 +530,7 @@ main(int argc, char* argv[])
 	}
 	#endif
 
-	ptr_fail = (unsigned int *) clEnqueueMapBuffer(commands, buffer_fail, true, CL_MAP_READ, 0, sizeof(unsigned int), 0, NULL, NULL, &err);
+	ptr_fail = (unsigned int *) clEnqueueMapBuffer(commands, buffer_fail, false, CL_MAP_READ, 0, sizeof(unsigned int), 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("ERROR : %d\n", err);
@@ -709,7 +709,7 @@ main(int argc, char* argv[])
 //	}
 //	#endif
 
-	ptr_e_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_e_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS, 0, NULL, NULL, &err);
+	ptr_e_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_e_in, false, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS, 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("ERROR : %d\n", err);
@@ -719,7 +719,7 @@ main(int argc, char* argv[])
 	#endif
 
 
-	ptr_s_out = (unsigned char *) clEnqueueMapBuffer(commands, buffer_s_out, true, CL_MAP_READ, 0, sizeof(unsigned char)*SYND_BYTES, 0, NULL, NULL, &err);
+	ptr_s_out = (unsigned char *) clEnqueueMapBuffer(commands, buffer_s_out, false, CL_MAP_READ, 0, sizeof(unsigned char)*SYND_BYTES, 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("ERROR : %d\n", err);
