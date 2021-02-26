@@ -22,16 +22,11 @@
 #include "root.h"
 #include "util.h"
 
-double sum_elim=0.0;
-int times_elim=0;
-
-double sum_par=0.0;
-int times_par=0;
-
 
 double sum_list_elim_tokern[1];
 double sum_list_elim_tohost[1];
 double sum_list_elim_kernel[1];
+double sum_elim=0.0;
 int times_elim = 0;
 int times_elim_tohost = 0;
 int times_elim_tokern = 0;

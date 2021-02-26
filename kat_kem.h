@@ -19,6 +19,7 @@ extern cl_kernel kernel_syndrome_7;
 extern cl_kernel kernel_syndrome_8;
 extern cl_kernel kernel_synd;
 extern cl_kernel kernel_synd_2;
+extern cl_kernel kernel_synd_last;
 extern cl_program program;
 extern cl_context context;
 extern cl_uint DATA_SIZE;
@@ -98,6 +99,14 @@ extern unsigned char *ptr_r_in;
 extern cl_mem pt_list_synd[4];
 extern cl_mem pt_list_synd_combined[5];
 extern cl_mem pt_list_synd_combined_out[2];
+
+extern cl_mem buffer_out_out_last;
+extern cl_mem buffer_f_in_last;
+extern cl_mem buffer_r_in_last;
+
+extern gf *ptr_r_in_last;
+extern gf *ptr_out_out_last;
+extern gf *ptr_f_in_last;
 
 extern cl_mem buffer_out_out_2;
 extern cl_mem buffer_f_in_2;
