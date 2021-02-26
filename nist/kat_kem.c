@@ -17,6 +17,7 @@
 #include "operations.h"
 
 #include <sys/time.h>
+#include <valgrind/callgrind.h>
 
 #define KAT_SUCCESS          0
 #define KAT_FILE_OPEN_ERROR -1
@@ -89,7 +90,10 @@ main()
        
         gettimeofday(&start_keygen, NULL);
 
+        CALLGRIND_START_INSTRUMENTATION;
         ret_val = crypto_kem_keypair(pk, sk);
+        CALLGRIND_STOP_INSTRUMENTATION;
+        CALLGRIND_DUMP_STATS;
 
         gettimeofday(&end_keygen, 0);
         long seconds_keygen = end_keygen.tv_sec - start_keygen.tv_sec;
@@ -110,7 +114,11 @@ main()
         // for(int t=0;t<100; t++){
 
             gettimeofday(&start_enc, NULL);
+
+            //CALLGRIND_START_INSTRUMENTATION;
             ret_val = crypto_kem_enc(ct, ss, pk);
+            //CALLGRIND_STOP_INSTRUMENTATION;
+	    //CALLGRIND_DUMP_STATS;
 
             gettimeofday(&end_enc, 0);
             long seconds_enc = end_enc.tv_sec - start_enc.tv_sec;
@@ -130,7 +138,13 @@ main()
             fprintf(fp_rsp, "\n");
     
             gettimeofday(&start_dec, NULL);
+
+	    //CALLGRIND_START_INSTRUMENTATION;
             ret_val =  crypto_kem_dec(ss1, ct, sk);
+            //CALLGRIND_STOP_INSTRUMENTATION;
+            //CALLGRIND_DUMP_STATS;
+
+
 
             gettimeofday(&end_dec, 0);
             long seconds_dec = end_dec.tv_sec - start_dec.tv_sec;
