@@ -107,7 +107,7 @@ main()
         fprintBstr(fp_rsp, "sk = ", sk, crypto_kem_SECRETKEYBYTES);
         
 
-        // for(int t=0;t<100; t++){
+  //      for(int t=0;t<100; t++){
 
             gettimeofday(&start_enc, NULL);
             ret_val = crypto_kem_enc(ct, ss, pk);
@@ -150,7 +150,7 @@ main()
                 return KAT_CRYPTO_FAILURE;
             }
 
-        // }//t
+//        }//t
     }
 	
     printf("\n\t**********TIMING RESULTS**********\t\n");    
