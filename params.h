@@ -39,8 +39,8 @@
 #define SYNDROME_KERNEL
 //#undef SYNDROME_KERNEL
 
-//#define SYND_KERNEL
-#undef SYND_KERNEL
+#define SYND_KERNEL
+//#undef SYND_KERNEL
 
 
 #endif

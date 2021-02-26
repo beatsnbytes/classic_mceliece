@@ -29,7 +29,15 @@ double sum_par=0.0;
 int times_par=0;
 
 
+double sum_list_elim_tokern[1];
+double sum_list_elim_tohost[1];
+double sum_list_elim_kernel[1];
+int times_elim = 0;
+int times_elim_tohost = 0;
+int times_elim_tokern = 0;
 
+double sum_pk_loop=0.0;
+int times_pk_loop=0;
 
 
 #ifdef GAUSSIAN_ELIMINATION_KERNEL
@@ -382,13 +390,12 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 
 	memcpy(sk_parallel, sk_initial, sizeof(unsigned char) * crypto_kem_SECRETKEYBYTES);
 	memcpy(pi_parallel, pi, sizeof(uint16_t) * (1<<GFBITS));
-	cl_event event_enq, event_mig_tohost_subbuffer, event_mig_tohost_buffer, event_mig_tokern, event_mig_tohost_mat;
+	cl_event event_enq, event_mig_tohost_buffer, event_mig_tokern, event_mig_tohost_mat;
 
-
-//#ifdef TIME_MEASUREMENT
-//  	struct timeval start_elim, end_elim;
-//  	gettimeofday(&start_elim, NULL);
-//#endif
+#ifdef TIME_MEASUREMENT
+  	struct timeval start_pk_loop, end_pk_loop;
+  	gettimeofday(&start_pk_loop, NULL);
+#endif
 
 	do
 	{
@@ -403,13 +410,6 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 
 	    err = clEnqueueTask(commands, kernel_gaussian_elimination, 1, &event_mig_tokern, &event_enq);
 
-//		err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_success_info, CL_MIGRATE_MEM_OBJECT_HOST, 1, &event_enq, &event_mig_tohost_subbuffer);
-//		#ifdef OCL_API_DEBUG
-//	    if (err != CL_SUCCESS) {
-//	    	printf("FAILED to enqueue buffer success info\n");
-//	    	return EXIT_FAILURE;
-//	    }
-//		#endif
 		err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_fail, CL_MIGRATE_MEM_OBJECT_HOST, 1, &event_enq, &event_mig_tohost_buffer);
 		#ifdef OCL_API_DEBUG
 	    if (err != CL_SUCCESS) {
@@ -418,47 +418,34 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 	    }
 		#endif
 
+#ifdef TIME_MEASUREMENT
+  	struct timeval start_parallel, end_parallel;
+  	gettimeofday(&start_parallel, NULL);
+#endif
 		memcpy(sk_initial, sk_parallel, sizeof(unsigned char) * crypto_kem_SECRETKEYBYTES);
 		memcpy(pi, pi_parallel, sizeof(uint16_t) * (1<<GFBITS));
-
 	    parallel_sw_part(sk_parallel, seed_initial, ptr_mat_in, pi_parallel);
 
+#ifdef TIME_MEASUREMENT
+	    gettimeofday(&end_parallel, NULL);
+	    get_event_time(&start_parallel, &end_parallel, &sum_parallel, &times_parallel);
+#endif
 	    clWaitForEvents(1, &event_mig_tohost_buffer);
 
-//	#ifdef TIME_MEASUREMENT
-//	    printf("\nMigrate to kernel\n");
-//		cl_profile_print(&event_mig_tokern, 1);
-//	    printf("\nEnqueue gaussian kernel\n");
-//		cl_profile_print(&event_enq, 1);
-//	    printf("\nMigrate to host subbuffer\n");
-//		cl_profile_print(&event_mig_tohost_subbuffer, 1);
-//	#endif
+#ifdef TIME_MEASUREMENT
+	cl_profile_print(&event_migr_tokern, 1, sum_list_elim_tokern, &times_elim_tokern);
+	cl_profile_print(&event_enq, 1, sum_list_elim_kernel, &times_elim);
+	cl_profile_print(&events_migr_tohost, 1, sum_list_elim_tohost, &times_elim_tohost);
+#endif
 
-//	}while(*success_info_host_ptr==255);
 	}while(*ptr_fail!=0);
 
+#ifdef TIME_MEASUREMENT
+	    gettimeofday(&end_pk_loop, NULL);
+	    get_event_time(&start_pk_loop, &end_pk_loop, &sum_pk_loop, &times_pk_loop);
+#endif
 
-//#ifdef TIME_MEASUREMENT
-//	printf("\npk_gen computation\n");
-//	gettimeofday(&end_elim, NULL);
-//	print_time(&start_elim, &end_elim);
-//#endif
-
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_out, CL_MIGRATE_MEM_OBJECT_HOST, 1, &event_mig_tohost_buffer, &event_mig_tohost_mat);
-	#ifdef OCL_API_DEBUG
-    if (err != CL_SUCCESS) {
-    	printf("FAILED to enqueue buffer success info\n");
-    	return EXIT_FAILURE;
-    }
-	#endif
-
-    clWaitForEvents(1, &event_mig_tohost_mat);
-
-//	for (i = 0; i < PK_NROWS; i++){
-//		memcpy(pk + i*PK_ROW_BYTES, (ptr_mat_out + i*MAT_COLS) + PK_NROWS/8, PK_ROW_BYTES);
-//	}
-
-	memcpy(pk, ptr_mat_out, PK_NROWS*PK_ROW_BYTES);
+//	memcpy(pk, ptr_mat_out, PK_NROWS*PK_ROW_BYTES);
 
 
 	free(sk_parallel);

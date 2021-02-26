@@ -27,6 +27,8 @@
 #include "gf.h"
 #include "controlbits.h"
 #include "synd.h"
+#include "operations.h"
+#include "custom_util.h"
 
 #include <sys/time.h>
 #include <CL/opencl.h>
@@ -72,6 +74,10 @@ cl_kernel kernel_syndrome;
 cl_kernel kernel_syndrome_2;
 cl_kernel kernel_syndrome_3;
 cl_kernel kernel_syndrome_4;
+cl_kernel kernel_syndrome_5;
+cl_kernel kernel_syndrome_6;
+cl_kernel kernel_syndrome_7;
+cl_kernel kernel_syndrome_8;
 #endif
 
 #ifdef SYND_KERNEL
@@ -1037,8 +1043,158 @@ main(int argc, char* argv[])
 			pt_list_syndrome_combined[1]= buffer_e_in;
 
 
+			#endif
+			//#5
 
-		#endif
+			#ifdef SYNDROME_KERNEL
+				kernel_syndrome_5 = clCreateKernel(program, "syndrome_kernel_5", &err);
+				#ifdef OCL_API_DEBUG
+				if (!kernel_syndrome || err != CL_SUCCESS) {
+					printf("Error: Failed to create compute kernel_syndrome!\n");
+					printf("Test failed\n");
+					return EXIT_FAILURE;
+				}
+				#endif
+
+				err = clSetKernelArg(kernel_syndrome_5, 0, sizeof(cl_mem), &buffer_mat_out);
+				#ifdef OCL_API_DEBUG
+				if (err != CL_SUCCESS) {
+					printf("FAILED to set kernel arguments for buffer_pk_in");
+					return EXIT_FAILURE;
+				}
+				#endif
+
+				err = clSetKernelArg(kernel_syndrome_5, 1, sizeof(cl_mem), &buffer_e_in);
+				#ifdef OCL_API_DEBUG
+				if (err != CL_SUCCESS) {
+					printf("FAILED to set kernel arguments for buffer_e_in");
+					return EXIT_FAILURE;
+				}
+				#endif
+
+
+				err = clSetKernelArg(kernel_syndrome_5, 2, sizeof(cl_mem), &buffer_s_out);
+				#ifdef OCL_API_DEBUG
+				if (err != CL_SUCCESS) {
+					printf("FAILED to set kernel arguments for buffer_s_out");
+					return EXIT_FAILURE;
+				}
+				#endif
+
+				#endif
+				//#5
+
+				#ifdef SYNDROME_KERNEL
+					kernel_syndrome_6 = clCreateKernel(program, "syndrome_kernel_6", &err);
+					#ifdef OCL_API_DEBUG
+					if (!kernel_syndrome || err != CL_SUCCESS) {
+						printf("Error: Failed to create compute kernel_syndrome!\n");
+						printf("Test failed\n");
+						return EXIT_FAILURE;
+					}
+					#endif
+
+					err = clSetKernelArg(kernel_syndrome_6, 0, sizeof(cl_mem), &buffer_mat_out);
+					#ifdef OCL_API_DEBUG
+					if (err != CL_SUCCESS) {
+						printf("FAILED to set kernel arguments for buffer_pk_in");
+						return EXIT_FAILURE;
+					}
+					#endif
+
+					err = clSetKernelArg(kernel_syndrome_6, 1, sizeof(cl_mem), &buffer_e_in);
+					#ifdef OCL_API_DEBUG
+					if (err != CL_SUCCESS) {
+						printf("FAILED to set kernel arguments for buffer_e_in");
+						return EXIT_FAILURE;
+					}
+					#endif
+
+
+					err = clSetKernelArg(kernel_syndrome_6, 2, sizeof(cl_mem), &buffer_s_out);
+					#ifdef OCL_API_DEBUG
+					if (err != CL_SUCCESS) {
+						printf("FAILED to set kernel arguments for buffer_s_out");
+						return EXIT_FAILURE;
+					}
+					#endif
+				#endif
+
+				//#6
+
+				#ifdef SYNDROME_KERNEL
+					kernel_syndrome_7 = clCreateKernel(program, "syndrome_kernel_7", &err);
+					#ifdef OCL_API_DEBUG
+					if (!kernel_syndrome || err != CL_SUCCESS) {
+						printf("Error: Failed to create compute kernel_syndrome!\n");
+						printf("Test failed\n");
+						return EXIT_FAILURE;
+					}
+					#endif
+
+					err = clSetKernelArg(kernel_syndrome_7, 0, sizeof(cl_mem), &buffer_mat_out);
+					#ifdef OCL_API_DEBUG
+					if (err != CL_SUCCESS) {
+						printf("FAILED to set kernel arguments for buffer_pk_in");
+						return EXIT_FAILURE;
+					}
+					#endif
+
+					err = clSetKernelArg(kernel_syndrome_7, 1, sizeof(cl_mem), &buffer_e_in);
+					#ifdef OCL_API_DEBUG
+					if (err != CL_SUCCESS) {
+						printf("FAILED to set kernel arguments for buffer_e_in");
+						return EXIT_FAILURE;
+					}
+					#endif
+
+
+					err = clSetKernelArg(kernel_syndrome_7, 2, sizeof(cl_mem), &buffer_s_out);
+					#ifdef OCL_API_DEBUG
+					if (err != CL_SUCCESS) {
+						printf("FAILED to set kernel arguments for buffer_s_out");
+						return EXIT_FAILURE;
+					}
+					#endif
+				#endif
+				//#7
+
+				#ifdef SYNDROME_KERNEL
+					kernel_syndrome_8 = clCreateKernel(program, "syndrome_kernel_8", &err);
+					#ifdef OCL_API_DEBUG
+					if (!kernel_syndrome || err != CL_SUCCESS) {
+						printf("Error: Failed to create compute kernel_syndrome!\n");
+						printf("Test failed\n");
+						return EXIT_FAILURE;
+					}
+					#endif
+
+					err = clSetKernelArg(kernel_syndrome_8, 0, sizeof(cl_mem), &buffer_mat_out);
+					#ifdef OCL_API_DEBUG
+					if (err != CL_SUCCESS) {
+						printf("FAILED to set kernel arguments for buffer_pk_in");
+						return EXIT_FAILURE;
+					}
+					#endif
+
+					err = clSetKernelArg(kernel_syndrome_8, 1, sizeof(cl_mem), &buffer_e_in);
+					#ifdef OCL_API_DEBUG
+					if (err != CL_SUCCESS) {
+						printf("FAILED to set kernel arguments for buffer_e_in");
+						return EXIT_FAILURE;
+					}
+					#endif
+
+
+					err = clSetKernelArg(kernel_syndrome_8, 2, sizeof(cl_mem), &buffer_s_out);
+					#ifdef OCL_API_DEBUG
+					if (err != CL_SUCCESS) {
+						printf("FAILED to set kernel arguments for buffer_s_out");
+						return EXIT_FAILURE;
+					}
+					#endif
+
+					#endif
 
 
 
@@ -1356,16 +1512,17 @@ main(int argc, char* argv[])
         fprintf(fp_rsp, "count = %d\n", i);
         fprintBstr(fp_rsp, "seed = ", seed[i], 48);
        
+#ifdef TIME_MEASUREMENT
+        struct timeval start_keygen, end_keygen;
         gettimeofday(&start_keygen, NULL);
-
+#endif
         ret_val = crypto_kem_keypair(pk, sk);
 
-        gettimeofday(&end_keygen, 0);
-        long seconds_keygen = end_keygen.tv_sec - start_keygen.tv_sec;
-        long microseconds_keygen = end_keygen.tv_usec - start_keygen.tv_usec;
-        double elapsed_keygen = seconds_keygen + microseconds_keygen*0.000001;
-        sum_keygen += elapsed_keygen;
-        times_keygen = times_keygen + 1;
+#ifdef TIME_MEASUREMENT
+        gettimeofday(&end_keygen, NULL);
+        get_event_time(&start_keygen, &end_keygen, &sum_keygen, &times_keygen);
+#endif
+
 
         if (ret_val != 0) {
             fprintf(stderr, "crypto_kem_keypair returned <%d>\n", ret_val);
@@ -1377,15 +1534,17 @@ main(int argc, char* argv[])
         //
 //         for(int t=0; t<100; t++){
         //
-			gettimeofday(&start_enc, NULL);
+#ifdef TIME_MEASUREMENT
+        	struct timeval start_enc, end_enc;
+        	gettimeofday(&start_enc, NULL);
+#endif
 			ret_val = crypto_kem_enc(ct, ss, pk);
 
-			gettimeofday(&end_enc, 0);
-			long seconds_enc = end_enc.tv_sec - start_enc.tv_sec;
-			long microseconds_enc = end_enc.tv_usec - start_enc.tv_usec;
-			double elapsed_enc = seconds_enc + microseconds_enc*0.000001;
-			sum_enc += elapsed_enc;
-			times_enc = times_enc + 1;
+#ifdef TIME_MEASUREMENT
+			gettimeofday(&end_enc, NULL);
+			get_event_time(&start_enc, &end_enc, &sum_enc, &times_enc);
+#endif
+
 
 			if (ret_val != 0) {
 				fprintf(stderr, "crypto_kem_enc returned <%d>\n", ret_val);
@@ -1396,15 +1555,18 @@ main(int argc, char* argv[])
 
 			fprintf(fp_rsp, "\n");
 
-			gettimeofday(&start_dec, NULL);
+#ifdef TIME_MEASUREMENT
+        	struct timeval start_dec, end_dec;
+        	gettimeofday(&start_dec, NULL);
+#endif
+
 			ret_val =  crypto_kem_dec(ss1, ct, sk);
 
-			gettimeofday(&end_dec, 0);
-			long seconds_dec = end_dec.tv_sec - start_dec.tv_sec;
-			long microseconds_dec = end_dec.tv_usec - start_dec.tv_usec;
-			double elapsed_dec = seconds_dec + microseconds_dec*0.000001;
-			sum_dec += elapsed_dec;
-			times_dec = times_dec + 1;
+#ifdef TIME_MEASUREMENT
+			gettimeofday(&end_dec, NULL);
+			get_event_time(&start_dec, &end_dec, &sum_dec, &times_dec);
+#endif
+
 
 			if (ret_val != 0) {
 				fprintf(stderr, "crypto_kem_dec returned <%d>\n", ret_val);
@@ -1422,54 +1584,96 @@ main(int argc, char* argv[])
 	
 
 #ifdef TIME_MEASUREMENT
-	#ifdef GAUSSIAN_ELIMINATION_KERNEL
-	printf("\n\t**********TIMING RESULTS**********\t\n");    
-	printf("Elim kernel: OpenCl avg Execution time is: %0.3f miliseconds \n",(sum_elim / 1000000.0)/times_elim);
-	#endif
 
-	#ifdef EVAL_KERNEL
-	printf("Eval kernel: Avg Execution time is: %0.3f miliseconds \n",(sum_eval / 1000000.0)/times_eval);
-	#endif
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
+	printf("\n***************TIMING RESULTS***************\n");
+	printf("Pk loop part ");
+	print_event_execution_time(&sum_pk_loop, &times_pk_loop);
+	printf("Parallel part ");
+	print_event_execution_time(&sum_parallel, &times_parallel);
+#endif
 
-	#ifdef SYND_KERNEL
-	printf("Synd kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_synd/1000000.0)/times_synd);
-	printf("Synd_2 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_synd_2/1000000.0)/times_synd_2);
-	printf("All Synd kernels :Avg Execution time is: %0.3f miliseconds \n", ((sum_synd + sum_synd_2)/2000000.0)/(times_synd_2));
-	#endif
 
-	#ifdef SYNDROME_KERNEL
-    printf("Syndrome kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome/1000000.0)/times_syndrome);
-    printf("Syndrome_2 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_2/1000000.0)/times_syndrome_2);
-    printf("Syndrome_3 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_3/1000000.0)/times_syndrome_3);
-    printf("Syndrome_4 kernel :Avg Execution time is: %0.3f miliseconds \n", (sum_syndrome_4/1000000.0)/times_syndrome_4);
-    printf("All Syndrome kernels :Avg Execution time is: %0.3f miliseconds \n", ((sum_syndrome + sum_syndrome_2 + sum_syndrome_3 + sum_syndrome_4)/4000000.0)/(times_syndrome_4));
-//    printf("All Syndrome kernels :Avg Execution time is: %0.3f miliseconds \n", ((sum_syndrome + sum_syndrome_2)/2000000.0)/(times_syndrome_2));
-	#endif
+#ifdef SYND_KERNEL
+	int synd_kernels = 2;
+	printf("\n***************SYND KERNEL***************\n");
+	printf("Kernel execution time\n");
+	print_kernel_execution_time(sum_list_synd_kernel, &times_synd, synd_kernels);
+	printf("To kernel migration time\n");
+	print_kernel_execution_time(sum_list_synd_tokern, &times_synd_tokern, 1);
+	printf("To host migration time\n");
+	print_kernel_execution_time(sum_list_synd_tohost, &times_synd_tohost, 1);
+	printf("Syndrome all kernels\n");
+	print_event_execution_time(&sum_synd_kernels, &times_synd_kernels);
+	printf("Synd host function ");
+	print_event_execution_time(&sum_total_synd, &times_total_synd);
+#endif
 
-    printf("Parallel Execution time is: %0.3f miliseconds \n", (sum_par*1000)/times_par);
+#ifdef SYNDROME_KERNEL
+    int syndrome_kernels=8;
+	printf("\n***************SYNDROME KERNEL***************\n");
+	printf("Kernel execution time\n");
+	print_kernel_execution_time(sum_list_syndrome_kernel, &times_syndrome, syndrome_kernels);
+	printf("To kernel migration time\n");
+	print_kernel_execution_time(sum_list_syndrome_tokern, &times_syndrome_tokern, 1);
+	printf("To host migration time\n");
+	print_kernel_execution_time(sum_list_syndrome_tohost, &times_syndrome_tohost, 1);
+	printf("Syndrome all kernels\n");
+	print_event_execution_time(&sum_syndrome_kernels, &times_syndrome_kernels);
+	printf("Syndrome host function\n");
+	print_event_execution_time(&sum_total_syndrome, &times_total_syndrome);
+#endif
 
-	#ifdef KEM_PARTS_MEASUREMENT
-	printf("Keygen :Avg Execution time is: %0.3f miliseconds \n",(sum_keygen*1000)/times_keygen);
-	printf("Enc :Avg Execution time is: %0.3f miliseconds \n",(sum_enc*1000)/times_enc);
-	printf("Dec :Avg Execution time is: %0.3f miliseconds \n",(sum_dec*1000)/times_dec);
-	#endif
-	#endif
+#ifdef KEM_PARTS_MEASUREMENT
+	printf("\n***************KEM PARTS***************\n");
+	printf("Key Generation Part ");
+	print_event_execution_time(&sum_keygen, &times_keygen);
+	printf("Encapsulate Part ");
+	print_event_execution_time(&sum_enc, &times_enc);
+	printf("Decapsulate Part ");
+	print_event_execution_time(&sum_dec, &times_dec);
+	printf("Encrypt Part ");
+	print_event_execution_time(&sum_encrypt, &times_encrypt);
+	printf("Decrypt Part ");
+	print_event_execution_time(&sum_decrypt, &times_decrypt);
+#endif
+
+#endif
 
 	#ifdef GAUSSIAN_ELIMINATION_KERNEL
 	clReleaseKernel(kernel_gaussian_elimination);
 	clEnqueueUnmapMemObject(commands, buffer_mat_in, ptr_mat_in, 0, NULL, NULL);
-	clEnqueueUnmapMemObject(commands, buffer_mat_out, ptr_mat_out, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_mat_out, NULL, 0, NULL, NULL);
 	#endif
 
 	#ifdef SYNDROME_KERNEL
 	clReleaseKernel(kernel_syndrome);
-	clEnqueueUnmapMemObject(commands, buffer_pk_in, ptr_pk_in, 0, NULL, NULL);
+	clReleaseKernel(kernel_syndrome_2);
+	clReleaseKernel(kernel_syndrome_3);
+	clReleaseKernel(kernel_syndrome_4);
+	clReleaseKernel(kernel_syndrome_5);
+	clReleaseKernel(kernel_syndrome_6);
+	clReleaseKernel(kernel_syndrome_7);
+	clReleaseKernel(kernel_syndrome_8);
 	clEnqueueUnmapMemObject(commands, buffer_e_in, ptr_e_in, 0, NULL, NULL);
 	clEnqueueUnmapMemObject(commands, buffer_s_out, ptr_s_out, 0, NULL, NULL);
 	#endif
 
-     clReleaseDevice(device_id);
-     clReleaseProgram(program);
+	#ifdef SYND_KERNEL
+	clReleaseKernel(kernel_synd);
+	clReleaseKernel(kernel_synd_2);
+	clEnqueueUnmapMemObject(commands, buffer_f_in, ptr_f_in, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_L_in, ptr_L_in, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_L_in_2, ptr_L_in_2, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_r_in, ptr_r_in, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_r_in_2, ptr_r_in_2, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_out_out, ptr_out_out, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_out_out_2, ptr_out_out_2, 0, NULL, NULL);
+	#endif
+
+
+    clReleaseDevice(device_id);
+    clReleaseProgram(program);
     clReleaseCommandQueue(commands);
     clReleaseContext(context);
 

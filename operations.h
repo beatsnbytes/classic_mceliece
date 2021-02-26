@@ -21,5 +21,11 @@ int crypto_kem_keypair
        unsigned char *sk 
 );
 
+
+extern double sum_decrypt;
+extern int times_decrypt;
+extern double sum_encrypt;
+extern int times_encrypt;
+
 #endif
 

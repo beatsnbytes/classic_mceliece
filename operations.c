@@ -16,7 +16,14 @@
 #include <stdlib.h>
 #include <CL/opencl.h>
 #include <CL/cl_ext.h>
+#include <sys/time.h>
 #include"kat_kem.h"
+
+double sum_decrypt=0.0;
+int times_decrypt=0;
+double sum_encrypt=0.0;
+int times_encrypt=0;
+
 
 int crypto_kem_enc(
        unsigned char *c,
@@ -28,10 +35,19 @@ int crypto_kem_enc(
 	unsigned char *e = two_e + 1;
 	unsigned char one_ec[ 1 + SYS_N/8 + (SYND_BYTES + 32) ] = {1};
 
+#ifdef TIME_MEASUREMENT
+        	struct timeval start_encrypt, end_encrypt;
+        	gettimeofday(&start_encrypt, NULL);
+#endif
+
 	encrypt(c, pk, e);
 
-	crypto_hash_32b(c + SYND_BYTES, two_e, sizeof(two_e)); 
+#ifdef TIME_MEASUREMENT
+			gettimeofday(&end_encrypt, NULL);
+			get_event_time(&start_encrypt, &end_encrypt, &sum_encrypt, &times_encrypt);
+#endif
 
+    crypto_hash_32b(c + SYND_BYTES, two_e, sizeof(two_e));
 	memcpy(one_ec + 1, e, SYS_N/8);
 	memcpy(one_ec + 1 + SYS_N/8, c, SYND_BYTES + 32);
 
@@ -60,9 +76,17 @@ int crypto_kem_dec(
 	unsigned char *x = preimage;
 	const unsigned char *s = sk + 40 + IRR_BYTES + COND_BYTES;
 
-	//
+#ifdef TIME_MEASUREMENT
+        	struct timeval start_decrypt, end_decrypt;
+        	gettimeofday(&start_decrypt, NULL);
+#endif
 
 	ret_decrypt = decrypt(e, sk + 40, c);
+
+#ifdef TIME_MEASUREMENT
+			gettimeofday(&end_decrypt, NULL);
+			get_event_time(&start_decrypt, &end_decrypt, &sum_decrypt, &times_decrypt);
+#endif
 
 	crypto_hash_32b(conf, two_e, sizeof(two_e)); 
 

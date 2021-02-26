@@ -8,20 +8,18 @@
 
 void encrypt(unsigned char *, const unsigned char *, unsigned char *);
 
-extern double sum_syndrome;
+extern double sum_list_syndrome_tokern[1];
+extern double sum_list_syndrome_tohost[1];
+extern double sum_list_syndrome_kernel[8];
 extern int times_syndrome;
+extern int times_syndrome_tohost;
+extern int times_syndrome_tokern;
 
-extern double sum_syndrome_2;
-extern int times_syndrome_2;
+extern double sum_syndrome_kernels;
+extern int times_syndrome_kernels;
 
-extern double sum_syndrome_3;
-extern int times_syndrome_3;
-
-extern double sum_syndrome_4;
-extern int times_syndrome_4;
-
-extern double sum_tmp;
-extern int times_tmp;
+extern double sum_total_syndrome;
+extern int times_total_syndrome;
 
 #endif
 

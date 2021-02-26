@@ -27,11 +27,17 @@
 /* input: Goppa polynomial f, support L, received word r */
 /* output: out, the syndrome of length 2t */
 
-double sum_synd=0.0;
-int times_synd=0;
+double sum_list_synd_tokern[1];
+double sum_list_synd_tohost[1];
+double sum_list_synd_kernel[2];
+int times_synd = 0;
+int times_synd_tohost = 0;
+int times_synd_tokern = 0;
 
-double sum_synd_2=0.0;
-int times_synd_2=0;
+double sum_synd_kernels=0.0;
+int times_synd_kernels=0;
+
+
 
 void synd_sw_host(gf *out, gf* f , gf *L, unsigned char *r)
 {
@@ -87,14 +93,17 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     }
 	#endif
 
-
-	#ifdef TIME_MEASUREMENT
+#ifdef TIME_MEASUREMENT
+	struct timeval start_kernel, end_kernel;
+	gettimeofday(&start_kernel, NULL);
+#endif
     err = clEnqueueTask(commands, kernel_synd, 1, &event_migr_tokern, &events_enq[0]);
     err = clEnqueueTask(commands, kernel_synd_2, 1, &event_migr_tokern, &events_enq[1]);
-	#endif
-	#ifndef TIME_MEASUREMENT
-    err = clEnqueueTask(commands, kernel_synd, 0, NULL, NULL);
-	#endif
+#ifdef TIME_MEASUREMENT
+	gettimeofday(&end_kernel, NULL);
+	get_event_time(&start_kernel, &end_kernel, &sum_synd_kernels, &times_synd_kernels);
+#endif
+
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
     	printf("FAILED to execute kernel synd\n");
@@ -117,40 +126,21 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     	*(out+i) = *(ptr_out_out+i) ^ *(ptr_out_out_2+i);
     }
 
-//	#ifdef FUNC_CORRECTNESS
-////    gf tmp;
-//	gf validate_mat[SYS_N];
-//	synd_sw_host(out_validate, f, L, r);
-//	for (int i=0;i<2*SYS_T;i++){
-////		tmp = *(ptr_out_out+i)^*(ptr_out_out_2+i);
-//		if (*(out_validate+i) != *(out+i)){\
-//			printf("\nERROR in %d: Expected %d, got %d\n", i, *(out_validate+i), *(out+i));
-//		}
-//	}
-//	#endif
+#ifdef FUNC_CORRECTNESS
+	gf validate_mat[SYS_N];
+	synd_sw_host(out_validate, f, L, r);
+	for (int i=0;i<2*SYS_T;i++){
+		if (*(out_validate+i) != *(out+i)){\
+			printf("\nERROR in %d: Expected %d, got %d\n", i, *(out_validate+i), *(out+i));
+		}
+	}
+#endif
 
-
-//	#ifdef TIME_MEASUREMENT
-//	cl_ulong time_start, time_start_2;
-//	cl_ulong time_end, time_end_2;
-//
-//	clGetEventProfilingInfo(events_enq[0], CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
-//	clGetEventProfilingInfo(events_enq[0], CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
-//
-//	clGetEventProfilingInfo(events_enq[1], CL_PROFILING_COMMAND_START, sizeof(time_start_2), &time_start_2, NULL);
-//	clGetEventProfilingInfo(events_enq[1], CL_PROFILING_COMMAND_END, sizeof(time_end_2), &time_end_2, NULL);
-//
-//	double nanoSeconds = time_end-time_start;
-//	sum_synd += nanoSeconds;
-//	times_synd = times_synd + 1;
-////	printf("Syndr kernel: OpenCl Execution time is: %0.3f milliseconds \n",nanoSeconds / 1000000.0);
-//
-//	double nanoSeconds_2 = time_end_2-time_start_2;
-//	sum_synd_2 += nanoSeconds_2;
-//	times_synd_2 = times_synd_2 + 1;
-////	printf("Syndr kernel_2: OpenCl Execution time is: %0.3f milliseconds \n",nanoSeconds_2 / 1000000.0);
-//	#endif
-
+#ifdef TIME_MEASUREMENT
+	cl_profile_print(&event_migr_tokern, 1, sum_list_synd_tokern, &times_synd_tokern);
+	cl_profile_print(&events_enq[0], 2, sum_list_synd_kernel, &times_synd);
+	cl_profile_print(&event_migr_tohost, 1, sum_list_synd_tohost, &times_synd_tohost);
+#endif
 
 }
 #endif
