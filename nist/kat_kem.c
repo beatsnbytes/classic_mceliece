@@ -93,7 +93,7 @@ main()
         CALLGRIND_START_INSTRUMENTATION;
         ret_val = crypto_kem_keypair(pk, sk);
         CALLGRIND_STOP_INSTRUMENTATION;
-        CALLGRIND_DUMP_STATS;
+        //CALLGRIND_DUMP_STATS;
 
         gettimeofday(&end_keygen, 0);
         long seconds_keygen = end_keygen.tv_sec - start_keygen.tv_sec;
@@ -115,9 +115,9 @@ main()
 
             gettimeofday(&start_enc, NULL);
 
-            //CALLGRIND_START_INSTRUMENTATION;
+            CALLGRIND_START_INSTRUMENTATION;
             ret_val = crypto_kem_enc(ct, ss, pk);
-            //CALLGRIND_STOP_INSTRUMENTATION;
+            CALLGRIND_STOP_INSTRUMENTATION;
 	    //CALLGRIND_DUMP_STATS;
 
             gettimeofday(&end_enc, 0);
@@ -139,10 +139,10 @@ main()
     
             gettimeofday(&start_dec, NULL);
 
-	    //CALLGRIND_START_INSTRUMENTATION;
+	    CALLGRIND_START_INSTRUMENTATION;
             ret_val =  crypto_kem_dec(ss1, ct, sk);
-            //CALLGRIND_STOP_INSTRUMENTATION;
-            //CALLGRIND_DUMP_STATS;
+            CALLGRIND_STOP_INSTRUMENTATION;
+            CALLGRIND_DUMP_STATS;
 
 
 
