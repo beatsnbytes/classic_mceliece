@@ -20,5 +20,9 @@ extern int times_elim_tokern;
 extern double sum_pk_loop;
 extern int times_pk_loop;
 
+
+extern double sum_parallel;
+extern int times_parallel;
+
 #endif
 

@@ -7,7 +7,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
+#include <errno.h>
 #include "gf.h"
+
 
 void cl_profile_print(cl_event *event, int event_num, double *sum_list, int *times){
 
@@ -72,3 +75,29 @@ void print_event_execution_time(double *sum_list, int *times){
 
 	return;
 }
+
+
+/* msleep(): Sleep for the requested number of milliseconds. */
+int msleep(long msec)
+{
+    struct timespec ts;
+    int res;
+
+    if (msec < 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+
+    do {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+
+    return res;
+}
+
+
+

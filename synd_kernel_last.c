@@ -4,12 +4,12 @@
 #include <string.h>
 //#include "ap_cint.h"
 
-gf gf_add_kernel(gf in0, gf in1)
+gf gf_add_kernel_last(gf in0, gf in1)
 {
 	return in0 ^ in1;
 }
 
-gf gf_mul_kernel(gf in0, gf in1)
+gf gf_mul_kernel_last(gf in0, gf in1)
 {
 	int i;
 
@@ -42,7 +42,7 @@ gf gf_mul_kernel(gf in0, gf in1)
 	return tmp & ((1 << GFBITS)-1);
 }
 
-static inline gf gf_sq_kernel(gf in)
+static inline gf gf_sq_kernel_last(gf in)
 {
 	const uint32_t B[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF};
 
@@ -65,7 +65,7 @@ static inline gf gf_sq_kernel(gf in)
 	return x & ((1 << GFBITS)-1);
 }
 
-gf gf_inv_kernel(gf in)
+gf gf_inv_kernel_last(gf in)
 {
 	gf tmp_11;
 	gf tmp_1111;
@@ -73,32 +73,32 @@ gf gf_inv_kernel(gf in)
 	gf out = in;
 
 
-	out = gf_sq_kernel(out);
-	tmp_11 = gf_mul_kernel(out, in); // 11
+	out = gf_sq_kernel_last(out);
+	tmp_11 = gf_mul_kernel_last(out, in); // 11
 
-	out = gf_sq_kernel(tmp_11);
-	out = gf_sq_kernel(out);
-	tmp_1111 = gf_mul_kernel(out, tmp_11); // 1111
+	out = gf_sq_kernel_last(tmp_11);
+	out = gf_sq_kernel_last(out);
+	tmp_1111 = gf_mul_kernel_last(out, tmp_11); // 1111
 
-	out = gf_sq_kernel(tmp_1111);
+	out = gf_sq_kernel_last(tmp_1111);
 
-	out = gf_sq_kernel(out);
-	out = gf_sq_kernel(out);
-	out = gf_sq_kernel(out);
+	out = gf_sq_kernel_last(out);
+	out = gf_sq_kernel_last(out);
+	out = gf_sq_kernel_last(out);
 
-	out = gf_mul_kernel(out, tmp_1111); // 11111111
+	out = gf_mul_kernel_last(out, tmp_1111); // 11111111
 
-	out = gf_sq_kernel(out);
-	out = gf_sq_kernel(out);
-	out = gf_mul_kernel(out, tmp_11); // 1111111111
+	out = gf_sq_kernel_last(out);
+	out = gf_sq_kernel_last(out);
+	out = gf_mul_kernel_last(out, tmp_11); // 1111111111
 
-	out = gf_sq_kernel(out);
-	out = gf_mul_kernel(out, in); // 11111111111
+	out = gf_sq_kernel_last(out);
+	out = gf_mul_kernel_last(out, in); // 11111111111
 
-	return gf_sq_kernel(out); // 111111111110
+	return gf_sq_kernel_last(out); // 111111111110
 }
 
-gf eval_inner(gf *f, gf a)
+gf eval_inner_last(gf *f, gf a)
 {
         int i;
         gf r;
@@ -109,7 +109,7 @@ gf eval_inner(gf *f, gf a)
         {
 		#pragma HLS PIPELINE II=3
 		#pragma HLS unroll factor=2
-                r = gf_mul_kernel(r, a) ^ f[i];
+                r = gf_mul_kernel_last(r, a) ^ f[i];
         }
 
         return r;
@@ -168,7 +168,7 @@ void synd_kernel_last(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	LOOP_EVAL:
 	for(uint i=0; i <SYS_N; i++){//11
 	#pragma HLS PIPELINE
-		e_mat[i] = eval_inner(local_f, local_L[i]);
+		e_mat[i] = eval_inner_last(local_f, local_L[i]);
 	}
 
 
@@ -177,7 +177,7 @@ void synd_kernel_last(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	for (uint i = 0; i < SYS_N; i++) //11
 	{
 		c = (local_r[i>>3] >> (i%8)) & 1;
-		e_inv = gf_inv_kernel(gf_mul_kernel(e_mat[i],e_mat[i]));
+		e_inv = gf_inv_kernel_last(gf_mul_kernel_last(e_mat[i],e_mat[i]));
 
 		LOOP_MAIN_INNER:
 		for (uint j = 0; j < 2*SYS_T; j++) //8
@@ -187,12 +187,12 @@ void synd_kernel_last(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		#pragma HLS unroll factor=2
 
 			if(i==0){
-				local_out[j] = gf_mul_kernel(e_inv, c);
+				local_out[j] = gf_mul_kernel_last(e_inv, c);
 			}else{
-				local_out[j] ^= gf_mul_kernel(e_inv, c);
+				local_out[j] ^= gf_mul_kernel_last(e_inv, c);
 
 			}
-			e_inv = gf_mul_kernel(e_inv, local_L[i]);
+			e_inv = gf_mul_kernel_last(e_inv, local_L[i]);
 
 		}
 	}

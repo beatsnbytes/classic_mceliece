@@ -166,15 +166,26 @@ void synd_host_last(gf *out, gf *f, gf *L, unsigned char *r)
 	cl_event events_enq[2], event_migr_tohost, event_migr_tokern;
 #endif
 
-
 	memcpy(ptr_r_in_last, r, sizeof(unsigned char)*MAT_COLS);
+
+	//
+	cl_mem temp_list[3];
+	memcpy(ptr_L_in, L, sizeof(gf)*SYS_N);
+	memcpy(ptr_f_in_last, f, sizeof(gf)*(SYS_T+1));
+	temp_list[0]= buffer_f_in_last;
+	temp_list[1]= buffer_L_in;
+	temp_list[2]= buffer_r_in_last;
+
+	//
+
 
 
 #ifdef FUNC_CORRECTNESS
 	gf *out_validate = (gf *)malloc(sizeof(gf)*2*SYS_T);
 #endif
 
-	err = clEnqueueMigrateMemObjects(commands, 1, &buffer_r_in_last, 0, 0, NULL, &event_migr_tokern);
+	err = clEnqueueMigrateMemObjects(commands, 3, &temp_list, 0, 0, NULL, &event_migr_tokern);
+//	err = clEnqueueMigrateMemObjects(commands, 1, &buffer_r_in_last, 0, 0, NULL, &event_migr_tokern);
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
     	printf("FAILED to enqueue input buffers\n");
@@ -213,11 +224,11 @@ void synd_host_last(gf *out, gf *f, gf *L, unsigned char *r)
 	}
 #endif
 
-//#ifdef TIME_MEASUREMENT
-//	cl_profile_print(&event_migr_tokern, 1, sum_list_synd_last_tokern, &times_synd_last_tokern);
-//	cl_profile_print(&events_enq[0], 1, sum_list_synd_last_kernel, &times_synd_last);
-//	cl_profile_print(&event_migr_tohost, 1, sum_list_synd_last_tohost, &times_synd_last_tohost);
-//#endif
+#ifdef TIME_MEASUREMENT
+	cl_profile_print(&event_migr_tokern, 1, sum_list_synd_last_tokern, &times_synd_last_tokern);
+	cl_profile_print(&events_enq[0], 1, sum_list_synd_last_kernel, &times_synd_last);
+	cl_profile_print(&event_migr_tohost, 1, sum_list_synd_last_tohost, &times_synd_last_tohost);
+#endif
 
 }
 #endif

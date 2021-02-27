@@ -154,14 +154,16 @@ void syndrome_host(unsigned char *s, unsigned char *e)
 
 	cl_event events_enq[8], event_migr_tokern, events_migr_tohost;
 
-//	memcpy(ptr_pk_in, pk, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-//	memcpy(ptr_pk_in_2, (pk + crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-//	memcpy(ptr_pk_in_3, (pk + 2*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-//	memcpy(ptr_pk_in_4, (pk + 3*crypto_kem_PUBLICKEYBYTES/4), sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES/4);
-
 	memcpy(ptr_e_in, e, sizeof(unsigned char)*MAT_COLS);
+	memcpy(ptr_e_in_2, e, sizeof(unsigned char)*MAT_COLS);
+	memcpy(ptr_e_in_3, e, sizeof(unsigned char)*MAT_COLS);
+	memcpy(ptr_e_in_4, e, sizeof(unsigned char)*MAT_COLS);
+	memcpy(ptr_e_in_5, e, sizeof(unsigned char)*MAT_COLS);
+	memcpy(ptr_e_in_6, e, sizeof(unsigned char)*MAT_COLS);
+	memcpy(ptr_e_in_7, e, sizeof(unsigned char)*MAT_COLS);
+	memcpy(ptr_e_in_8, e, sizeof(unsigned char)*MAT_COLS);
 
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome_combined[1], 0, 0, NULL, &event_migr_tokern);
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)8, &pt_list_syndrome_combined[0], 0, 0, NULL, &event_migr_tokern);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to enqueue pt_list_syndrome\n");
@@ -169,10 +171,11 @@ void syndrome_host(unsigned char *s, unsigned char *e)
 	}
 	#endif
 
-	#ifdef TIME_MEASUREMENT
-		struct timeval start_kernel, end_kernel;
-		gettimeofday(&start_kernel, NULL);
-	#endif
+//	#ifdef TIME_MEASUREMENT
+//		clWaitForEvents(1, &event_migr_tokern);
+//		struct timeval start_kernel, end_kernel;
+//		gettimeofday(&start_kernel, NULL);
+//	#endif
 
 	err = clEnqueueTask(commands, kernel_syndrome, 1, &event_migr_tokern, &events_enq[0]);
 	err = clEnqueueTask(commands, kernel_syndrome_2, 1, &event_migr_tokern, &events_enq[1]);
@@ -183,10 +186,11 @@ void syndrome_host(unsigned char *s, unsigned char *e)
 	err = clEnqueueTask(commands, kernel_syndrome_7, 1, &event_migr_tokern, &events_enq[6]);
 	err = clEnqueueTask(commands, kernel_syndrome_8, 1, &event_migr_tokern, &events_enq[7]);
 
-	#ifdef TIME_MEASUREMENT
-		gettimeofday(&end_kernel, NULL);
-		get_event_time(&start_kernel, &end_kernel, &sum_syndrome_kernels, &times_syndrome_kernels);
-	#endif
+//	#ifdef TIME_MEASUREMENT
+//		clWaitForEvents(8, &events_enq);
+//		gettimeofday(&end_kernel, NULL);
+//		get_event_time(&start_kernel, &end_kernel, &sum_syndrome_kernels, &times_syndrome_kernels);
+//	#endif
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to execute kernel\n");
@@ -221,11 +225,11 @@ void syndrome_host(unsigned char *s, unsigned char *e)
 //	}
 //	#endif
 
-#ifdef TIME_MEASUREMENT
-	cl_profile_print(&event_migr_tokern, 1, sum_list_syndrome_tokern, &times_syndrome_tokern);
-	cl_profile_print(&events_enq[0], 8, sum_list_syndrome_kernel, &times_syndrome);
-	cl_profile_print(&events_migr_tohost, 1, sum_list_syndrome_tohost, &times_syndrome_tohost);
-#endif
+//#ifdef TIME_MEASUREMENT
+//	cl_profile_print(&event_migr_tokern, 1, sum_list_syndrome_tokern, &times_syndrome_tokern);
+//	cl_profile_print(&events_enq[0], 8, sum_list_syndrome_kernel, &times_syndrome);
+//	cl_profile_print(&events_migr_tohost, 1, sum_list_syndrome_tohost, &times_syndrome_tohost);
+//#endif
 
 
 }

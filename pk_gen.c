@@ -34,6 +34,9 @@ int times_elim_tokern = 0;
 double sum_pk_loop=0.0;
 int times_pk_loop=0;
 
+double sum_parallel=0.0;
+int times_parallel=0;
+
 
 #ifdef GAUSSIAN_ELIMINATION_KERNEL
 
@@ -161,13 +164,13 @@ void parallel_sw_part(unsigned char * sk, unsigned char * seed, unsigned char ma
 }
 
 
-int gaussian_elim(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]){
+int gaussian_elim(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ], uint *fail){
 
 	int i, j, k;
 	int row, c;
 	unsigned char mask;
 
-
+	*fail=0;
 	for (i = 0; i < (PK_NROWS + 7) / 8; i++)
 	for (j = 0; j < 8; j++)
 	{
@@ -190,6 +193,7 @@ int gaussian_elim(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]){
 		if ( ((mat[ row ][ i ] >> j) & 1) == 0 ) // return if not systematic
 		{
 			mat[0][0]=255;
+			*fail=1;
 			return -1;
 		}
 
@@ -206,36 +210,35 @@ int gaussian_elim(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]){
 			}
 		}
 	}
+
 	return 0;
+
 }
 
 
 
 
 
-void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]) {
+void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ], uint *fail){
+//void gaussian_elimination_host(unsigned char *mat, uint *fail) {
 
 	#ifdef TIME_MEASUREMENT
-	cl_event event;
+	cl_event event_enq, event_mig_tokern, event_mig_tohost, event_mig_tohost_buffer;
 	#endif
 
 
 	memcpy(ptr_mat_in, mat, sizeof(unsigned char) * MAT_SIZE);
 
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_in, 0, 0, NULL, NULL);
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_in, 0, 0, NULL, &event_mig_tokern);
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
     	printf("FAILED to enqueue buffer_mat\n");
     	return EXIT_FAILURE;
     }
 	#endif
-    clFinish(commands);
 
 	#ifdef TIME_MEASUREMENT
-    err = clEnqueueTask(commands, kernel_gaussian_elimination, 0, NULL, &event);
-	#endif
-	#ifndef TIME_MEASUREMENT
-    err = clEnqueueTask(commands, kernel_gaussian_elimination, 0, NULL, NULL);
+    err = clEnqueueTask(commands, kernel_gaussian_elimination, 1, &event_mig_tokern, &event_enq);
 	#endif
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
@@ -244,10 +247,15 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]) {
     }
 	#endif
 
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_fail, CL_MIGRATE_MEM_OBJECT_HOST, 1, &event_enq, &event_mig_tohost_buffer);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to enqueue buffer success info\n");
+		return EXIT_FAILURE;
+	}
+	#endif
 
-    clFinish(commands);
-
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_out, CL_MIGRATE_MEM_OBJECT_HOST, 0, NULL, NULL);
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_out, CL_MIGRATE_MEM_OBJECT_HOST, 1, &event_enq, &event_mig_tohost);
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
     	printf("FAILED to enqueue bufer_res\n");
@@ -255,49 +263,17 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ]) {
     }
 	#endif
 
-	#ifdef TIME_MEASUREMENT
-//    clWaitForEvents(1, &event);
-	#endif
-    clFinish(commands);
+    clWaitForEvents(1, &event_mig_tohost_buffer);
+    clWaitForEvents(1, &event_mig_tohost);
 
+    *fail = *ptr_fail;
+    memcpy(mat, ptr_mat_out, sizeof(unsigned char) * (MAT_ROWS*PK_ROW_BYTES));
 
-
-    //TODO Fix func correctness of gauss elim
-//	#ifdef FUNC_CORRECTNESS
-////    unsigned char *validate_mat = (unsigned char *)malloc(MAT_ROWS * MAT_COLS * sizeof(unsigned char));
-//    unsigned char validate_mat[MAT_ROWS][MAT_COLS];
-//	for (int i=0;i<MAT_ROWS;i++){
-//		for(int j=0;j<MAT_COLS;j++){
-//			validate_mat[i][j] = *(*mat+i*MAT_COLS+j);
-//		}
-//	}
-//
-//	gaussian_elimination_sw(validate_mat);
-//	for (int i=0;i<MAT_ROWS;i++){
-//		for(int j=0;j<MAT_COLS;j++){
-//			if (validate_mat[i][j] != *(ptr_mat_out+i*MAT_COLS+j)){\
-//				printf("\nERROR: Expected %d, got %d\n", validate_mat[i][j], *(ptr_mat_out+i*MAT_COLS+j));
-//			}
-//		}
-//	}
-//	#endif
-
-    memcpy(mat, ptr_mat_out, sizeof(unsigned char) * MAT_SIZE);
-
-
-	#ifdef TIME_MEASUREMENT
-	cl_ulong time_start;
-	cl_ulong time_end;
-
-	clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
-	clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
-
-	double nanoSeconds = time_end-time_start;
-	sum_elim += nanoSeconds;
-	times_elim = times_elim + 1;
-	#endif
-
-
+#ifdef TIME_MEASUREMENT
+	cl_profile_print(&event_mig_tokern, 1, sum_list_elim_tokern, &times_elim_tokern);
+    cl_profile_print(&event_enq, 1, sum_list_elim_kernel, &times_elim);
+	cl_profile_print(&event_mig_tohost, 1, sum_list_elim_tohost, &times_elim_tohost);
+#endif
 }
 #endif
 
@@ -317,6 +293,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 	gf inv[ SYS_N ];
 
 	g[ SYS_T ] = 1;
+
 
 	for (i = 0; i < SYS_T; i++) { g[i] = load_gf(sk); sk += 2; }
 
@@ -347,6 +324,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 	for (i = 0; i < PK_NROWS; i++)
 	for (j = 0; j < SYS_N/8; j++){
 		*(ptr_mat_in + i*MAT_COLS + j) = 0;
+
 	}
 
 	for (i = 0; i < SYS_T; i++)
@@ -371,13 +349,36 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 
 	}
 
-////only sw solution// embed to sw validation functional correctness
-//	gaussian_elim(mat);
-//	while(*mat==255)
+
+
+//#ifdef TIME_MEASUREMENT
+//  	struct timeval start_pk_loop, end_pk_loop;
+//  	gettimeofday(&start_pk_loop, NULL);
+//#endif
+//
+//	uint fail=0;
+//	gaussian_elimination_host(ptr_mat_in, &fail);
+//	while(fail==1)
 //	{
-//		parallel_sw_part(sk_initial, seed_initial, mat, pi);
-//		gaussian_elimination_host(mat);
+//	#ifdef TIME_MEASUREMENT
+//		struct timeval start_parallel, end_parallel;
+//		gettimeofday(&start_parallel, NULL);
+//	#endif
+//
+//		parallel_sw_part(sk_initial, seed_initial, ptr_mat_in, pi);
+//
+//	#ifdef TIME_MEASUREMENT
+//			gettimeofday(&end_parallel, NULL);
+//			get_event_time(&start_parallel, &end_parallel, &sum_parallel, &times_parallel);
+//	#endif
+//		gaussian_elimination_host(ptr_mat_in, &fail);
 //	}
+//
+//#ifdef TIME_MEASUREMENT
+//	    gettimeofday(&end_pk_loop, NULL);
+//	    get_event_time(&start_pk_loop, &end_pk_loop, &sum_pk_loop, &times_pk_loop);
+//#endif
+
 
 
 	unsigned char * sk_parallel = (unsigned char *)malloc(sizeof(unsigned char) * crypto_kem_SECRETKEYBYTES);;
@@ -392,6 +393,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
   	gettimeofday(&start_pk_loop, NULL);
 #endif
 
+  	long custom_delay=12.0;
 	do
 	{
 		//Send data and enqueue kernel
@@ -427,10 +429,13 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 #endif
 	    clWaitForEvents(1, &event_mig_tohost_buffer);
 
+
+//	    msleep(custom_delay);
+
 #ifdef TIME_MEASUREMENT
-	cl_profile_print(&event_migr_tokern, 1, sum_list_elim_tokern, &times_elim_tokern);
+	cl_profile_print(&event_mig_tokern, 1, sum_list_elim_tokern, &times_elim_tokern);
 	cl_profile_print(&event_enq, 1, sum_list_elim_kernel, &times_elim);
-	cl_profile_print(&events_migr_tohost, 1, sum_list_elim_tohost, &times_elim_tohost);
+	cl_profile_print(&event_mig_tohost_buffer, 1, sum_list_elim_tohost, &times_elim_tohost);
 #endif
 
 	}while(*ptr_fail!=0);
@@ -440,11 +445,24 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 	    get_event_time(&start_pk_loop, &end_pk_loop, &sum_pk_loop, &times_pk_loop);
 #endif
 
+//	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_mat_out, CL_MIGRATE_MEM_OBJECT_HOST, 1, &event_mig_tohost_buffer, &event_mig_tohost_mat);
+//	#ifdef OCL_API_DEBUG
+//	if (err != CL_SUCCESS) {
+//		printf("FAILED to enqueue buffer success info\n");
+//		return EXIT_FAILURE;
+//	}
+//	#endif
+//
+//	clWaitForEvents(1, &event_mig_tohost_mat);
+//
 //	memcpy(pk, ptr_mat_out, PK_NROWS*PK_ROW_BYTES);
 
 
 	free(sk_parallel);
 	free(pi_parallel);
+
+
+	memcpy(pk, ptr_mat_in, sizeof(unsigned char)*PK_NROWS*PK_ROW_BYTES);
 
 	return 0;
 }

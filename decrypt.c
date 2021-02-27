@@ -101,7 +101,7 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c){
 	gettimeofday(&start_synd, NULL);
 #endif
 #ifdef SYND_KERNEL
-	synd_host_last(s_cmp, g, L, e);
+	synd_host(s_cmp, g, L, e);
 #endif
 #ifndef SYND_KERNEL
 	synd_sw_host(s_cmp, g, L, e);
