@@ -1,10 +1,9 @@
-#include "params.h"
+#include "../params.h"
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-//#include "ap_cint.h"
 
-void syndrome_kernel_2(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
+void syndrome_kernel8_2(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
 {
 	#pragma HLS INTERFACE m_axi     port=pk_in    offset=slave bundle=gmem3
 	#pragma HLS INTERFACE m_axi     port=e_in     offset=slave bundle=gmem4

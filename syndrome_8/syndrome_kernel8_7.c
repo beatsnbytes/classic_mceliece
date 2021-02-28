@@ -1,10 +1,10 @@
-#include "params.h"
+#include "../params.h"
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 //#include "ap_cint.h"
 
-void syndrome_kernel_5(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
+void syndrome_kernel8_7(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
 {
 	#pragma HLS INTERFACE m_axi     port=pk_in    offset=slave bundle=gmem3
 	#pragma HLS INTERFACE m_axi     port=e_in     offset=slave bundle=gmem4
@@ -34,7 +34,7 @@ void syndrome_kernel_5(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 		for(int j=0;j<PK_ROW_BYTES;j++){
 			#pragma HLS PIPELINE II=1
 			#pragma HLS unroll factor=4
-			local_pk[i][j] = *(pk_in+(4*PK_ROW_BYTES*MAT_ROWS/8)+i*PK_ROW_BYTES+j);
+			local_pk[i][j] = *(pk_in+(6*PK_ROW_BYTES*MAT_ROWS/8)+i*PK_ROW_BYTES+j);
 //			local_pk[i][j] = *(pk_in+(MAT_COLS*MAT_ROWS/2)+i*MAT_COLS+j + PK_NROWS/8);
 		}
 	}
@@ -76,7 +76,7 @@ void syndrome_kernel_5(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 		 }
 
 
-		row[(i>>3)+4*SYND_BYTES/8] |= 1 << (i%8);
+		row[(i>>3)+6*SYND_BYTES/8] |= 1 << (i%8);
 
 		b = 0;
 		LOOP_B_COMPUTE:for (uint j = 0; j < MAT_COLS; j++){
@@ -97,11 +97,11 @@ void syndrome_kernel_5(unsigned char *pk_in, unsigned char *e_in, unsigned char 
 	}
 
 
-	LOOP_WRITE_TO_BRAM_R:for (unsigned int i=4*SYND_BYTES/8;i<5*SYND_BYTES/8;i++){
+	LOOP_WRITE_TO_BRAM_R:for (unsigned int i=6*SYND_BYTES/8;i<7*SYND_BYTES/8;i++){
 		#pragma HLS PIPELINE II=1
 		#pragma HLS unroll factor=4
 //		*(s_out+i) = local_s[i];
-		*(s_out+i) = local_s[i-4*SYND_BYTES/8];
+		*(s_out+i) = local_s[i-6*SYND_BYTES/8];
 	}
 
 }

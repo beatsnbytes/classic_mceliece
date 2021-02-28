@@ -29,7 +29,8 @@ void cl_profile_print(cl_event *event, int event_num, double *sum_list, int *tim
 		miliSeconds_sub_start = (time_start - time_submit)/1000000.0;
 		miliSeconds_start_end = (time_end - time_start)/1000000.0;
 		miliSeconds_total = (time_end - time_queue)/1000000.0;
-		sum_list[i] += miliSeconds_total;
+//		sum_list[i] += miliSeconds_total;
+		sum_list[i] += miliSeconds_start_end;
 
 #ifdef ITERATION_PRINT
 		printf("Event %d: Queued --> Submit time is: %0.3f milliseconds \n", i, miliSeconds_q_sub);

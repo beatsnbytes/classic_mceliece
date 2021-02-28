@@ -148,22 +148,19 @@ static void syndrome_sw_host(unsigned char *s, const unsigned char *pk, unsigned
 /* input: public key pk, error vector e */
 /* output: syndrome s */
 #ifdef SYNDROME_KERNEL
-//void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
-void syndrome_host(unsigned char *s, unsigned char *e)
+void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
+//void syndrome_host(unsigned char *s, unsigned char *e)
 {
 
 	cl_event events_enq[8], event_migr_tokern, events_migr_tohost;
 
-	memcpy(ptr_e_in, e, sizeof(unsigned char)*MAT_COLS);
-	memcpy(ptr_e_in_2, e, sizeof(unsigned char)*MAT_COLS);
-	memcpy(ptr_e_in_3, e, sizeof(unsigned char)*MAT_COLS);
-	memcpy(ptr_e_in_4, e, sizeof(unsigned char)*MAT_COLS);
-	memcpy(ptr_e_in_5, e, sizeof(unsigned char)*MAT_COLS);
-	memcpy(ptr_e_in_6, e, sizeof(unsigned char)*MAT_COLS);
-	memcpy(ptr_e_in_7, e, sizeof(unsigned char)*MAT_COLS);
-	memcpy(ptr_e_in_8, e, sizeof(unsigned char)*MAT_COLS);
+	memcpy(ptr_pk_in, pk, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES);
+	for(int i=0; i<syndrome_kernels; i++){
+		memcpy(ptr_e_in_list[i], e, sizeof(unsigned char)*MAT_COLS);
+	}
 
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)8, &pt_list_syndrome_combined[0], 0, 0, NULL, &event_migr_tokern);
+
+	err = clEnqueueMigrateMemObjects(commands, syndrome_kernels+1, &pt_list_syndrome_combined[0], 0, 0, NULL, &event_migr_tokern);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to enqueue pt_list_syndrome\n");
@@ -171,26 +168,22 @@ void syndrome_host(unsigned char *s, unsigned char *e)
 	}
 	#endif
 
-//	#ifdef TIME_MEASUREMENT
-//		clWaitForEvents(1, &event_migr_tokern);
-//		struct timeval start_kernel, end_kernel;
-//		gettimeofday(&start_kernel, NULL);
-//	#endif
+	#ifdef TIME_MEASUREMENT
+		clWaitForEvents(1, &event_migr_tokern);
+		struct timeval start_kernel, end_kernel;
+		gettimeofday(&start_kernel, NULL);
+	#endif
 
-	err = clEnqueueTask(commands, kernel_syndrome, 1, &event_migr_tokern, &events_enq[0]);
-	err = clEnqueueTask(commands, kernel_syndrome_2, 1, &event_migr_tokern, &events_enq[1]);
-	err = clEnqueueTask(commands, kernel_syndrome_3, 1, &event_migr_tokern, &events_enq[2]);
-	err = clEnqueueTask(commands, kernel_syndrome_4, 1, &event_migr_tokern, &events_enq[3]);
-	err = clEnqueueTask(commands, kernel_syndrome_5, 1, &event_migr_tokern, &events_enq[4]);
-	err = clEnqueueTask(commands, kernel_syndrome_6, 1, &event_migr_tokern, &events_enq[5]);
-	err = clEnqueueTask(commands, kernel_syndrome_7, 1, &event_migr_tokern, &events_enq[6]);
-	err = clEnqueueTask(commands, kernel_syndrome_8, 1, &event_migr_tokern, &events_enq[7]);
+	for (int i=0; i<syndrome_kernels; i++){
+		err = clEnqueueTask(commands, syndrome_kernels_list[i], 1, &event_migr_tokern, &events_enq[i]);
+	}
 
-//	#ifdef TIME_MEASUREMENT
-//		clWaitForEvents(8, &events_enq);
-//		gettimeofday(&end_kernel, NULL);
-//		get_event_time(&start_kernel, &end_kernel, &sum_syndrome_kernels, &times_syndrome_kernels);
-//	#endif
+	#ifdef TIME_MEASUREMENT
+		clWaitForEvents(syndrome_kernels, &events_enq);
+		gettimeofday(&end_kernel, NULL);
+		get_event_time(&start_kernel, &end_kernel, &sum_syndrome_kernels, &times_syndrome_kernels);
+	#endif
+
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to execute kernel\n");
@@ -198,7 +191,7 @@ void syndrome_host(unsigned char *s, unsigned char *e)
 	}
 	#endif
 
-	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &pt_list_syndrome[2], CL_MIGRATE_MEM_OBJECT_HOST, 8, &events_enq, &events_migr_tohost);
+	err = clEnqueueMigrateMemObjects(commands, (cl_uint)1, &buffer_s_out, CL_MIGRATE_MEM_OBJECT_HOST, syndrome_kernels, &events_enq, &events_migr_tohost);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("FAILED to enqueue bufer_res\n");
@@ -211,10 +204,6 @@ void syndrome_host(unsigned char *s, unsigned char *e)
 	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES);
 
 
-
-
-
-//probably func correctness is not valid now since I do not pass the pk matrix out of the fpga device
 //	#ifdef FUNC_CORRECTNESS
 //	unsigned char validate_mat[SYND_BYTES];
 //	syndrome_sw_host(validate_mat, pk, e);
@@ -225,11 +214,11 @@ void syndrome_host(unsigned char *s, unsigned char *e)
 //	}
 //	#endif
 
-//#ifdef TIME_MEASUREMENT
-//	cl_profile_print(&event_migr_tokern, 1, sum_list_syndrome_tokern, &times_syndrome_tokern);
-//	cl_profile_print(&events_enq[0], 8, sum_list_syndrome_kernel, &times_syndrome);
-//	cl_profile_print(&events_migr_tohost, 1, sum_list_syndrome_tohost, &times_syndrome_tohost);
-//#endif
+#ifdef TIME_MEASUREMENT
+	cl_profile_print(&event_migr_tokern, 1, sum_list_syndrome_tokern, &times_syndrome_tokern);
+	cl_profile_print(&events_enq[0], syndrome_kernels, sum_list_syndrome_kernel, &times_syndrome);
+	cl_profile_print(&events_migr_tohost, 1, sum_list_syndrome_tohost, &times_syndrome_tohost);
+#endif
 
 
 }
@@ -260,7 +249,7 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
 #endif
 
 	#ifdef SYNDROME_KERNEL
-	syndrome_host(s, e);
+	syndrome_host(s, pk, e);
 	#endif
 	#ifndef SYNDROME_KERNEL
 	syndrome_sw_host(s, pk, e);

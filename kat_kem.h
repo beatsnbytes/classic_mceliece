@@ -50,6 +50,9 @@ extern unsigned char *ptr_pk_in;
 extern unsigned char *ptr_e_in;
 extern unsigned char *ptr_s_out;
 extern cl_mem pt_list_syndrome[3];
+extern int syndrome_kernels;
+extern cl_kernel syndrome_kernels_list[8];
+extern unsigned char *ptr_e_in_list[8];
 
 extern cl_mem buffer_pk_in_2;
 extern cl_mem buffer_e_in_2;
@@ -74,7 +77,7 @@ extern unsigned char *ptr_pk_in_4;
 extern unsigned char *ptr_e_in_4;
 extern unsigned char *ptr_s_out_4;
 extern cl_mem pt_list_syndrome_4[3];
-extern cl_mem pt_list_syndrome_combined[8];
+extern cl_mem pt_list_syndrome_combined[9];
 extern cl_mem pt_list_syndrome_combined_out[4];
 
 extern cl_mem buffer_e_in_5;
