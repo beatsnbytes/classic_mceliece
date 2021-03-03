@@ -148,11 +148,7 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
 
 	syndrome(s, pk, e);
 
-	gettimeofday(&end_syndrome, 0);
-    long seconds = end_syndrome.tv_sec - start_syndrome.tv_sec;
-    long microseconds = end_syndrome.tv_usec - start_syndrome.tv_usec;
-    double elapsed_syndrome = seconds + microseconds*0.000001;
-	sum_syndrome += elapsed_syndrome;
-	times_syndrome = times_syndrome + 1;
+	gettimeofday(&end_syndrome, NULL);
+	get_event_time(&start_syndrome, &end_syndrome, &sum_syndrome, &times_syndrome);
 }
 

@@ -92,8 +92,8 @@ int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi
 	}
 
 
-    	struct timeval start, end;
-    	gettimeofday(&start, NULL);
+    	struct timeval start_elim, end_elim;
+    	gettimeofday(&start_elim, NULL);
 
 	// gaussian elimination
 
@@ -119,12 +119,9 @@ int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi
 		if ( ((mat[ row ][ i ] >> j) & 1) == 0 ) // return if not systematic
 		{
 
-			gettimeofday(&end, 0);
-			long seconds = end.tv_sec - start.tv_sec;
-			long microseconds = end.tv_usec - start.tv_usec;
-			double elapsed_elim = seconds + microseconds*0.000001;
-			sum_elim += elapsed_elim;
-			times_elim = times_elim + 1;
+			gettimeofday(&end_elim, NULL);
+			get_event_time(&start_elim, &end_elim, &sum_elim, &times_elim);
+			times_elim = times_elim - 1;
 
 			return -1;
 		}
@@ -143,12 +140,8 @@ int pk_gen(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi
 		}
 	}
 
-    	gettimeofday(&end, 0);
-    	long seconds = end.tv_sec - start.tv_sec;
-    	long microseconds = end.tv_usec - start.tv_usec;
-    	double elapsed_elim = seconds + microseconds*0.000001;
-	sum_elim += elapsed_elim;
-	times_elim = times_elim + 1;
+		gettimeofday(&end_elim, NULL);
+		get_event_time(&start_elim, &end_elim, &sum_elim, &times_elim);
 
 	for (i = 0; i < PK_NROWS; i++)
 		memcpy(pk + i*PK_ROW_BYTES, mat[i] + PK_NROWS/8, PK_ROW_BYTES);
