@@ -15,6 +15,7 @@
 #include "encrypt.h"
 #include "decrypt.h"
 #include "operations.h"
+#include "custom_util.h"
 
 #include <sys/time.h>
 #include <valgrind/callgrind.h>
@@ -30,6 +31,9 @@ unsigned char seed[KATNUM][48];
 
 double sum_keygen, sum_enc, sum_dec;
 int times_keygen, times_enc, times_dec;
+
+double sum_total;
+int times_total;
 
 int
 main()
@@ -90,17 +94,15 @@ main()
        
         gettimeofday(&start_keygen, NULL);
 
-        CALLGRIND_START_INSTRUMENTATION;
+        // CALLGRIND_START_INSTRUMENTATION;
         ret_val = crypto_kem_keypair(pk, sk);
-        CALLGRIND_STOP_INSTRUMENTATION;
+        // CALLGRIND_STOP_INSTRUMENTATION;
         //CALLGRIND_DUMP_STATS;
 
-        gettimeofday(&end_keygen, 0);
-        long seconds_keygen = end_keygen.tv_sec - start_keygen.tv_sec;
-        long microseconds_keygen = end_keygen.tv_usec - start_keygen.tv_usec;
-        double elapsed_keygen = seconds_keygen + microseconds_keygen*0.000001;
-        sum_keygen += elapsed_keygen;
-        times_keygen = times_keygen + 1;
+        gettimeofday(&end_keygen, NULL);
+        get_event_time(&start_keygen, &end_keygen, &sum_keygen, &times_keygen);
+        get_event_time(&start_keygen, &end_keygen, &sum_total, &times_total);
+        times_total = times_total - 1;
 
         if (ret_val != 0) {
         // if ( (ret_val = crypto_kem_keypair(pk, sk)) != 0) {
@@ -113,70 +115,76 @@ main()
 
         // for(int t=0;t<100; t++){
 
-            gettimeofday(&start_enc, NULL);
+        gettimeofday(&start_enc, NULL);
 
-            CALLGRIND_START_INSTRUMENTATION;
-            ret_val = crypto_kem_enc(ct, ss, pk);
-            CALLGRIND_STOP_INSTRUMENTATION;
-	    //CALLGRIND_DUMP_STATS;
+        // CALLGRIND_START_INSTRUMENTATION;
+        ret_val = crypto_kem_enc(ct, ss, pk);
+        // CALLGRIND_STOP_INSTRUMENTATION;
+        // CALLGRIND_DUMP_STATS;
 
-            gettimeofday(&end_enc, 0);
-            long seconds_enc = end_enc.tv_sec - start_enc.tv_sec;
-            long microseconds_enc = end_enc.tv_usec - start_enc.tv_usec;
-            double elapsed_enc = seconds_enc + microseconds_enc*0.000001;
-            sum_enc += elapsed_enc;
-            times_enc = times_enc + 1;
+        gettimeofday(&end_enc, NULL);
+        get_event_time(&start_enc, &end_enc, &sum_enc, &times_enc);
+        get_event_time(&start_enc, &end_enc, &sum_total, &times_total);
+        times_total = times_total - 1;
 
-            if (ret_val != 0) {
-            // if ( (ret_val = crypto_kem_enc(ct, ss, pk)) != 0) {
-                fprintf(stderr, "crypto_kem_enc returned <%d>\n", ret_val);
-                return KAT_CRYPTO_FAILURE;
-            }
-            fprintBstr(fp_rsp, "ct = ", ct, crypto_kem_CIPHERTEXTBYTES);
-            fprintBstr(fp_rsp, "ss = ", ss, crypto_kem_BYTES);
-            
-            fprintf(fp_rsp, "\n");
-    
-            gettimeofday(&start_dec, NULL);
+        if (ret_val != 0) {
+        // if ( (ret_val = crypto_kem_enc(ct, ss, pk)) != 0) {
+            fprintf(stderr, "crypto_kem_enc returned <%d>\n", ret_val);
+            return KAT_CRYPTO_FAILURE;
+        }
+        fprintBstr(fp_rsp, "ct = ", ct, crypto_kem_CIPHERTEXTBYTES);
+        fprintBstr(fp_rsp, "ss = ", ss, crypto_kem_BYTES);
+        
+        fprintf(fp_rsp, "\n");
 
-	    CALLGRIND_START_INSTRUMENTATION;
-            ret_val =  crypto_kem_dec(ss1, ct, sk);
-            CALLGRIND_STOP_INSTRUMENTATION;
-            CALLGRIND_DUMP_STATS;
+        gettimeofday(&start_dec, NULL);
 
+        // CALLGRIND_START_INSTRUMENTATION;
+        ret_val =  crypto_kem_dec(ss1, ct, sk);
+        // CALLGRIND_STOP_INSTRUMENTATION;
+        // CALLGRIND_DUMP_STATS;
 
+        gettimeofday(&end_dec, NULL);
+        get_event_time(&start_dec, &end_dec, &sum_dec, &times_dec);
+        get_event_time(&start_dec, &end_dec, &sum_total, &times_total);
 
-            gettimeofday(&end_dec, 0);
-            long seconds_dec = end_dec.tv_sec - start_dec.tv_sec;
-            long microseconds_dec = end_dec.tv_usec - start_dec.tv_usec;
-            double elapsed_dec = seconds_dec + microseconds_dec*0.000001;
-            sum_dec += elapsed_dec;
-            times_dec = times_dec + 1;
-
-            if (ret_val != 0) {
-    //        if ( (ret_val = crypto_kem_dec(ss1, ct, sk)) != 0) {
-                fprintf(stderr, "crypto_kem_dec returned <%d>\n", ret_val);
-                return KAT_CRYPTO_FAILURE;
-            }
-            
-            if ( memcmp(ss, ss1, crypto_kem_BYTES) ) {
-                fprintf(stderr, "crypto_kem_dec returned bad 'ss' value\n");
-                return KAT_CRYPTO_FAILURE;
-            }
+        if (ret_val != 0) {
+//        if ( (ret_val = crypto_kem_dec(ss1, ct, sk)) != 0) {
+            fprintf(stderr, "crypto_kem_dec returned <%d>\n", ret_val);
+            return KAT_CRYPTO_FAILURE;
+        }
+        
+        if ( memcmp(ss, ss1, crypto_kem_BYTES) ) {
+            fprintf(stderr, "crypto_kem_dec returned bad 'ss' value\n");
+            return KAT_CRYPTO_FAILURE;
+        }
 
         // }//t
     }
 	
     printf("\n\t**********TIMING RESULTS**********\t\n");    
-    printf("Elim kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_elim)*1000/times_elim);
-    printf("Synd kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_synd)*1000/times_synd);
-    printf("Syndrome kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_syndrome)*1000/(times_syndrome));
+    printf("Elim kernel Part ");
+	print_event_execution_time(&sum_elim, &times_elim);
+    printf("Synd kernel Part ");
+	print_event_execution_time(&sum_synd, &times_synd);
+    printf("Syndrome kernel Part ");
+	print_event_execution_time(&sum_syndrome, &times_syndrome);
     
-    printf("\nKeygen :Avg Execution time is: %0.3f miliseconds \n",(sum_keygen)*1000/times_keygen);
-    printf("Enc :Avg Execution time is: %0.3f miliseconds \n",(sum_enc)*1000/times_enc);
-    printf("Dec :Avg Execution time is: %0.3f miliseconds \n",(sum_dec)*1000/times_dec);
-    printf("Encrypt :Avg Execution time is: %0.3f miliseconds \n",(sum_encrypt)*1000/times_encrypt);
-    printf("Decrypt :Avg Execution time is: %0.3f miliseconds \n",(sum_decrypt)*1000/times_decrypt);
+	printf("Key Generation Part ");
+	print_event_execution_time(&sum_keygen, &times_keygen);
+	printf("Encapsulate Part ");
+	print_event_execution_time(&sum_enc, &times_enc);
+	printf("Decapsulate Part ");
+	print_event_execution_time(&sum_dec, &times_dec);
+    printf("Pk generation Part ");
+	print_event_execution_time(&sum_keyop, &times_keyop);
+    printf("Encryption Part ");
+	print_event_execution_time(&sum_encrypt, &times_encrypt);
+    printf("Decryption Part ");
+	print_event_execution_time(&sum_decrypt, &times_decrypt);
+
+    printf("Total Part ");
+	print_event_execution_time(&sum_total, &times_decrypt);
 
     return KAT_SUCCESS;
 }

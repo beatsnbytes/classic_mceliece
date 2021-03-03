@@ -9,6 +9,7 @@
 #include "sk_gen.h"
 #include "pk_gen.h"
 #include "util.h"
+#include "custom_util.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -18,6 +19,8 @@ double sum_encrypt=0.0;
 int times_encrypt=0;
 double sum_decrypt=0.0;
 int times_decrypt=0;
+double sum_keyop=0.0;
+int times_keyop=0;
 
 /* check if the padding bits of pk are all zero */
 static int check_pk_padding(const unsigned char * pk)
@@ -57,12 +60,8 @@ int crypto_kem_enc(
 
 	encrypt(c, pk, e);
 
-	gettimeofday(&end_encrypt, 0);
-	long seconds = end_encrypt.tv_sec - start_encrypt.tv_sec;
-	long microseconds = end_encrypt.tv_usec - start_encrypt.tv_usec;
-	double elapsed_encrypt = seconds + microseconds*0.000001;
-	sum_encrypt += elapsed_encrypt;
-	times_encrypt = times_encrypt + 1;
+	gettimeofday(&end_encrypt, NULL);
+	get_event_time(&start_encrypt, &end_encrypt, &sum_encrypt, &times_encrypt);
 
 	crypto_hash_32b(c + SYND_BYTES, two_e, sizeof(two_e)); 
 
@@ -128,12 +127,8 @@ int crypto_kem_dec(
 
 	ret_decrypt = decrypt(e, sk + 40, c);
 
-	gettimeofday(&end_decrypt, 0);
-	long seconds = end_decrypt.tv_sec - start_decrypt.tv_sec;
-	long microseconds = end_decrypt.tv_usec - start_decrypt.tv_usec;
-	double elapsed_decrypt = seconds + microseconds*0.000001;
-	sum_decrypt += elapsed_decrypt;
-	times_decrypt = times_decrypt + 1;
+	gettimeofday(&end_decrypt, NULL);
+	get_event_time(&start_decrypt, &end_decrypt, &sum_decrypt, &times_decrypt);
 
 	crypto_hash_32b(conf, two_e, sizeof(two_e)); 
 
@@ -181,6 +176,9 @@ int crypto_kem_keypair
 
 	randombytes(seed+1, 32);
 
+	struct timeval start_keyop, end_keyop;
+	gettimeofday(&start_keyop, NULL);
+
 	while (1)
 	{
 		rp = &r[ sizeof(r)-32 ];
@@ -217,6 +215,9 @@ int crypto_kem_keypair
 
 		if (pk_gen(pk, skp - IRR_BYTES, perm, pi))
 			continue;
+
+		gettimeofday(&end_keyop, NULL);
+		get_event_time(&start_keyop, &end_keyop, &sum_keyop, &times_keyop);
 
 		controlbitsfrompermutation(skp, pi, GFBITS, 1 << GFBITS);
 		skp += COND_BYTES;
