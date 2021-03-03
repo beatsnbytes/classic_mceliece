@@ -163,11 +163,12 @@ main()
     }
 	
     printf("\n\t**********TIMING RESULTS**********\t\n");    
-    // printf("Elim kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_elim)*1000/times_elim);
-    printf("Elim Part ");
+    printf("Elim kernel Part ");
 	print_event_execution_time(&sum_elim, &times_elim);
-    printf("Synd kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_synd)*1000/times_synd);
-    printf("Syndrome kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_syndrome)*1000/(times_syndrome));
+    printf("Synd kernel Part ");
+	print_event_execution_time(&sum_synd, &times_synd);
+    printf("Syndrome kernel Part ");
+	print_event_execution_time(&sum_syndrome, &times_syndrome);
     
 	printf("Key Generation Part ");
 	print_event_execution_time(&sum_keygen, &times_keygen);
