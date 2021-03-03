@@ -147,14 +147,14 @@ static void syndrome_sw_host(unsigned char *s, const unsigned char *pk, unsigned
 
 /* input: public key pk, error vector e */
 /* output: syndrome s */
-#ifdef SYNDROME_KERNEL
+//#ifdef SYNDROME_KERNEL
 void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
-//void syndrome_host(unsigned char *s, unsigned char *e)
 {
 
 	cl_event events_enq[8], event_migr_tokern, events_migr_tohost;
 
 	memcpy(ptr_pk_in, pk, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES);
+
 	for(int i=0; i<syndrome_kernels; i++){
 		memcpy(ptr_e_in_list[i], e, sizeof(unsigned char)*MAT_COLS);
 	}
@@ -222,7 +222,7 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 
 
 }
-#endif
+//#endif
 
 
 
@@ -248,12 +248,12 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
   	gettimeofday(&start_syndrome, NULL);
 #endif
 
-	#ifdef SYNDROME_KERNEL
+//	#ifdef SYNDROME_KERNEL
 	syndrome_host(s, pk, e);
-	#endif
-	#ifndef SYNDROME_KERNEL
-	syndrome_sw_host(s, pk, e);
-	#endif
+//	#endif
+//	#ifndef SYNDROME_KERNEL
+//	syndrome_sw_host(s, pk, e);
+//	#endif
 
 #ifdef TIME_MEASUREMENT
 	gettimeofday(&end_syndrome, NULL);
