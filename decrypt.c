@@ -49,17 +49,14 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 
 	support_gen(L, sk);
 
+
 	struct timeval start_synd, end_synd;
-    gettimeofday(&start_synd, NULL);
+	gettimeofday(&start_synd, NULL);
 
 	synd(s, g, L, r);
 
-	gettimeofday(&end_synd, 0);
-    long seconds = end_synd.tv_sec - start_synd.tv_sec;
-    long microseconds = end_synd.tv_usec - start_synd.tv_usec;
-    double elapsed_synd = seconds + microseconds*0.000001;
-	sum_synd += elapsed_synd;
-	times_synd = times_synd + 1;
+	gettimeofday(&end_synd, NULL);
+	get_event_time(&start_synd, &end_synd, &sum_synd, &times_synd);
 
 	bm(locator, s);
 
@@ -94,12 +91,8 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 
 	synd(s_cmp, g, L, e);
 
-	gettimeofday(&end_synd, 0);
-    seconds = end_synd.tv_sec - start_synd.tv_sec;
-    microseconds = end_synd.tv_usec - start_synd.tv_usec;
-    elapsed_synd = seconds + microseconds*0.000001;
-	sum_synd += elapsed_synd;
-	times_synd = times_synd + 1;
+	gettimeofday(&end_synd, NULL);
+	get_event_time(&start_synd, &end_synd, &sum_synd, &times_synd);
 
 	//
 
