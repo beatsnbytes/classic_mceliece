@@ -25,6 +25,8 @@ extern double sum_encrypt;
 extern int times_encrypt;
 extern double sum_decrypt;
 extern int times_decrypt;
+extern double sum_keyop;
+extern int times_keyop;
 
 #endif
 
