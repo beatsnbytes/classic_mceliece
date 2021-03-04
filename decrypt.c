@@ -13,6 +13,7 @@
 #include "root.h"
 #include "gf.h"
 #include "bm.h"
+#include "custom_util.h"
 
 /* Niederreiter decryption with the Berlekamp decoder */
 /* intput: sk, secret key */

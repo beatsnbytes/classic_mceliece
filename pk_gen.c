@@ -15,6 +15,7 @@
 #include "benes.h"
 #include "root.h"
 #include "util.h"
+#include "custom_util.h"
 
 double sum_elim = 0.0;
 int times_elim = 0;

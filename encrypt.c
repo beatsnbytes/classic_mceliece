@@ -15,6 +15,7 @@
 #include <sys/time.h>
 
 #include "gf.h"
+#include "custom_util.h"
 
 double sum_syndrome = 0;
 int times_syndrome = 0;

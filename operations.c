@@ -9,11 +9,11 @@
 #include "sk_gen.h"
 #include "pk_gen.h"
 #include "util.h"
-#include "custom_util.h"
 
 #include <stdint.h>
 #include <string.h>
 #include <sys/time.h>
+#include "custom_util.h"
 
 double sum_encrypt=0.0;
 int times_encrypt=0;
