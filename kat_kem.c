@@ -21,14 +21,14 @@
 #include <math.h>
 
 #include "pk_gen.h"
-#include "root.h"
-#include "encrypt.h"
 #include "decrypt.h"
 #include "encrypt.h"
 #include "root.h"
 #include "gf.h"
 #include "controlbits.h"
 #include "synd.h"
+#include "operations.h"
+#include "custom_util.h"
 
 #include <sys/time.h>
 #include <CL/opencl.h>
@@ -132,9 +132,11 @@ cl_mem buffer_mat_in;
 cl_mem buffer_mat_out;
 unsigned char *ptr_mat_in;
 unsigned char *ptr_mat_out;
+unsigned int *ptr_fail;
 unsigned char *success_info_host_ptr;
 cl_buffer_region region_success_info;
 cl_mem buffer_success_info;
+cl_mem buffer_fail;
 
 //synd
 cl_mem buffer_out_out;
@@ -328,41 +330,6 @@ main(int argc, char* argv[])
 	#endif
 
 
-	commands_2 = clCreateCommandQueue(context, device_id, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &err);
-	#ifdef OCL_API_DEBUG
-	if (!commands) {
-		printf("Error: Failed to create a command commands!\n");
-		printf("Error: code %i\n",err);
-		printf("Test failed\n");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	commands_3 = clCreateCommandQueue(context, device_id, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &err);
-	#ifdef OCL_API_DEBUG
-	if (!commands) {
-		printf("Error: Failed to create a command commands!\n");
-		printf("Error: code %i\n",err);
-		printf("Test failed\n");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	commands_4 = clCreateCommandQueue(context, device_id, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, &err);
-	#ifdef OCL_API_DEBUG
-	if (!commands) {
-		printf("Error: Failed to create a command commands!\n");
-		printf("Error: code %i\n",err);
-		printf("Test failed\n");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-
-
-
-
-
 
    cl_int status;
    unsigned char *kernelbinary;
@@ -454,6 +421,14 @@ main(int argc, char* argv[])
 	}
 	#endif
 
+	buffer_fail = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(unsigned int), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_a");
+		return EXIT_FAILURE;
+	}
+	#endif
+
 	err = clSetKernelArg(kernel_gaussian_elimination, 0, sizeof(cl_mem), &buffer_mat_in);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
@@ -461,31 +436,6 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 	#endif
-
-	//
-	//Create a small sub-buffer to read the quantity of data
-	cl_buffer_region region_success_info={0,1*sizeof(unsigned char)};
-	buffer_success_info = clCreateSubBuffer (buffer_mat_out, CL_MEM_WRITE_ONLY, CL_BUFFER_CREATE_TYPE_REGION, &region_success_info, &err);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("ERROR : %d\n", err);
-		printf("FAILED to create sub-buffer");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	// Map the sub-buffer into the host space
-	success_info_host_ptr = (unsigned char *)clEnqueueMapBuffer(commands, buffer_success_info, true, CL_MAP_READ, 0, sizeof(unsigned char) * 1, 0, NULL, NULL, &err);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("ERROR : %d\n", err);
-		printf("FAILED to enqueue map buffer_a");
-		return EXIT_FAILURE;
-	}
-	#endif
-	//
-
-
 
 	err = clSetKernelArg(kernel_gaussian_elimination, 1, sizeof(cl_mem), &buffer_mat_out);
 	#ifdef OCL_API_DEBUG
@@ -495,7 +445,16 @@ main(int argc, char* argv[])
 	}
 	#endif
 
-	ptr_mat_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_mat_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char) * MAT_SIZE, 0, NULL, NULL, &err);
+	err = clSetKernelArg(kernel_gaussian_elimination, 2, sizeof(cl_mem), &buffer_fail);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_fail");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	ptr_mat_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_mat_in, false, CL_MAP_WRITE, 0, sizeof(unsigned char) * MAT_SIZE, 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("ERROR : %d\n", err);
@@ -505,6 +464,15 @@ main(int argc, char* argv[])
 	#endif
 
 	ptr_mat_out = (unsigned char *) clEnqueueMapBuffer(commands, buffer_mat_out, true, CL_MAP_READ, 0, sizeof(unsigned char) * MAT_SIZE, 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map buffer_a");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_fail = (unsigned int *) clEnqueueMapBuffer(commands, buffer_fail, false, CL_MAP_READ, 0, sizeof(unsigned int), 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
 		printf("ERROR : %d\n", err);
@@ -1326,16 +1294,17 @@ main(int argc, char* argv[])
         fprintf(fp_rsp, "count = %d\n", i);
         fprintBstr(fp_rsp, "seed = ", seed[i], 48);
        
+#ifdef TIME_MEASUREMENT
+        struct timeval start_keygen, end_keygen;
         gettimeofday(&start_keygen, NULL);
-
+#endif
         ret_val = crypto_kem_keypair(pk, sk);
 
-        gettimeofday(&end_keygen, 0);
-        long seconds_keygen = end_keygen.tv_sec - start_keygen.tv_sec;
-        long microseconds_keygen = end_keygen.tv_usec - start_keygen.tv_usec;
-        double elapsed_keygen = seconds_keygen + microseconds_keygen*0.000001;
-        sum_keygen += elapsed_keygen;
-        times_keygen = times_keygen + 1;
+#ifdef TIME_MEASUREMENT
+        gettimeofday(&end_keygen, NULL);
+        get_event_time(&start_keygen, &end_keygen, &sum_keygen, &times_keygen);
+#endif
+
 
         if (ret_val != 0) {
             fprintf(stderr, "crypto_kem_keypair returned <%d>\n", ret_val);
@@ -1347,15 +1316,17 @@ main(int argc, char* argv[])
         //
 //         for(int t=0; t<100; t++){
         //
-			gettimeofday(&start_enc, NULL);
+#ifdef TIME_MEASUREMENT
+        	struct timeval start_enc, end_enc;
+        	gettimeofday(&start_enc, NULL);
+#endif
 			ret_val = crypto_kem_enc(ct, ss, pk);
 
-			gettimeofday(&end_enc, 0);
-			long seconds_enc = end_enc.tv_sec - start_enc.tv_sec;
-			long microseconds_enc = end_enc.tv_usec - start_enc.tv_usec;
-			double elapsed_enc = seconds_enc + microseconds_enc*0.000001;
-			sum_enc += elapsed_enc;
-			times_enc = times_enc + 1;
+#ifdef TIME_MEASUREMENT
+			gettimeofday(&end_enc, NULL);
+			get_event_time(&start_enc, &end_enc, &sum_enc, &times_enc);
+#endif
+
 
 			if (ret_val != 0) {
 				fprintf(stderr, "crypto_kem_enc returned <%d>\n", ret_val);
@@ -1366,15 +1337,18 @@ main(int argc, char* argv[])
 
 			fprintf(fp_rsp, "\n");
 
-			gettimeofday(&start_dec, NULL);
+#ifdef TIME_MEASUREMENT
+        	struct timeval start_dec, end_dec;
+        	gettimeofday(&start_dec, NULL);
+#endif
+
 			ret_val =  crypto_kem_dec(ss1, ct, sk);
 
-			gettimeofday(&end_dec, 0);
-			long seconds_dec = end_dec.tv_sec - start_dec.tv_sec;
-			long microseconds_dec = end_dec.tv_usec - start_dec.tv_usec;
-			double elapsed_dec = seconds_dec + microseconds_dec*0.000001;
-			sum_dec += elapsed_dec;
-			times_dec = times_dec + 1;
+#ifdef TIME_MEASUREMENT
+			gettimeofday(&end_dec, NULL);
+			get_event_time(&start_dec, &end_dec, &sum_dec, &times_dec);
+#endif
+
 
 			if (ret_val != 0) {
 				fprintf(stderr, "crypto_kem_dec returned <%d>\n", ret_val);
@@ -1392,10 +1366,22 @@ main(int argc, char* argv[])
 	
 
 #ifdef TIME_MEASUREMENT
-	#ifdef GAUSSIAN_ELIMINATION_KERNEL
-	printf("\n\t**********TIMING RESULTS**********\t\n");    
-	printf("Elim kernel: OpenCl avg Execution time is: %0.3f miliseconds \n",(sum_elim / 1000000.0)/times_elim);
-	#endif
+//	printf("\n***************TIMING RESULTS***************\n");
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
+	printf("\n***************ELIM KERNEL***************\n");
+	printf("Kernel execution time\n");
+	print_kernel_execution_time(sum_list_elim_kernel, &times_elim, 1);
+	printf("To kernel migration time ");
+	print_kernel_execution_time(sum_list_elim_tokern, &times_elim_tokern, 1);
+	printf("To host migration time ");
+	print_kernel_execution_time(sum_list_elim_tohost, &times_elim_tohost, 1);
+	printf("Pk loop part ");
+	print_event_execution_time(&sum_pk_loop, &times_pk_loop);
+	printf("Parallel part ");
+	print_event_execution_time(&sum_parallel, &times_parallel);
+	printf("While KeyGen part ");
+	print_event_execution_time(&sum_while_pk_loop, &times_while_pk_loop);
+#endif
 
 	#ifdef EVAL_KERNEL
 	printf("Eval kernel: Avg Execution time is: %0.3f miliseconds \n",(sum_eval / 1000000.0)/times_eval);
@@ -1416,19 +1402,26 @@ main(int argc, char* argv[])
 //    printf("All Syndrome kernels :Avg Execution time is: %0.3f miliseconds \n", ((sum_syndrome + sum_syndrome_2)/2000000.0)/(times_syndrome_2));
 	#endif
 
-    printf("Parallel Execution time is: %0.3f miliseconds \n", (sum_par*1000)/times_par);
+#ifdef KEM_PARTS_MEASUREMENT
+	printf("\n***************KEM PARTS***************\n");
+	printf("Key Generation Part ");
+	print_event_execution_time(&sum_keygen, &times_keygen);
+	printf("Encapsulate Part ");
+	print_event_execution_time(&sum_enc, &times_enc);
+	printf("Decapsulate Part ");
+	print_event_execution_time(&sum_dec, &times_dec);
+	printf("Encrypt Part ");
+	print_event_execution_time(&sum_encrypt, &times_encrypt);
+	printf("Decrypt Part ");
+	print_event_execution_time(&sum_decrypt, &times_decrypt);
+#endif
 
-	#ifdef KEM_PARTS_MEASUREMENT
-	printf("Keygen :Avg Execution time is: %0.3f miliseconds \n",(sum_keygen*1000)/times_keygen);
-	printf("Enc :Avg Execution time is: %0.3f miliseconds \n",(sum_enc*1000)/times_enc);
-	printf("Dec :Avg Execution time is: %0.3f miliseconds \n",(sum_dec*1000)/times_dec);
-	#endif
-	#endif
+#endif
 
 	#ifdef GAUSSIAN_ELIMINATION_KERNEL
 	clReleaseKernel(kernel_gaussian_elimination);
 	clEnqueueUnmapMemObject(commands, buffer_mat_in, ptr_mat_in, 0, NULL, NULL);
-	clEnqueueUnmapMemObject(commands, buffer_mat_out, ptr_mat_out, 0, NULL, NULL);
+	clEnqueueUnmapMemObject(commands, buffer_mat_out, NULL, 0, NULL, NULL);
 	#endif
 
 	#ifdef SYNDROME_KERNEL
@@ -1438,8 +1431,9 @@ main(int argc, char* argv[])
 	clEnqueueUnmapMemObject(commands, buffer_s_out, ptr_s_out, 0, NULL, NULL);
 	#endif
 
-     clReleaseDevice(device_id);
-     clReleaseProgram(program);
+
+    clReleaseDevice(device_id);
+    clReleaseProgram(program);
     clReleaseCommandQueue(commands);
     clReleaseContext(context);
 

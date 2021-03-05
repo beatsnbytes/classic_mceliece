@@ -3,6 +3,8 @@
 */
 
 #include <stdio.h>
+#include <CL/opencl.h>
+#include <CL/cl_ext.h>
 #include <sys/time.h>
 #include "decrypt.h"
 
@@ -13,6 +15,10 @@
 #include "root.h"
 #include "gf.h"
 #include "bm.h"
+#include "custom_util.h"
+
+double sum_total_synd=0.0;
+int times_total_synd=0;
 
 /* Niederreiter decryption with the Berlekamp decoder */
 /* intput: sk, secret key */
@@ -49,13 +55,20 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 
 	support_gen(L, sk);
 
-
-	#ifdef SYND_KERNEL
+#ifdef TIME_MEASUREMENT
+  	struct timeval start_synd, end_synd;
+  	gettimeofday(&start_synd, NULL);
+#endif
+#ifdef SYND_KERNEL
 	synd_host(s, g, L, r);
-	#endif
-	#ifndef SYND_KERNEL
+#endif
+#ifndef SYND_KERNEL
 	synd_sw_host(s, g, L, r);
-	#endif
+#endif
+#ifdef TIME_MEASUREMENT
+	gettimeofday(&end_synd, NULL);
+	get_event_time(&start_synd, &end_synd, &sum_total_synd, &times_total_synd);
+#endif
 
 	bm(locator, s);
 
@@ -85,14 +98,20 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
     printf("\n");
   }
 #endif
-	
-	#ifdef SYND_KERNEL
-	synd_host(s_cmp, g, L, e);
-	#endif
-	#ifndef SYND_KERNEL
-	synd_sw_host(s_cmp, g, L, e);
-	#endif
 
+#ifdef TIME_MEASUREMENT
+	gettimeofday(&start_synd, NULL);
+#endif
+#ifdef SYND_KERNEL
+	synd_host(s_cmp, g, L, e);
+#endif
+#ifndef SYND_KERNEL
+	synd_sw_host(s_cmp, g, L, e);
+#endif
+#ifdef TIME_MEASUREMENT
+	gettimeofday(&end_synd, NULL);
+	get_event_time(&start_synd, &end_synd, &sum_total_synd, &times_total_synd);
+#endif
 
 	check = w;
 	check ^= SYS_T;

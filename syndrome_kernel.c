@@ -22,7 +22,7 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 
 	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=64
 	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=64
-	#pragma HLS ARRAY_PARTITION variable=local_s cyclic factor=24
+	#pragma HLS ARRAY_PARTITION variable=local_s cyclic factor=39
 	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=64 dim=2
 
 
@@ -46,7 +46,7 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 
 	LOOP_INIT_S:for (unsigned int i = 0; i < SYND_BYTES/2; i++){
 		#pragma HLS PIPELINE ΙΙ=1
-		#pragma HLS unroll factor=48
+		#pragma HLS unroll factor=39
 		local_s[i] = 0;
 	}
 

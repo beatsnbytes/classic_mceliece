@@ -22,17 +22,19 @@
 
 #include "gf.h"
 
-double sum_syndrome = 0;
-int times_syndrome = 0;
-double sum_syndrome_2 = 0;
-int times_syndrome_2 = 0;
-double sum_syndrome_3 = 0;
-int times_syndrome_3 = 0;
-double sum_syndrome_4 = 0;
-int times_syndrome_4 = 0;
 
-double sum_tmp = 0;
-int times_tmp = 0;
+double sum_list_syndrome_tokern[1];
+double sum_list_syndrome_tohost[1];
+double sum_list_syndrome_kernel[8];
+int times_syndrome = 0;
+int times_syndrome_tohost = 0;
+int times_syndrome_tokern = 0;
+
+double sum_syndrome_kernels=0.0;
+int times_syndrome_kernels=0;
+
+double sum_total_syndrome=0.0;
+int times_total_syndrome=0;
 
 static inline unsigned char same_mask(uint16_t x, uint16_t y)
 {
@@ -290,7 +292,7 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
 
 #ifdef TIME_MEASUREMENT
 	gettimeofday(&end_syndrome, NULL);
-	print_time(&start_syndrome, &end_syndrome);
+	get_event_time(&start_syndrome, &end_syndrome, &sum_total_syndrome, &times_total_syndrome);
 #endif
 
 }

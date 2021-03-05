@@ -2,107 +2,183 @@
 #include "gf.h"
 #include <stdlib.h>
 #include <string.h>
-//#include "ap_cint.h"
 
 gf gf_add_kernel_2(gf in0, gf in1)
 {
 	return in0 ^ in1;
 }
-
 gf gf_mul_kernel_2(gf in0, gf in1)
 {
 	int i;
 
-	uint32_t tmp;
-//	, tmp1, tmp2;
-	uint32_t t0;
-	uint32_t t1;
-	uint32_t t;
+	uint64_t tmp;
+	uint64_t t0;
+	uint64_t t1;
+	uint64_t t;
 
 	t0 = in0;
 	t1 = in1;
 
-
 	tmp = t0 * (t1 & 1);
 
-
-	for (uint i = 1; i < GFBITS; i++){ //4
+	for (i = 1; i < GFBITS; i++){
 	#pragma HLS unroll factor=4
-//#pragma HLS RESOURCE variable=tmp2 core=Mul_lut
 		tmp ^= (t0 * (t1 & (1 << i)));
-//		tmp1= (t1 & (1 << i));
-//		tmp2 =  t0 * tmp1;
-//		tmp ^= tmp2;
 	}
 
-	t = tmp & 0x7FC000;
-	tmp ^= t >> 9;
-	tmp ^= t >> 12;
+	//
 
-	t = tmp & 0x3000;
-	tmp ^= t >> 9;
-	tmp ^= t >> 12;
+	t = tmp & 0x1FF0000;
+	tmp ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
 
-	return tmp & ((1 << GFBITS)-1);
+	t = tmp & 0x000E000;
+	tmp ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
+
+	return tmp & GFMASK;
 }
 
-static inline gf gf_sq_kernel_2(gf in)
+
+/* input: field element in */
+/* return: (in^2)^2 */
+static inline gf gf_sq2_kernel_2(gf in)
 {
-	const uint32_t B[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF};
+	int i;
 
-	uint32_t x = in;
-	uint32_t t;
+	const uint64_t B[] = {0x1111111111111111,
+	                      0x0303030303030303,
+	                      0x000F000F000F000F,
+	                      0x000000FF000000FF};
 
-	x = (x | (x << 8)) & B[3];
-	x = (x | (x << 4)) & B[2];
-	x = (x | (x << 2)) & B[1];
-	x = (x | (x << 1)) & B[0];
+	const uint64_t M[] = {0x0001FF0000000000,
+	                      0x000000FF80000000,
+	                      0x000000007FC00000,
+	                      0x00000000003FE000};
 
-	t = x & 0x7FC000;
-	x ^= t >> 9;
-	x ^= t >> 12;
+	uint64_t x = in;
+	uint64_t t;
 
-	t = x & 0x3000;
-	x ^= t >> 9;
-	x ^= t >> 12;
+	x = (x | (x << 24)) & B[3];
+	x = (x | (x << 12)) & B[2];
+	x = (x | (x << 6)) & B[1];
+	x = (x | (x << 3)) & B[0];
 
-	return x & ((1 << GFBITS)-1);
+	for (i = 0; i < 4; i++)
+	{
+		t = x & M[i];
+		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
+	}
+
+	return x & GFMASK;
 }
 
-gf gf_inv_kernel_2(gf in)
+/* input: field element in, m */
+/* return: (in^2)*m */
+static inline gf gf_sqmul_kernel_2(gf in, gf m)
+{
+	int i;
+
+	uint64_t x;
+	uint64_t t0;
+	uint64_t t1;
+	uint64_t t;
+
+	const uint64_t M[] = {0x0000001FF0000000,
+	                      0x000000000FF80000,
+	                      0x000000000007E000};
+
+	t0 = in;
+	t1 = m;
+
+	x = (t1 << 6) * (t0 & (1 << 6));
+
+	t0 ^= (t0 << 7);
+
+	x ^= (t1 * (t0 & (0x04001)));
+	x ^= (t1 * (t0 & (0x08002))) << 1;
+	x ^= (t1 * (t0 & (0x10004))) << 2;
+	x ^= (t1 * (t0 & (0x20008))) << 3;
+	x ^= (t1 * (t0 & (0x40010))) << 4;
+	x ^= (t1 * (t0 & (0x80020))) << 5;
+
+	for (i = 0; i < 3; i++)
+	{
+		t = x & M[i];
+		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
+	}
+
+	return x & GFMASK;
+}
+
+/* input: field element in, m */
+/* return: ((in^2)^2)*m */
+static inline gf gf_sq2mul_kernel_2(gf in, gf m)
+{
+	int i;
+
+	uint64_t x;
+	uint64_t t0;
+	uint64_t t1;
+	uint64_t t;
+
+	const uint64_t M[] = {0x1FF0000000000000,
+		              0x000FF80000000000,
+		              0x000007FC00000000,
+	                      0x00000003FE000000,
+	                      0x0000000001FE0000,
+	                      0x000000000001E000};
+
+	t0 = in;
+	t1 = m;
+
+	x = (t1 << 18) * (t0 & (1 << 6));
+
+	t0 ^= (t0 << 21);
+
+	x ^= (t1 * (t0 & (0x010000001)));
+	x ^= (t1 * (t0 & (0x020000002))) << 3;
+	x ^= (t1 * (t0 & (0x040000004))) << 6;
+	x ^= (t1 * (t0 & (0x080000008))) << 9;
+	x ^= (t1 * (t0 & (0x100000010))) << 12;
+	x ^= (t1 * (t0 & (0x200000020))) << 15;
+
+	for (i = 0; i < 6; i++)
+	{
+	#pragma HLS PIPELINE
+		t = x & M[i];
+		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
+	}
+
+	return x & GFMASK;
+}
+
+
+
+
+gf gf_frac_kernel_2(gf den, gf num)
 {
 	gf tmp_11;
 	gf tmp_1111;
+	gf out;
 
-	gf out = in;
+	tmp_11 = gf_sqmul_kernel_2(den, den); // ^11
+	tmp_1111 = gf_sq2mul_kernel_2(tmp_11, tmp_11); // ^1111
+	out = gf_sq2_kernel_2(tmp_1111);
+	out = gf_sq2mul_kernel_2(out, tmp_1111); // ^11111111
+	out = gf_sq2_kernel_2(out);
+	out = gf_sq2mul_kernel_2(out, tmp_1111); // ^111111111111
 
-
-	out = gf_sq_kernel_2(out);
-	tmp_11 = gf_mul_kernel_2(out, in); // 11
-
-	out = gf_sq_kernel_2(tmp_11);
-	out = gf_sq_kernel_2(out);
-	tmp_1111 = gf_mul_kernel_2(out, tmp_11); // 1111
-
-	out = gf_sq_kernel_2(tmp_1111);
-
-	out = gf_sq_kernel_2(out);
-	out = gf_sq_kernel_2(out);
-	out = gf_sq_kernel_2(out);
-
-	out = gf_mul_kernel_2(out, tmp_1111); // 11111111
-
-	out = gf_sq_kernel_2(out);
-	out = gf_sq_kernel_2(out);
-	out = gf_mul_kernel_2(out, tmp_11); // 1111111111
-
-	out = gf_sq_kernel_2(out);
-	out = gf_mul_kernel_2(out, in); // 11111111111
-
-	return gf_sq_kernel_2(out); // 111111111110
+	return gf_sqmul_kernel_2(out, num); // ^1111111111110 = ^-1
 }
 
-gf eval_inner_2(gf *f, gf a)
+
+gf gf_inv_kernel_2(gf den)
+{
+	return gf_frac_kernel_2(den, ((gf) 1));
+}
+
+
+
+gf eval_inner_kernel_2(gf *f, gf a)
 {
         int i;
         gf r;
@@ -114,12 +190,10 @@ gf eval_inner_2(gf *f, gf a)
 		#pragma HLS PIPELINE II=3
 		#pragma HLS unroll factor=2
                 r = gf_mul_kernel_2(r, a) ^ f[i];
-//                r = gf_add(r, f[i]);
         }
 
         return r;
 }
-
 void synd_kernel_2(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
@@ -171,8 +245,8 @@ void synd_kernel_2(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	//READ into local vars END
 	LOOP_EVAL:
 	for(uint i=SYS_N/2; i <SYS_N; i++){
-	#pragma HLS PIPELINE
-		e_mat[i] = eval_inner_2(local_f, local_L[i]);
+//	#pragma HLS PIPELINE
+		e_mat[i] = eval_inner_kernel_2(local_f, local_L[i]);
 	}
 
 
