@@ -73,64 +73,15 @@ extern unsigned int *ptr_fail;
 
 //SYNDROME
 
-extern cl_kernel kernel_synd_1;
-extern cl_kernel kernel_synd_2;
-extern cl_kernel kernel_synd_3;
-extern cl_kernel kernel_synd_4;
-extern cl_kernel kernel_synd_5;
-extern cl_kernel kernel_synd_6;
-extern cl_kernel kernel_synd_7;
-extern cl_kernel kernel_synd_8;
 extern cl_kernel synd_kernels_list[8];
-//extern char synd_kernels_name_list[7][20];
-
-extern cl_mem buffer_out_out;
-extern cl_mem buffer_out_out_2;
-extern cl_mem buffer_out_out_3;
-extern cl_mem buffer_out_out_4;
-extern cl_mem buffer_out_out_5;
-extern cl_mem buffer_out_out_6;
-extern cl_mem buffer_out_out_7;
-extern cl_mem buffer_out_out_8;
 extern cl_mem buffer_out_out_list[8];
-
-extern gf *ptr_out_out;
-extern gf *ptr_out_out_2;
-extern gf *ptr_out_out_3;
-extern gf *ptr_out_out_4;
-extern gf *ptr_out_out_5;
-extern gf *ptr_out_out_6;
-extern gf *ptr_out_out_7;
-extern gf *ptr_out_out_8;
 extern gf * ptr_out_out_list[8];
-
-
-extern cl_mem buffer_f_in;
-extern cl_mem buffer_f_in_2;
-extern cl_mem buffer_f_in_3;
-extern cl_mem buffer_f_in_4;
-extern cl_mem buffer_f_in_5;
-extern cl_mem buffer_f_in_6;
-extern cl_mem buffer_f_in_7;
-extern cl_mem buffer_f_in_8;
 extern cl_mem buffer_f_in_list[8];
-
-extern gf *ptr_f_in;
-extern gf *ptr_f_in_2;
-extern gf *ptr_f_in_3;
-extern gf *ptr_f_in_4;
-extern gf *ptr_f_in_5;
-extern gf *ptr_f_in_6;
-extern gf *ptr_f_in_7;
-extern gf *ptr_f_in_8;
 extern gf *ptr_f_in_list[8];
-
 extern cl_mem buffer_L_in;
 extern gf *ptr_L_in;
-
 extern cl_mem buffer_r_in;
 extern unsigned char *ptr_r_in;
-
 extern cl_mem pt_list_synd_combined[10];
 extern cl_mem pt_list_synd_combined_out[8];
 
