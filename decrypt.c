@@ -26,8 +26,8 @@ int times_total_synd=0;
 /* output: e, error vector */
 /* return: 0 for success; 1 for failure */
 
-double sum_synd= 0.0;
-int times_synd= 0;
+//double sum_synd= 0.0;
+//int times_synd= 0;
 
 int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 {

@@ -17,9 +17,17 @@
 /* input: Goppa polynomial f, support L, received word r */
 /* output: out, the syndrome of length 2t */
 
+double sum_list_synd_tokern[1];
+double sum_list_synd_tohost[1];
+double sum_list_synd_kernel[2];
+int times_synd = 0;
+int times_synd_tohost = 0;
+int times_synd_tokern = 0;
 
-double sum_synd_2=0.0;
-int times_synd_2=0;
+double sum_synd_kernels=0.0;
+int times_synd_kernels=0;
+
+
 
 void synd_sw_host(gf *out, gf* f , gf *L, unsigned char *r)
 {
@@ -54,6 +62,7 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 #endif
 
 	memcpy(ptr_f_in, f, sizeof(gf)*(SYS_T+1));
+	memcpy(ptr_f_in_2, f, sizeof(gf)*(SYS_T+1));
 	memcpy(ptr_L_in, L, sizeof(gf)*SYS_N);
 	memcpy(ptr_r_in, r, sizeof(unsigned char)*MAT_COLS);
 
@@ -68,7 +77,7 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 
 
 	//TODO fix the argument size parametrization. which buffers should be duplicated?
-	err = clEnqueueMigrateMemObjects(commands, 3*synd_kernels, &pt_list_synd_combined[0], 0, 0, NULL, &event_migr_tokern);
+	err = clEnqueueMigrateMemObjects(commands, 3+(synd_kernels-1), &pt_list_synd_combined[0], 0, 0, NULL, &event_migr_tokern);
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
     	printf("FAILED to enqueue input buffers\n");
@@ -76,19 +85,19 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     }
 	#endif
 
-	//#ifdef TIME_MEASUREMENT
-	//	struct timeval start_kernel, end_kernel;
-	//	gettimeofday(&start_kernel, NULL);
-	//#endif
+//	#ifdef TIME_MEASUREMENT
+//		struct timeval start_kernel, end_kernel;
+//		gettimeofday(&start_kernel, NULL);
+//	#endif
 
     for (int i=0; i<synd_kernels; i++){
-    	err = clEnqueueTask(commands, synd_kernels_list[i], 1, &event_migr_tokern, &events_enq[i]);
+    	err = clEnqueueTask(commands, synd_kernels_list[(synd_kernels-1)+i], 1, &event_migr_tokern, &events_enq[i]);
     }
-    //	#ifdef TIME_MEASUREMENT
-    //		clWaitForEvents(synd_kernels, &events_enq);
-    //		gettimeofday(&end_kernel, NULL);
-    //		get_event_time(&start_kernel, &end_kernel, &sum_synd_kernels, &times_synd_kernels);
-    //	#endif
+//    	#ifdef TIME_MEASUREMENT
+//    		clWaitForEvents(synd_kernels, &events_enq);
+//    		gettimeofday(&end_kernel, NULL);
+//    		get_event_time(&start_kernel, &end_kernel, &sum_synd_kernels, &times_synd_kernels);
+//    	#endif
 
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
@@ -108,11 +117,11 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     clWaitForEvents(1, &event_migr_tohost);
 
 
-//    for(int i=0; i<2*SYS_T; i++){
-//    	*(out+i) = *(ptr_out_out+i) ^ *(ptr_out_out_2+i);
-//    }
+    for(int i=0; i<2*SYS_T; i++){
+    	*(out+i) = *(ptr_out_out2_1+i) ^ *(ptr_out_out2_2+i);
+    }
     //TODO parametrize with ifdefs
-    memcpy(out, ptr_out_out, sizeof(gf)*(2*SYS_T));
+//    memcpy(out, ptr_out_out, sizeof(gf)*(2*SYS_T));
 
 
 #ifdef FUNC_CORRECTNESS
