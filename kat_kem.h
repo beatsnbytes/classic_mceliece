@@ -17,34 +17,13 @@ extern cl_kernel kernel_syndrome_5;
 extern cl_kernel kernel_syndrome_6;
 extern cl_kernel kernel_syndrome_7;
 extern cl_kernel kernel_syndrome_8;
-extern cl_kernel kernel_synd1_1;
-extern cl_kernel kernel_synd2_1;
-extern cl_kernel kernel_synd2_2;
-extern cl_kernel kernel_synd4_1;
-extern cl_kernel kernel_synd4_2;
-extern cl_kernel kernel_synd4_3;
-extern cl_kernel kernel_synd4_4;
+
+
 extern cl_program program;
 extern cl_context context;
 extern cl_uint DATA_SIZE;
 extern cl_int err;
 extern cl_command_queue commands;
-extern cl_command_queue commands_2;
-extern cl_command_queue commands_3;
-extern cl_command_queue commands_4;
-extern cl_mem buffer_in0;
-extern cl_mem buffer_in1;
-extern cl_mem buffer_output;
-
-
-//eval
-extern cl_mem buffer_f_in;
-extern cl_mem buffer_a_in;
-extern cl_mem buffer_r_out;
-extern gf *ptr_f_in;
-extern gf *ptr_a_in;
-extern gf *ptr_r_out;
-extern cl_mem pt_list_eval[3];
 
 //syndrome
 extern cl_mem buffer_pk_in;
@@ -92,32 +71,68 @@ extern unsigned char *ptr_mat_out;
 extern unsigned char *success_info_host_ptr;
 extern unsigned int *ptr_fail;
 
-//synd
-extern cl_mem buffer_out_out;
-extern cl_mem buffer_out_out2_1;
-extern cl_mem buffer_out_out2_2;
-extern cl_mem buffer_f_in;
-extern cl_mem buffer_L_in;
-extern cl_mem buffer_r_in;
-extern gf *ptr_out_out;
-extern gf *ptr_out_out2_1;
-extern gf *ptr_out_out2_2;
-extern gf *ptr_f_in;
-extern gf *ptr_L_in;
-extern unsigned char *ptr_r_in;
-extern cl_mem pt_list_synd[4];
-extern cl_mem pt_list_synd_combined[4];
-extern cl_kernel synd_kernels_list[7];
-extern cl_mem pt_list_synd_combined_out[3];
+//SYNDROME
 
+extern cl_kernel kernel_synd_1;
+extern cl_kernel kernel_synd_2;
+extern cl_kernel kernel_synd_3;
+extern cl_kernel kernel_synd_4;
+extern cl_kernel kernel_synd_5;
+extern cl_kernel kernel_synd_6;
+extern cl_kernel kernel_synd_7;
+extern cl_kernel kernel_synd_8;
+extern cl_kernel synd_kernels_list[8];
+//extern char synd_kernels_name_list[7][20];
+
+extern cl_mem buffer_out_out;
 extern cl_mem buffer_out_out_2;
-extern cl_mem buffer_f_in_2;
-extern cl_mem buffer_L_in_2;
-extern cl_mem buffer_r_in_2;
+extern cl_mem buffer_out_out_3;
+extern cl_mem buffer_out_out_4;
+extern cl_mem buffer_out_out_5;
+extern cl_mem buffer_out_out_6;
+extern cl_mem buffer_out_out_7;
+extern cl_mem buffer_out_out_8;
+extern cl_mem buffer_out_out_list[8];
+
+extern gf *ptr_out_out;
 extern gf *ptr_out_out_2;
+extern gf *ptr_out_out_3;
+extern gf *ptr_out_out_4;
+extern gf *ptr_out_out_5;
+extern gf *ptr_out_out_6;
+extern gf *ptr_out_out_7;
+extern gf *ptr_out_out_8;
+extern gf * ptr_out_out_list[8];
+
+
+extern cl_mem buffer_f_in;
+extern cl_mem buffer_f_in_2;
+extern cl_mem buffer_f_in_3;
+extern cl_mem buffer_f_in_4;
+extern cl_mem buffer_f_in_5;
+extern cl_mem buffer_f_in_6;
+extern cl_mem buffer_f_in_7;
+extern cl_mem buffer_f_in_8;
+extern cl_mem buffer_f_in_list[8];
+
+extern gf *ptr_f_in;
 extern gf *ptr_f_in_2;
-extern gf *ptr_L_in_2;
-extern unsigned char *ptr_r_in_2;
-extern cl_mem pt_list_synd_2[4];
+extern gf *ptr_f_in_3;
+extern gf *ptr_f_in_4;
+extern gf *ptr_f_in_5;
+extern gf *ptr_f_in_6;
+extern gf *ptr_f_in_7;
+extern gf *ptr_f_in_8;
+extern gf *ptr_f_in_list[8];
+
+extern cl_mem buffer_L_in;
+extern gf *ptr_L_in;
+
+extern cl_mem buffer_r_in;
+extern unsigned char *ptr_r_in;
+
+extern cl_mem pt_list_synd_combined[10];
+extern cl_mem pt_list_synd_combined_out[8];
+
 
 

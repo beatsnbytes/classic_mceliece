@@ -20,6 +20,9 @@ extern int times_synd_tokern;
 extern double sum_synd_kernels;
 extern int times_synd_kernels;
 
+extern double sum_xor;
+extern int times_xor;
+
 
 #endif
 

@@ -27,6 +27,9 @@ int times_synd_tokern = 0;
 double sum_synd_kernels=0.0;
 int times_synd_kernels=0;
 
+double sum_xor=0.0;
+int times_xor=0;
+
 
 
 void synd_sw_host(gf *out, gf* f , gf *L, unsigned char *r)
@@ -57,26 +60,17 @@ void synd_sw_host(gf *out, gf* f , gf *L, unsigned char *r)
 void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 {
 
-#ifdef TIME_MEASUREMENT
-	cl_event events_enq[2], event_migr_tohost, event_migr_tokern;
-#endif
+	cl_event events_enq[4], event_migr_tohost, event_migr_tokern;
+	gf xor_reduction;
 
-	memcpy(ptr_f_in, f, sizeof(gf)*(SYS_T+1));
-	memcpy(ptr_f_in_2, f, sizeof(gf)*(SYS_T+1));
+
 	memcpy(ptr_L_in, L, sizeof(gf)*SYS_N);
 	memcpy(ptr_r_in, r, sizeof(unsigned char)*MAT_COLS);
 
+	for (int i=0; i<synd_kernels; i++){
+		memcpy(ptr_f_in_list[i], f, sizeof(gf)*(SYS_T+1));
+	}
 
-//	memcpy(ptr_L_in, L, sizeof(gf)*SYS_N/2);
-//	memcpy(ptr_L_in_2, (L+SYS_N/2), sizeof(gf)*SYS_N/2);
-//
-//	memcpy(ptr_r_in, r, sizeof(unsigned char)*MAT_COLS/2);
-//	memcpy(ptr_r_in_2, (r+MAT_COLS/2), sizeof(unsigned char)*MAT_COLS/2);
-
-
-
-
-	//TODO fix the argument size parametrization. which buffers should be duplicated?
 	err = clEnqueueMigrateMemObjects(commands, 3+(synd_kernels-1), &pt_list_synd_combined[0], 0, 0, NULL, &event_migr_tokern);
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
@@ -85,19 +79,19 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     }
 	#endif
 
-//	#ifdef TIME_MEASUREMENT
-//		struct timeval start_kernel, end_kernel;
-//		gettimeofday(&start_kernel, NULL);
-//	#endif
+	#ifdef TIME_MEASUREMENT
+		struct timeval start_kernel, end_kernel;
+		gettimeofday(&start_kernel, NULL);
+	#endif
 
     for (int i=0; i<synd_kernels; i++){
-    	err = clEnqueueTask(commands, synd_kernels_list[(synd_kernels-1)+i], 1, &event_migr_tokern, &events_enq[i]);
+    	err = clEnqueueTask(commands, synd_kernels_list[i], 1, &event_migr_tokern, &events_enq[i]);
     }
-//    	#ifdef TIME_MEASUREMENT
-//    		clWaitForEvents(synd_kernels, &events_enq);
-//    		gettimeofday(&end_kernel, NULL);
-//    		get_event_time(&start_kernel, &end_kernel, &sum_synd_kernels, &times_synd_kernels);
-//    	#endif
+    	#ifdef TIME_MEASUREMENT
+    		clWaitForEvents(synd_kernels, &events_enq);
+    		gettimeofday(&end_kernel, NULL);
+    		get_event_time(&start_kernel, &end_kernel, &sum_synd_kernels, &times_synd_kernels);
+    	#endif
 
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
@@ -106,7 +100,7 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     }
 	#endif
 
-	err = clEnqueueMigrateMemObjects(commands, synd_kernels, &pt_list_synd_combined_out[synd_kernels-1], CL_MIGRATE_MEM_OBJECT_HOST, synd_kernels, &events_enq[0], &event_migr_tohost);
+	err = clEnqueueMigrateMemObjects(commands, synd_kernels, &pt_list_synd_combined_out[0], CL_MIGRATE_MEM_OBJECT_HOST, synd_kernels, &events_enq[0], &event_migr_tohost);
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {
     	printf("FAILED to enqueue bufer_res\n");
@@ -115,13 +109,25 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 	#endif
 
     clWaitForEvents(1, &event_migr_tohost);
-
+    	#ifdef TIME_MEASUREMENT
+    		struct timeval start_xor, end_xor;
+    		gettimeofday(&start_xor, NULL);
+    	#endif
 
     for(int i=0; i<2*SYS_T; i++){
-    	*(out+i) = *(ptr_out_out2_1+i) ^ *(ptr_out_out2_2+i);
+    	xor_reduction = 0;
+    	for(int j=0; j<synd_kernels; j++){
+    		xor_reduction ^= *(ptr_out_out_list[j] + i);
+    	}
+       *(out+i) = xor_reduction;
     }
-    //TODO parametrize with ifdefs
-//    memcpy(out, ptr_out_out, sizeof(gf)*(2*SYS_T));
+
+        	#ifdef TIME_MEASUREMENT
+        		clWaitForEvents(synd_kernels, &events_enq);
+        		gettimeofday(&end_xor, NULL);
+        		get_event_time(&start_xor, &end_xor, &sum_xor, &times_xor);
+        	#endif
+
 
 
 #ifdef FUNC_CORRECTNESS
@@ -134,11 +140,11 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 	}
 #endif
 
-//#ifdef TIME_MEASUREMENT
-//	cl_profile_print(&event_migr_tokern, 1, sum_list_synd_tokern, &times_synd_tokern);
-//	cl_profile_print(&events_enq[0], synd_kernels, sum_list_synd_kernel, &times_synd);
-//	cl_profile_print(&event_migr_tohost, 1, sum_list_synd_tohost, &times_synd_tohost);
-//#endif
+#ifdef TIME_MEASUREMENT
+	cl_profile_print(&event_migr_tokern, 1, sum_list_synd_tokern, &times_synd_tokern);
+	cl_profile_print(&events_enq[0], synd_kernels, sum_list_synd_kernel, &times_synd);
+	cl_profile_print(&event_migr_tohost, 1, sum_list_synd_tohost, &times_synd_tohost);
+#endif
 
 }
 #endif
