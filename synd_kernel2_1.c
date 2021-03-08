@@ -25,7 +25,7 @@ gf gf_mul_kernel2_1(gf in0, gf in1)
 
 	for (uint i = 1; i < GFBITS; i++){
 //#pragma HLS dependence variable=tmp_mul_mat RAW true
-	#pragma HLS pipeline
+//	#pragma HLS pipeline
 //	#pragma HLS unroll
 		tmp ^= (t0 * (t1 & (1 << i)));
 	}
@@ -67,8 +67,8 @@ static inline gf gf_sq2_kernel2_1(gf in)
 
 	for (i = 0; i < 4; i++)
 	{
-	#pragma HLS PIPELINE
-	#pragma HLS unroll
+//	#pragma HLS PIPELINE
+//	#pragma HLS unroll
 
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
@@ -108,8 +108,8 @@ static inline gf gf_sqmul_kernel2_1(gf in, gf m)
 
 	for (i = 0; i < 3; i++)
 	{
-	#pragma HLS PIPELINE
-	#pragma HLS unroll
+//	#pragma HLS PIPELINE
+//	#pragma HLS unroll
 
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
@@ -152,8 +152,8 @@ static inline gf gf_sq2mul_kernel2_1(gf in, gf m)
 
 	for (i = 0; i < 6; i++)
 	{
-	#pragma HLS PIPELINE
-	#pragma HLS unroll
+//	#pragma HLS PIPELINE
+//	#pragma HLS unroll
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
 	}
@@ -197,7 +197,7 @@ gf eval_inner2_1(gf *f, gf a)
 
         for (i = SYS_T-1; i >= 0; i--)
         {
-		#pragma HLS PIPELINE II=3
+//		#pragma HLS PIPELINE II=3
 //		#pragma HLS unroll factor=2
                 r = gf_mul_kernel2_1(r, a) ^ f[i];
         }
@@ -258,7 +258,7 @@ void synd_kernel2_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	//READ into local vars END
 	LOOP_EVAL:
 	for(uint i=0; i <SYS_N/2; i++){//
-	#pragma HLS PIPELINE
+//	#pragma HLS PIPELINE
 //	#pragma HLS unroll factor=2
 		e_mat[i] = eval_inner2_1(local_f, local_L[i]);
 	}
@@ -277,7 +277,7 @@ void synd_kernel2_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		for (uint j = 0; j < 2*SYS_T; j++) //8
 		{
 //		#pragma HLS DEPENDENCE inter variable=local_out false
-		#pragma HLS PIPELINE
+//		#pragma HLS PIPELINE
 //		#pragma HLS unroll factor=2
 
 			if(i==0){

@@ -74,7 +74,7 @@ cl_kernel kernel_syndrome_4;
 #endif
 
 #ifdef SYND_KERNEL
-int synd_kernels = 4 ;
+int synd_kernels = 2 ;
 
 cl_kernel synd_kernels_list[8];
 const char *synd_kernels_name_list[15] = {"synd_kernel1_1",
@@ -1000,31 +1000,7 @@ main(int argc, char* argv[])
 
 #ifdef SYND_KERNEL
 
-	synd_kernels_list[0] = clCreateKernel(program, "synd_kernel4_1", &err);
-	#ifdef OCL_API_DEBUG
-	if (!synd_kernels_list[0] || err != CL_SUCCESS) {
-		printf("Error: Failed to create compute kernel_synd!\n");
-		printf("Test failed\n");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	buffer_out_out_list[0] = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(gf)*2*SYS_T, NULL, &err);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to create buffer_out_out");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	buffer_f_in_list[0] = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(gf)*(SYS_T+1), NULL, &err);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to create buffer_f_in");
-		return EXIT_FAILURE;
-	}
-	#endif
-
+	//Initalize the buffers/pointers that will be used by all kernels
 	buffer_L_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(gf)*SYS_N, NULL, &err);
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
@@ -1042,57 +1018,6 @@ main(int argc, char* argv[])
 	#endif
 
 
-	err = clSetKernelArg(synd_kernels_list[0], 0, sizeof(cl_mem), &buffer_out_out_list[0]);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to set kernel arguments for buffer_out_out");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	err = clSetKernelArg(synd_kernels_list[0], 1, sizeof(cl_mem), &buffer_f_in_list[0]);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to set kernel arguments for buffer_f_in");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	err = clSetKernelArg(synd_kernels_list[0], 2, sizeof(cl_mem), &buffer_L_in);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to set kernel arguments for buffer_L_in");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-
-	err = clSetKernelArg(synd_kernels_list[0], 3, sizeof(cl_mem), &buffer_r_in);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("FAILED to set kernel arguments for buffer_r_in");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-
-	ptr_out_out_list[0] = (gf *) clEnqueueMapBuffer(commands, buffer_out_out_list[0], true, CL_MAP_READ, 0, sizeof(gf)*2*SYS_T, 0, NULL, NULL, &err);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("ERROR : %d\n", err);
-		printf("FAILED to enqueue map buffer_r_out");
-		return EXIT_FAILURE;
-	}
-	#endif
-
-	ptr_f_in_list[0] = (gf *) clEnqueueMapBuffer(commands, buffer_f_in_list[0], true, CL_MAP_WRITE, 0, sizeof(gf)*(SYS_T+1), 0, NULL, NULL, &err);
-	#ifdef OCL_API_DEBUG
-	if (err != CL_SUCCESS) {
-		printf("ERROR : %d\n", err);
-		printf("FAILED to enqueue map buffer_f");
-		return EXIT_FAILURE;
-	}
-	#endif
 
 	ptr_L_in = (gf *) clEnqueueMapBuffer(commands, buffer_L_in, true, CL_MAP_WRITE, 0, sizeof(gf)*SYS_N, 0, NULL, NULL, &err);
 	#ifdef OCL_API_DEBUG
@@ -1113,7 +1038,8 @@ main(int argc, char* argv[])
 	}
 	#endif
 
-	for(int i=1; i<synd_kernels; i++){
+	//Iteratively initialize kernels and their private buffers/pointers
+	for(int i=0; i<synd_kernels; i++){
 
 		int index = synd_kernels-1+i;
 		synd_kernels_list[i] = clCreateKernel(program, synd_kernels_name_list[index], &err);
@@ -1196,27 +1122,18 @@ main(int argc, char* argv[])
 
 	}
 
-	//TODO init with for looop
-	pt_list_synd_combined[0]= buffer_f_in_list[0];
-	pt_list_synd_combined[1]= buffer_L_in;
-	pt_list_synd_combined[2]= buffer_r_in;
-	pt_list_synd_combined[3]= buffer_f_in_list[1];
-	pt_list_synd_combined[4]= buffer_f_in_list[2];
-	pt_list_synd_combined[5]= buffer_f_in_list[3];
-	pt_list_synd_combined[6]= buffer_f_in_list[4];
-	pt_list_synd_combined[7]= buffer_f_in_list[5];
-	pt_list_synd_combined[8]= buffer_f_in_list[6];
-	pt_list_synd_combined[9]= buffer_f_in_list[7];
+	//Put buffers/pointers to lists so they can be used by the host function
+	pt_list_synd_combined[0]= buffer_L_in;
+	pt_list_synd_combined[1]= buffer_r_in;
 
-	//TODO init with for looop
-	pt_list_synd_combined_out[0]= buffer_out_out_list[0];
-	pt_list_synd_combined_out[1]= buffer_out_out_list[1];
-	pt_list_synd_combined_out[2]= buffer_out_out_list[2];
-	pt_list_synd_combined_out[3]= buffer_out_out_list[3];
-	pt_list_synd_combined_out[4]= buffer_out_out_list[4];
-	pt_list_synd_combined_out[5]= buffer_out_out_list[5];
-	pt_list_synd_combined_out[6]= buffer_out_out_list[6];
-	pt_list_synd_combined_out[7]= buffer_out_out_list[7];
+	for(int i=0; i<synd_kernels; i++){
+		pt_list_synd_combined[2+i]= buffer_f_in_list[i];
+	}
+
+	for(int i=0; i<synd_kernels; i++){
+		pt_list_synd_combined_out[i]= buffer_out_out_list[i];
+	}
+
 
 #endif
 
@@ -1373,8 +1290,6 @@ main(int argc, char* argv[])
 	print_kernel_execution_time(sum_list_synd_tokern, &times_synd_tokern, 1);
 	printf("To host migration time ");
 	print_kernel_execution_time(sum_list_synd_tohost, &times_synd_tohost, 1);
-	printf("XOR reduction\n");
-	print_event_execution_time(&sum_xor, &times_xor);
 	printf("Synd all kernels\n");
 	print_event_execution_time(&sum_synd_kernels, &times_synd_kernels);
 	printf("Synd host function ");
