@@ -76,7 +76,7 @@ cl_mem buffer_fail;
 
 
 #ifdef SYNDROME_KERNEL
-int syndrome_kernels = 4 ;
+int syndrome_kernels = 2 ;
 cl_kernel syndrome_kernels_list[8];
 
 const char *syndrome_kernels_name_list[15] = {"syndrome_kernel",
@@ -113,7 +113,7 @@ cl_mem pt_list_syndrome_combined[9];
 #endif
 
 #ifdef SYND_KERNEL
-int synd_kernels = 2;
+int synd_kernels = 1;
 
 cl_kernel synd_kernels_list[8];
 const char *synd_kernels_name_list[15] = {"synd_kernel1_1",
@@ -889,6 +889,10 @@ main(int argc, char* argv[])
 	printf("\n***************SYNDROME KERNEL***************\n");
 	printf("Kernel execution time\n");
 	print_kernel_execution_time(sum_list_syndrome_kernel, &times_syndrome, syndrome_kernels);
+
+	printf("Kernel execution time\n");
+	print_kernel_execution_time(sum_list_syndrome_kernel, &times_syndrome, syndrome_kernels);
+
 	printf("To kernel migration time\n");
 	print_kernel_execution_time(sum_list_syndrome_tokern, &times_syndrome_tokern, 1);
 	printf("To host migration time\n");

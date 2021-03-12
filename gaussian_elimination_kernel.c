@@ -17,16 +17,24 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 	#pragma HLS INTERFACE s_axilite port=return 		      bundle=control
 
 
-	unsigned int i, k, row;
-	unsigned int j, c;
+//	unsigned int i, k, row;
+//	unsigned int j, c;
+//
+	int i, k, row;
+	int j, c;
 
 	unsigned char mask, tmpVal, cmpVal;
 
 	unsigned char tmpRow[MAT_COLS];
     unsigned char localMat[MAT_ROWS][MAT_COLS]; // Local memory to store input matrix
 
-	#pragma HLS ARRAY_PARTITION variable=localMat cyclic factor=144 dim=2
-	#pragma HLS ARRAY_PARTITION variable=tmpRow cyclic factor=144
+	#pragma HLS ARRAY_PARTITION variable=localMat cyclic factor=76 dim=2
+	#pragma HLS ARRAY_PARTITION variable=tmpRow cyclic factor=76 //76
+
+//	#pragma HLS RESOURCE variable=tmpRow core=RAM_2P_LUTRAM
+//	#pragma HLS RESOURCE variable=localMat core=RAM_2P_LUTRAM
+
+
 
 
 	LOOP_READ_FROM_DRAM_PK:
@@ -47,8 +55,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 			row = (i<<3) + j;
 			TMP_ROW_CONSTRUCTION_LOOP2:for(c=0;c<MAT_COLS;c++){
 				#pragma HLS dependence variable=tmpRow inter false
-//				#pragma HLS dependence variable=localMat inter false
-				#pragma HLS unroll factor=144
+				#pragma HLS unroll factor=76
 				#pragma HLS PIPELINE II=1
 
 				if (row>=1){
@@ -60,7 +67,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 			OUTER_LOOP_FWD_ELIM:for (k = row+1; k < MAT_ROWS; k++)
 			{
 				#pragma HLS dependence variable=tmpRow inter false
-				#pragma HLS LOOP_TRIPCOUNT min=1 max=1247
+				#pragma HLS LOOP_TRIPCOUNT min=1 max=1643
 //				#pragma HLS unroll factor=2
 //				#pragma HLS PIPELINE
 
@@ -73,7 +80,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 				{
 				#pragma HLS dependence variable=tmpRow inter false
 				#pragma HLS PIPELINE
-				#pragma HLS unroll factor=144
+				#pragma HLS unroll factor=76
 					tmpRow[c] ^= localMat[k][c] & mask;
 				}
 			}
@@ -85,7 +92,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 			} else {
 				OUTER_LOOP_BACK_SUB:for (k = 0; k < MAT_ROWS; k++)
 				{
-//				#pragma HLS dependence variable=localMat inter false
+//				#pragma HLS dependence variable=localMat inter false//not before stay as is
 				#pragma HLS unroll factor=2
 				#pragma HLS PIPELINE
 					if (k != row)
@@ -96,8 +103,8 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 						INNER_LOOP_BACK_SUB:for (c = 0; c < MAT_COLS; c++){
 //						#pragma HLS dependence variable=tmpRow inter false
 //						#pragma HLS dependence variable=localMat inter false
-//						#pragma HLS PIPELINE II
-//						#pragma HLS unroll factor=96
+//						#pragma HLS PIPELINE
+//						#pragma HLS unroll factor=8
 
 							localMat[k][c] ^= tmpRow[c] & mask;
 						}
@@ -107,19 +114,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 		}
 	}
 
-//	int tmp_idx;
-//	LOOP_WRITE_TO_DRAM_ALT:
-//	for( i=0;i<MAT_ROWS;i++){
-//		for( j=0;j<(PK_ROW_BYTES);j++){
-//		#pragma HLS PIPELINE II=1
-//		#pragma HLS unroll factor=2
-//		#pragma HLS RESOURCE variable=tmp_idx core=Mul_lut
-//			tmp_idx = i*(PK_ROW_BYTES);
-//			*(mat_out+tmp_idx+j) = localMat[i][j + PK_NROWS/8];
-//		}
-//	}
-//
-//
+
 	LOOP_WRITE_TO_DRAM_ALT:
 	for(unsigned int i=0;i<MAT_ROWS;i++){
 		for(unsigned int j=0;j<MAT_COLS;j++){
@@ -129,18 +124,5 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 		}
 	}
 
-
-
-//	LOOP_WRITE_TO_DRAM_ALT:
-//		for (unsigned int itr = 0, i = 0, j = 0; itr < MAT_ROWS * MAT_COLS; itr++, j++) {
-//		   #pragma HLS LOOP_TRIPCOUNT min=768*436 max=768*436
-//		   #pragma HLS PIPELINE II=1
-//
-//			if (j == MAT_COLS) {
-//				j = 0;
-//				i++;
-//			}
-//			*(mat_out+itr) = localMat[i][j];
-//		}
 
 }

@@ -393,7 +393,6 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
   	gettimeofday(&start_pk_loop, NULL);
 #endif
 
-//  	long custom_delay=12.0;
 	do
 	{
 
@@ -433,17 +432,15 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 	    clWaitForEvents(1, &event_mig_tohost_buffer);
 
 
-//	    msleep(custom_delay);
-
 #ifdef TIME_MEASUREMENT
 	cl_profile_print(&event_mig_tokern, 1, sum_list_elim_tokern, &times_elim_tokern);
 	cl_profile_print(&event_enq, 1, sum_list_elim_kernel, &times_elim);
 	cl_profile_print(&event_mig_tohost_buffer, 1, sum_list_elim_tohost, &times_elim_tohost);
-	if(*ptr_fail!=0){
-		times_elim = times_elim - 1;
-		times_elim_tokern = times_elim_tokern - 1;
-		times_elim_tohost = times_elim_tohost - 1;
-	}
+//	if(*ptr_fail!=0){
+//		times_elim = times_elim - 1;
+//		times_elim_tokern = times_elim_tokern - 1;
+//		times_elim_tohost = times_elim_tohost - 1;
+//	}
 #endif
 
 	}while(*ptr_fail!=0);
@@ -463,8 +460,6 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 	#endif
 
 	clWaitForEvents(1, &event_mig_tohost_mat);
-
-//	memcpy(pk, ptr_mat_out, sizeof(unsigned char) * MAT_SIZE);
 
 	for (i = 0; i < PK_NROWS; i++)
 		memcpy(pk + i*PK_ROW_BYTES, (ptr_mat_out+i*MAT_COLS) + PK_NROWS/8, PK_ROW_BYTES);
