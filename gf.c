@@ -8,6 +8,13 @@
 
 #include <stdio.h>
 
+//
+gf gf_add(gf in0, gf in1)
+{
+	return in0 ^ in1;
+}
+//
+
 /* field multiplication */
 gf gf_mul(gf in0, gf in1)
 {
