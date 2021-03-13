@@ -10,6 +10,12 @@
 #include <string.h>
 #include "rng.h"
 #include "crypto_kem.h"
+#include "pk_gen.h"
+#include "encrypt.h"
+#include "decrypt.h"
+#include "operations.h"
+
+#include <sys/time.h>
 
 #define KAT_SUCCESS          0
 #define KAT_FILE_OPEN_ERROR -1
@@ -19,6 +25,9 @@ void	fprintBstr(FILE *fp, char *S, unsigned char *A, unsigned long long L);
 
 unsigned char entropy_input[48];
 unsigned char seed[KATNUM][48];
+
+double sum_keygen, sum_enc, sum_dec;
+int times_keygen, times_enc, times_dec;
 
 int
 main()
@@ -32,6 +41,8 @@ main()
     unsigned char *pk = 0;
     unsigned char *sk = 0;
 
+    struct timeval start_keygen, end_keygen, start_enc, end_enc, start_dec, end_dec;
+
     for (i=0; i<48; i++)
         entropy_input[i] = i;
     randombytes_init(entropy_input, NULL, 256);
@@ -39,7 +50,7 @@ main()
     for (i=0; i<KATNUM; i++)
         randombytes(seed[i], 48);
 
-    fp_req = fdopen(8, "w");
+    fp_req = fopen("kat_kem.req", "w");
     if (!fp_req)
         return KAT_FILE_OPEN_ERROR;
 
@@ -52,7 +63,7 @@ main()
         fprintf(fp_req, "ss =\n\n");
     }
 
-    fp_rsp = fdopen(9, "w");
+    fp_rsp = fopen("kat_kem.rsp", "w");
     if (!fp_rsp)
         return KAT_FILE_OPEN_ERROR;
 
@@ -74,33 +85,83 @@ main()
 
         fprintf(fp_rsp, "count = %d\n", i);
         fprintBstr(fp_rsp, "seed = ", seed[i], 48);
-        
-        if ( (ret_val = crypto_kem_keypair(pk, sk)) != 0) {
+       
+        gettimeofday(&start_keygen, NULL);
+
+        ret_val = crypto_kem_keypair(pk, sk);
+
+        gettimeofday(&end_keygen, 0);
+        long seconds_keygen = end_keygen.tv_sec - start_keygen.tv_sec;
+        long microseconds_keygen = end_keygen.tv_usec - start_keygen.tv_usec;
+        double elapsed_keygen = seconds_keygen + microseconds_keygen*0.000001;
+        sum_keygen += elapsed_keygen;
+        times_keygen = times_keygen + 1;
+
+        if (ret_val != 0) {
+        // if ( (ret_val = crypto_kem_keypair(pk, sk)) != 0) {
             fprintf(stderr, "crypto_kem_keypair returned <%d>\n", ret_val);
             return KAT_CRYPTO_FAILURE;
         }
         fprintBstr(fp_rsp, "pk = ", pk, crypto_kem_PUBLICKEYBYTES);
         fprintBstr(fp_rsp, "sk = ", sk, crypto_kem_SECRETKEYBYTES);
         
-        if ( (ret_val = crypto_kem_enc(ct, ss, pk)) != 0) {
-            fprintf(stderr, "crypto_kem_enc returned <%d>\n", ret_val);
-            return KAT_CRYPTO_FAILURE;
-        }
-        fprintBstr(fp_rsp, "ct = ", ct, crypto_kem_CIPHERTEXTBYTES);
-        fprintBstr(fp_rsp, "ss = ", ss, crypto_kem_BYTES);
-        
-        fprintf(fp_rsp, "\n");
-        
-        if ( (ret_val = crypto_kem_dec(ss1, ct, sk)) != 0) {
-            fprintf(stderr, "crypto_kem_dec returned <%d>\n", ret_val);
-            return KAT_CRYPTO_FAILURE;
-        }
-        
-        if ( memcmp(ss, ss1, crypto_kem_BYTES) ) {
-            fprintf(stderr, "crypto_kem_dec returned bad 'ss' value\n");
-            return KAT_CRYPTO_FAILURE;
-        }
+
+        // for(int t=0;t<100; t++){
+
+            gettimeofday(&start_enc, NULL);
+            ret_val = crypto_kem_enc(ct, ss, pk);
+
+            gettimeofday(&end_enc, 0);
+            long seconds_enc = end_enc.tv_sec - start_enc.tv_sec;
+            long microseconds_enc = end_enc.tv_usec - start_enc.tv_usec;
+            double elapsed_enc = seconds_enc + microseconds_enc*0.000001;
+            sum_enc += elapsed_enc;
+            times_enc = times_enc + 1;
+
+            if (ret_val != 0) {
+            // if ( (ret_val = crypto_kem_enc(ct, ss, pk)) != 0) {
+                fprintf(stderr, "crypto_kem_enc returned <%d>\n", ret_val);
+                return KAT_CRYPTO_FAILURE;
+            }
+            fprintBstr(fp_rsp, "ct = ", ct, crypto_kem_CIPHERTEXTBYTES);
+            fprintBstr(fp_rsp, "ss = ", ss, crypto_kem_BYTES);
+            
+            fprintf(fp_rsp, "\n");
+    
+            gettimeofday(&start_dec, NULL);
+            ret_val =  crypto_kem_dec(ss1, ct, sk);
+
+            gettimeofday(&end_dec, 0);
+            long seconds_dec = end_dec.tv_sec - start_dec.tv_sec;
+            long microseconds_dec = end_dec.tv_usec - start_dec.tv_usec;
+            double elapsed_dec = seconds_dec + microseconds_dec*0.000001;
+            sum_dec += elapsed_dec;
+            times_dec = times_dec + 1;
+
+            if (ret_val != 0) {
+    //        if ( (ret_val = crypto_kem_dec(ss1, ct, sk)) != 0) {
+                fprintf(stderr, "crypto_kem_dec returned <%d>\n", ret_val);
+                return KAT_CRYPTO_FAILURE;
+            }
+            
+            if ( memcmp(ss, ss1, crypto_kem_BYTES) ) {
+                fprintf(stderr, "crypto_kem_dec returned bad 'ss' value\n");
+                return KAT_CRYPTO_FAILURE;
+            }
+
+        // }//t
     }
+	
+    printf("\n\t**********TIMING RESULTS**********\t\n");    
+   // printf("Elim kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_elim)*1000/times_elim);
+   // printf("Synd kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_synd)*1000/times_synd);
+   // printf("Syndrome kernel :Avg Execution time is: %0.3f miliseconds \n",(sum_syndrome)*1000/(times_syndrome));
+    
+    printf("\nKeygen :Avg Execution time is: %0.3f miliseconds \n",(sum_keygen)*1000/times_keygen);
+    printf("Enc :Avg Execution time is: %0.3f miliseconds \n",(sum_enc)*1000/times_enc);
+    printf("Dec :Avg Execution time is: %0.3f miliseconds \n",(sum_dec)*1000/times_dec);
+   // printf("Encrypt :Avg Execution time is: %0.3f miliseconds \n",(sum_encrypt)*1000/times_encrypt);
+   // printf("Decrypt :Avg Execution time is: %0.3f miliseconds \n",(sum_decrypt)*1000/times_decrypt);
 
     return KAT_SUCCESS;
 }
