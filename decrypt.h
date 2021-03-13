@@ -8,8 +8,9 @@
 
 int decrypt(unsigned char *, const unsigned char *, const unsigned char *);
 
-extern double sum_synd;
-extern int times_synd;
+extern double sum_total_synd;
+extern int times_total_synd;
+
 
 #endif
 
