@@ -197,7 +197,7 @@ gf eval_inner1_1(gf *f, gf a)
 
         for (i = SYS_T-1; i >= 0; i--)
         {
-		#pragma HLS PIPELINE II=3
+//		#pragma HLS PIPELINE II=3
 //		#pragma HLS unroll factor=2
                 r = gf_mul_kernel1_1(r, a) ^ f[i];
         }
@@ -230,7 +230,7 @@ void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	gf e_mat[SYS_N];
 
-	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=32 //32
+	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=64 //32
 	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=8 //8
 	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=8 //8
 
@@ -259,7 +259,7 @@ void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	LOOP_EVAL:
 	for(uint i=0; i <SYS_N; i++){
 	#pragma HLS PIPELINE
-	#pragma HLS unroll factor=2 //taking long
+//	#pragma HLS unroll factor=2 //taking long
 		e_mat[i] = eval_inner1_1(local_f, local_L[i]);
 	}
 
@@ -277,7 +277,7 @@ void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		{
 		#pragma HLS DEPENDENCE inter variable=e_inv RAW true
 		#pragma HLS PIPELINE
-		#pragma HLS unroll factor=4
+		#pragma HLS unroll factor=2
 
 
 			if(i==0){

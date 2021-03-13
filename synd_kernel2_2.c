@@ -67,8 +67,8 @@ static inline gf gf_sq2_kernel2_2(gf in)
 
 	for (i = 0; i < 4; i++)
 	{
-//	#pragma HLS PIPELINE
-//	#pragma HLS unroll
+	#pragma HLS PIPELINE
+	#pragma HLS unroll
 
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
@@ -108,8 +108,8 @@ static inline gf gf_sqmul_kernel2_2(gf in, gf m)
 
 	for (i = 0; i < 3; i++)
 	{
-//	#pragma HLS PIPELINE
-//	#pragma HLS unroll
+	#pragma HLS PIPELINE
+	#pragma HLS unroll
 
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
@@ -152,8 +152,8 @@ static inline gf gf_sq2mul_kernel2_2(gf in, gf m)
 
 	for (i = 0; i < 6; i++)
 	{
-//	#pragma HLS PIPELINE
-//	#pragma HLS unroll
+	#pragma HLS PIPELINE
+	#pragma HLS unroll
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
 	}
@@ -234,6 +234,7 @@ void synd_kernel2_2(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4 //64
 	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4 //8
 	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4 //8
+	#pragma HLS ARRAY_PARTITION variable=local_f cyclic factor=4 //8
 
 	//READ into local vars
 

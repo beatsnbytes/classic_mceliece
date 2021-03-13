@@ -67,8 +67,8 @@ static inline gf gf_sq2_kernel2_1(gf in)
 
 	for (i = 0; i < 4; i++)
 	{
-//	#pragma HLS PIPELINE
-//	#pragma HLS unroll
+	#pragma HLS PIPELINE
+	#pragma HLS unroll
 
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
@@ -108,8 +108,8 @@ static inline gf gf_sqmul_kernel2_1(gf in, gf m)
 
 	for (i = 0; i < 3; i++)
 	{
-//	#pragma HLS PIPELINE
-//	#pragma HLS unroll
+	#pragma HLS PIPELINE
+	#pragma HLS unroll
 
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
@@ -152,8 +152,8 @@ static inline gf gf_sq2mul_kernel2_1(gf in, gf m)
 
 	for (i = 0; i < 6; i++)
 	{
-//	#pragma HLS PIPELINE
-//	#pragma HLS unroll
+	#pragma HLS PIPELINE
+	#pragma HLS unroll
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
 	}

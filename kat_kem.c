@@ -76,7 +76,7 @@ cl_mem buffer_fail;
 
 
 #ifdef SYNDROME_KERNEL
-int syndrome_kernels = 2 ;
+int syndrome_kernels = 8 ;
 cl_kernel syndrome_kernels_list[8];
 
 const char *syndrome_kernels_name_list[15] = {"syndrome_kernel",
@@ -113,7 +113,7 @@ cl_mem pt_list_syndrome_combined[9];
 #endif
 
 #ifdef SYND_KERNEL
-int synd_kernels = 1;
+int synd_kernels = 8;
 
 cl_kernel synd_kernels_list[8];
 const char *synd_kernels_name_list[15] = {"synd_kernel1_1",
