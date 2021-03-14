@@ -106,7 +106,6 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     }
 	#endif
 
-
     clWaitForEvents(1, &event_migr_tohost);
 
     for(int i=0; i<2*SYS_T; i++){
