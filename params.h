@@ -4,6 +4,9 @@
 #define GFBITS 13
 #define SYS_N 4608
 #define SYS_T 96
+#define MAT_SIZE GFBITS*SYS_T*(SYS_N/8)
+#define MAT_ROWS (SYS_T*GFBITS)
+#define MAT_COLS (SYS_N/8)
 
 #define COND_BYTES ((1 << (GFBITS-4))*(2*GFBITS - 1))
 #define IRR_BYTES (SYS_T * 2)
@@ -23,6 +26,9 @@
 
 #define TIME_MEASUREMENT
 //#undef TIME_MEASUREMENT
+
+//#define ITER_PRINT
+#undef ITERATION_PRINT
 
 #define KEM_PARTS_MEASUREMENT
 //#undef KEM_PARTS_MEASUREMENT
