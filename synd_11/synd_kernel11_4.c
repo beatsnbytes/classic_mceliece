@@ -264,7 +264,7 @@ void synd_kernel11_4(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 
 	LOOP_MAIN_OUTER:
-	for (uint i = SYS_N/11; i < 2*SYS_N/11; i++) //11
+	for (uint i = 3*SYS_N/11; i < 4*SYS_N/11; i++) //11
 	{
 //	#pragma HLS pipeline
 

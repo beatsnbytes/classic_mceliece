@@ -113,30 +113,34 @@ cl_mem pt_list_syndrome_combined[9];
 #endif
 
 #ifdef SYND_KERNEL
-int synd_kernels = 8;
+int synd_kernels = 11;
+int start_idx = 7;
 
-cl_kernel synd_kernels_list[8];
-const char *synd_kernels_name_list[15] = {"synd_kernel1_1",
+cl_kernel synd_kernels_list[11];
+const char *synd_kernels_name_list[18] = {"synd_kernel1_1",
 										"synd_kernel2_1",
 										"synd_kernel2_2",
 										"synd_kernel4_1",
 										"synd_kernel4_2",
 										"synd_kernel4_3",
 										"synd_kernel4_4",
-										"synd_kernel8_1",
-										"synd_kernel8_2",
-										"synd_kernel8_3",
-										"synd_kernel8_4",
-										"synd_kernel8_5",
-										"synd_kernel8_6",
-										"synd_kernel8_7",
-										"synd_kernel8_8"
+										"synd_kernel11_1",
+										"synd_kernel11_2",
+										"synd_kernel11_3",
+										"synd_kernel11_4",
+										"synd_kernel11_5",
+										"synd_kernel11_6",
+										"synd_kernel11_7",
+										"synd_kernel11_8",
+										"synd_kernel11_9",
+										"synd_kernel11_10",
+										"synd_kernel11_11"
 										};
 
-cl_mem buffer_out_out_list[8];
-gf * ptr_out_out_list[8];
-cl_mem buffer_f_in_list[8];
-gf *ptr_f_in_list[8];
+cl_mem buffer_out_out_list[11];
+gf * ptr_out_out_list[11];
+cl_mem buffer_f_in_list[11];
+gf *ptr_f_in_list[11];
 
 cl_mem buffer_L_in;
 gf *ptr_L_in;
@@ -144,8 +148,8 @@ gf *ptr_L_in;
 cl_mem buffer_r_in;
 unsigned char *ptr_r_in;
 
-cl_mem pt_list_synd_combined[10];
-cl_mem pt_list_synd_combined_out[8];
+cl_mem pt_list_synd_combined[13];
+cl_mem pt_list_synd_combined_out[11];
 
 
 #endif
@@ -629,10 +633,13 @@ main(int argc, char* argv[])
 	}
 	#endif
 
+	if (synd_kernels==11){
+		start_idx = 7;
+	}
 	//Iteratively initialize kernels and their private buffers/pointers
 	for(int i=0; i<synd_kernels; i++){
 
-		int index = synd_kernels-1+i;
+		int index = start_idx +i;
 		synd_kernels_list[i] = clCreateKernel(program, synd_kernels_name_list[index], &err);
 		#ifdef OCL_API_DEBUG
 		if (!synd_kernels_list[i] || err != CL_SUCCESS) {
