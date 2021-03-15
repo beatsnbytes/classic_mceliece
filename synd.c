@@ -54,7 +54,7 @@ void synd_sw_host(gf *out, gf* f , gf *L, unsigned char *r)
 }
 
 
-#ifdef SYND_KERNEL
+#ifdef SYND_KERNELa
 void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 {
 
