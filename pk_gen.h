@@ -8,10 +8,21 @@
 
 #include "gf.h"
 
-int pk_gen(unsigned char *, unsigned char *, uint32_t *, int16_t *);
+int pk_gen(unsigned char *, unsigned char *, uint32_t *, int16_t *, unsigned char *, unsigned char *);
 
-extern double sum_elim;
+extern double sum_list_elim_tokern[1];
+extern double sum_list_elim_tohost[1];
+extern double sum_list_elim_kernel[1];
 extern int times_elim;
+extern int times_elim_tohost;
+extern int times_elim_tokern;
+
+extern double sum_pk_loop;
+extern int times_pk_loop;
+
+
+extern double sum_parallel;
+extern int times_parallel;
 
 #endif
 

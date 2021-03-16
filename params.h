@@ -16,5 +16,32 @@
 
 #define GFMASK ((1 << GFBITS) - 1)
 
+//Custom definitions
+
+//#define FUNC_CORRECTNESS
+#undef FUNC_CORRECTNESS
+
+#define TIME_MEASUREMENT
+//#undef TIME_MEASUREMENT
+
+//#define ITER_PRINT
+#undef ITERATION_PRINT
+
+#define KEM_PARTS_MEASUREMENT
+//#undef KEM_PARTS_MEASUREMENT
+
+#define OCL_API_DEBUG
+//#undef OCL_API_DEBUG
+
+//#define GAUSSIAN_ELIMINATION_KERNEL
+#undef GAUSSIAN_ELIMINATION_KERNEL
+
+#define SYNDROME_KERNEL
+//#undef SYNDROME_KERNEL
+
+//#define SYND_KERNEL
+#undef SYND_KERNEL
+
+
 #endif
 
