@@ -133,7 +133,7 @@ static void syndrome_sw_host(unsigned char *s, const unsigned char *pk, unsigned
 
 /* input: public key pk, error vector e */
 /* output: syndrome s */
-#ifdef SYNDROME_KERNELa
+#ifdef SYNDROME_KERNEL
 void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 {
 
@@ -234,12 +234,12 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
   	gettimeofday(&start_syndrome, NULL);
 #endif
 
-//	#ifdef SYNDROME_KERNEL
-//	syndrome_host(s, pk, e);
-//	#endif
-//	#ifndef SYNDROME_KERNEL
+	#ifdef SYNDROME_KERNEL
+	syndrome_host(s, pk, e);
+	#endif
+	#ifndef SYNDROME_KERNEL
 	syndrome_sw_host(s, pk, e);
-//	#endif
+	#endif
 
 #ifdef TIME_MEASUREMENT
 	gettimeofday(&end_syndrome, NULL);

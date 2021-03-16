@@ -59,7 +59,7 @@ cl_context context;
 cl_command_queue commands;
 cl_program program;
 
-//#ifdef GAUSSIAN_ELIMINATION_KERNEL
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
 cl_kernel kernel_gaussian_elimination;
 
 cl_mem buffer_mat_in;
@@ -72,10 +72,10 @@ cl_buffer_region region_success_info;
 cl_mem buffer_success_info;
 cl_mem buffer_fail;
 
-//#endif
+#endif
 
 
-#ifdef SYNDROME_KERNELa
+#ifdef SYNDROME_KERNEL
 int syndrome_kernels = 8 ;
 cl_kernel syndrome_kernels_list[8];
 
@@ -112,7 +112,7 @@ cl_mem pt_list_syndrome_combined[9];
 
 #endif
 
-#ifdef SYND_KERNELa
+#ifdef SYND_KERNEL
 int synd_kernels = 8;
 
 cl_kernel synd_kernels_list[8];
@@ -382,7 +382,7 @@ main(int argc, char* argv[])
 	// -------------------------------------------------------------
 
 
-//#ifdef GAUSSIAN_ELIMINATION_KERNEL
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
 	kernel_gaussian_elimination = clCreateKernel(program, "gaussian_elimination_kernel", &err);
 	#ifdef OCL_API_DEBUG
 	if (!kernel_gaussian_elimination || err != CL_SUCCESS) {
@@ -471,10 +471,10 @@ main(int argc, char* argv[])
 
 
 
-//#endif
+#endif
 
 
-#ifdef SYNDROME_KERNELa
+#ifdef SYNDROME_KERNEL
 
 
 		buffer_pk_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES, NULL, &err);
@@ -589,7 +589,7 @@ main(int argc, char* argv[])
 
 
 
-#ifdef SYND_KERNELa
+#ifdef SYND_KERNEL
 
 	//Initalize the buffers/pointers that will be used by all kernels
 	buffer_L_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(gf)*SYS_N, NULL, &err);
@@ -853,7 +853,7 @@ main(int argc, char* argv[])
 	
 
 #ifdef TIME_MEASUREMENT
-//#ifdef GAUSSIAN_ELIMINATION_KERNEL
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
 	printf("\n***************ELIM KERNEL***************\n");
 	printf("Kernel execution time\n");
 	print_kernel_execution_time(sum_list_elim_kernel, &times_elim, 1);
@@ -867,10 +867,10 @@ main(int argc, char* argv[])
 	print_event_execution_time(&sum_parallel, &times_parallel);
 	printf("While KeyGen part ");
 	print_event_execution_time(&sum_while_pk_loop, &times_while_pk_loop);
-//#endif
+#endif
 
 
-#ifdef SYND_KERNELa
+#ifdef SYND_KERNEL
 	printf("\n***************SYND KERNEL***************\n");
 	printf("Kernel execution time\n");
 	print_kernel_execution_time(sum_list_synd_kernel, &times_synd, synd_kernels);
@@ -884,7 +884,7 @@ main(int argc, char* argv[])
 	print_event_execution_time(&sum_total_synd, &times_total_synd);
 #endif
 
-#ifdef SYNDROME_KERNELa
+#ifdef SYNDROME_KERNEL
 	printf("\n***************SYNDROME KERNEL***************\n");
 	printf("Kernel execution time\n");
 	print_kernel_execution_time(sum_list_syndrome_kernel, &times_syndrome, syndrome_kernels);
@@ -918,13 +918,13 @@ main(int argc, char* argv[])
 
 #endif
 
-//	#ifdef GAUSSIAN_ELIMINATION_KERNEL
+	#ifdef GAUSSIAN_ELIMINATION_KERNEL
 	clReleaseKernel(kernel_gaussian_elimination);
 	clEnqueueUnmapMemObject(commands, buffer_mat_in, ptr_mat_in, 0, NULL, NULL);
 	clEnqueueUnmapMemObject(commands, buffer_mat_out, NULL, 0, NULL, NULL);
-//	#endif
+	#endif
 
-	#ifdef SYNDROME_KERNELa
+	#ifdef SYNDROME_KERNEL
 	clReleaseKernel(syndrome_kernels_list[0]);
 	clEnqueueUnmapMemObject(commands, buffer_pk_in, ptr_pk_in, 0, NULL, NULL);
 	clEnqueueUnmapMemObject(commands, buffer_e_in_list[0], ptr_e_in_list[0], 0, NULL, NULL);

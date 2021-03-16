@@ -170,14 +170,14 @@ int crypto_kem_keypair
 			perm[i] = load4(rp + i*4); 
 
 
-//		#ifdef GAUSSIAN_ELIMINATION_KERNEL
+		#ifdef GAUSSIAN_ELIMINATION_KERNEL
 		if (pk_gen_host(pk, skp - IRR_BYTES, perm, pi, sk, seed))
 			continue;
-//		#endif
-//		#ifndef GAUSSIAN_ELIMINATION_KERNEL
-//		if (pk_gen_sw_host(pk, skp - IRR_BYTES, perm, pi))
-//			continue;
-//		#endif
+		#endif
+		#ifndef GAUSSIAN_ELIMINATION_KERNEL
+		if (pk_gen_sw_host(pk, skp - IRR_BYTES, perm, pi))
+			continue;
+		#endif
 
 #ifdef TIME_MEASUREMENT
 	    gettimeofday(&end_while_pk_loop, NULL);

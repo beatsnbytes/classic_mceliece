@@ -38,7 +38,7 @@ double sum_parallel=0.0;
 int times_parallel=0;
 
 
-//#ifdef GAUSSIAN_ELIMINATION_KERNEL
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
 
 
 void parallel_sw_part(unsigned char * sk, unsigned char * seed, unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ], int16_t * pi){
@@ -275,13 +275,13 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ], u
 	cl_profile_print(&event_mig_tohost, 1, sum_list_elim_tohost, &times_elim_tohost);
 #endif
 }
-//#endif
+#endif
 
 
 
 
 // Code that contains the call to gaussian elimination hw kernel
-//#ifdef GAUSSIAN_ELIMINATION_KERNEL
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
 int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi, unsigned char * sk_initial,  unsigned char * seed_initial)
 {
 
@@ -350,7 +350,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 	}
 
 
-//
+
 //#ifdef TIME_MEASUREMENT
 //  	struct timeval start_pk_loop, end_pk_loop;
 //  	gettimeofday(&start_pk_loop, NULL);
@@ -378,7 +378,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 //	    gettimeofday(&end_pk_loop, NULL);
 //	    get_event_time(&start_pk_loop, &end_pk_loop, &sum_pk_loop, &times_pk_loop);
 //#endif
-//
+
 
 
 	unsigned char * sk_parallel = (unsigned char *)malloc(sizeof(unsigned char) * crypto_kem_SECRETKEYBYTES);;
@@ -470,7 +470,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 
 	return 0;
 }
-//#endif
+#endif
 
 /* input: secret key sk */
 /* output: public key pk */
