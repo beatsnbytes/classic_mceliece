@@ -154,21 +154,21 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	}
 	#endif
 
-	#ifdef TIME_MEASUREMENT
-		clWaitForEvents(1, &event_migr_tokern);
-		struct timeval start_kernel, end_kernel;
-		gettimeofday(&start_kernel, NULL);
-	#endif
+//	#ifdef TIME_MEASUREMENT
+//		clWaitForEvents(1, &event_migr_tokern);
+//		struct timeval start_kernel, end_kernel;
+//		gettimeofday(&start_kernel, NULL);
+//	#endif
 
 	for (int i=0; i<syndrome_kernels; i++){
 		err = clEnqueueTask(commands, syndrome_kernels_list[i], 1, &event_migr_tokern, &events_enq[i]);
 	}
 
-	#ifdef TIME_MEASUREMENT
-		clWaitForEvents(syndrome_kernels, &events_enq);
-		gettimeofday(&end_kernel, NULL);
-		get_event_time(&start_kernel, &end_kernel, &sum_syndrome_kernels, &times_syndrome_kernels);
-	#endif
+//	#ifdef TIME_MEASUREMENT
+//		clWaitForEvents(syndrome_kernels, &events_enq);
+//		gettimeofday(&end_kernel, NULL);
+//		get_event_time(&start_kernel, &end_kernel, &sum_syndrome_kernels, &times_syndrome_kernels);
+//	#endif
 
 	#ifdef OCL_API_DEBUG
 	if (err != CL_SUCCESS) {
@@ -200,11 +200,11 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	}
 	#endif
 
-#ifdef TIME_MEASUREMENT
-	cl_profile_print(&event_migr_tokern, 1, sum_list_syndrome_tokern, &times_syndrome_tokern);
-	cl_profile_print(&events_enq[0], syndrome_kernels, sum_list_syndrome_kernel, &times_syndrome);
-	cl_profile_print(&events_migr_tohost, 1, sum_list_syndrome_tohost, &times_syndrome_tohost);
-#endif
+//#ifdef TIME_MEASUREMENT
+//	cl_profile_print(&event_migr_tokern, 1, sum_list_syndrome_tokern, &times_syndrome_tokern);
+//	cl_profile_print(&events_enq[0], syndrome_kernels, sum_list_syndrome_kernel, &times_syndrome);
+//	cl_profile_print(&events_migr_tohost, 1, sum_list_syndrome_tohost, &times_syndrome_tohost);
+//#endif
 
 
 }

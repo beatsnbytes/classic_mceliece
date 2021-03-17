@@ -20,10 +20,10 @@ void syndrome_kernel8_1(unsigned char *pk_in, unsigned char *e_in, unsigned char
 	unsigned char local_s[SYND_BYTES/8];
 	unsigned char local_e[MAT_COLS];
 
-	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=76
-	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=76
+	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=16
+	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=16
 	#pragma HLS ARRAY_PARTITION variable=local_s cyclic factor=2
-	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=76 dim=2
+	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=16 dim=2
 
 
 	LOOP_LOAD_FROM_BRAM_PK:
@@ -60,7 +60,7 @@ void syndrome_kernel8_1(unsigned char *pk_in, unsigned char *e_in, unsigned char
 
 		LOOP_INIT_ROW:for (unsigned int i = 0; i < MAT_COLS - PK_ROW_BYTES; i++){
 			#pragma HLS PIPELINE ΙΙ=1
-			#pragma HLS unroll factor=208
+			#pragma HLS unroll factor=16
 			row[i] = 0;
 		}
 
@@ -69,7 +69,7 @@ void syndrome_kernel8_1(unsigned char *pk_in, unsigned char *e_in, unsigned char
 //			#pragma HLS DEPENDENCE variable=local_pk inter false
 //			#pragma HLS DEPENDENCE variable=row inter false
 			#pragma HLS PIPELINE
-			#pragma HLS unroll factor=76
+			#pragma HLS unroll factor=16
 
 				 row[j] = local_pk[i][j-(MAT_COLS - PK_ROW_BYTES)];
 
@@ -82,7 +82,7 @@ void syndrome_kernel8_1(unsigned char *pk_in, unsigned char *e_in, unsigned char
 		b = 0;
 		LOOP_B_COMPUTE:for (uint j = 0; j < MAT_COLS; j++){
 			#pragma HLS PIPELINE
-			#pragma HLS unroll factor=76
+			#pragma HLS unroll factor=16
 
 			b ^= row[j] & local_e[j];
 		}
