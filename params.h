@@ -7,6 +7,7 @@
 
 #define MAT_ROWS (SYS_T*GFBITS)
 #define MAT_COLS (SYS_N/8)
+#define MAT_SIZE GFBITS*SYS_T*(SYS_N/8)
 #define COND_BYTES ((1 << (GFBITS-4))*(2*GFBITS - 1))
 #define IRR_BYTES (SYS_T * 2)
 

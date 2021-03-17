@@ -285,7 +285,9 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ], u
 int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi, unsigned char * sk_initial,  unsigned char * seed_initial)
 {
 
-	int i, j, k;
+	unsigned char *pk_ptr = pk;
+
+	int i, j, k, tail;
 	uint64_t buf[ 1 << GFBITS ];
 	unsigned char b;
 	gf g[ SYS_T+1 ]; // Goppa polynomial
@@ -461,15 +463,14 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 
 	clWaitForEvents(1, &event_mig_tohost_mat);
 
-//	for (i = 0; i < PK_NROWS; i++)
-//		memcpy(pk + i*PK_ROW_BYTES, (ptr_mat_out+i*MAT_COLS) + PK_NROWS/8, PK_ROW_BYTES);
-
+	tail = PK_NROWS % 8;
 	for (i = 0; i < PK_NROWS; i++)
 	{
-		for (j = (PK_NROWS - 1)/8; j < SYS_N/8 - 1; j++)
-			*pk_ptr++ = (mat[i][j] >> tail) | (mat[i][j+1] << (8-tail));
+		for (j = (PK_NROWS - 1)/8; j < SYS_N/8 - 1; j++){
+			*pk_ptr++ = (*(ptr_mat_out+i*SYS_N/8+j) >> tail) | (*(ptr_mat_out+i*SYS_N/8+j+1) << (8-tail));
+		}
 
-		*pk_ptr++ = (mat[i][j] >> tail);
+		*pk_ptr++ = (*(ptr_mat_out+i*SYS_N/8+j) >> tail);
 	}
 
 

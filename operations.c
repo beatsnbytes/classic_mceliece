@@ -57,6 +57,8 @@ int crypto_kem_enc(
 	unsigned char mask;
 	int i, padding_ok;
 
+	padding_ok = check_pk_padding(pk);
+
 #ifdef TIME_MEASUREMENT
         	struct timeval start_encrypt, end_encrypt;
         	gettimeofday(&start_encrypt, NULL);
@@ -123,6 +125,8 @@ int crypto_kem_dec(
 	unsigned char preimage[ 1 + SYS_N/8 + (SYND_BYTES + 32) ];
 	unsigned char *x = preimage;
 	const unsigned char *s = sk + 40 + IRR_BYTES + COND_BYTES;
+
+//	padding_ok = check_c_padding(c);
 
 #ifdef TIME_MEASUREMENT
         	struct timeval start_decrypt, end_decrypt;
