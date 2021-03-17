@@ -1,4 +1,5 @@
 #include "operations.h"
+
 #include "controlbits.h"
 #include "randombytes.h"
 #include "crypto_hash.h"
@@ -23,6 +24,8 @@ double sum_decrypt=0.0;
 int times_decrypt=0;
 double sum_encrypt=0.0;
 int times_encrypt=0;
+double sum_while_pk_loop=0.0;
+int times_while_pk_loop=0;
 
 
 int crypto_kem_enc(
@@ -127,6 +130,11 @@ int crypto_kem_keypair
 
 	randombytes(seed+1, 32);
 
+#ifdef TIME_MEASUREMENT
+  	struct timeval start_while_pk_loop, end_while_pk_loop;
+  	gettimeofday(&start_while_pk_loop, NULL);
+#endif
+
 	while (1)
 	{
 		rp = &r[ sizeof(r)-32 ];
@@ -170,6 +178,11 @@ int crypto_kem_keypair
 		if (pk_gen_sw_host(pk, skp - IRR_BYTES, perm, pi))
 			continue;
 		#endif
+
+#ifdef TIME_MEASUREMENT
+	    gettimeofday(&end_while_pk_loop, NULL);
+	    get_event_time(&start_while_pk_loop, &end_while_pk_loop, &sum_while_pk_loop, &times_while_pk_loop);
+#endif
 
 		controlbitsfrompermutation(skp, pi, GFBITS, 1 << GFBITS);
 		skp += COND_BYTES;

@@ -147,7 +147,7 @@ static void syndrome_sw_host(unsigned char *s, const unsigned char *pk, unsigned
 
 /* input: public key pk, error vector e */
 /* output: syndrome s */
-//#ifdef SYNDROME_KERNEL
+#ifdef SYNDROME_KERNEL
 void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 {
 
@@ -204,15 +204,15 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 	memcpy(s, ptr_s_out, sizeof(unsigned char)*SYND_BYTES);
 
 
-//	#ifdef FUNC_CORRECTNESS
-//	unsigned char validate_mat[SYND_BYTES];
-//	syndrome_sw_host(validate_mat, pk, e);
-//	for (int i=0;i<SYND_BYTES;i++){
-//		if (validate_mat[i] != *(s+i)){\
-//			printf("\nERROR in %d: Expected %d, got %d\n", i, validate_mat[i], *(s+i));
-//		}
-//	}
-//	#endif
+	#ifdef FUNC_CORRECTNESS
+	unsigned char validate_mat[SYND_BYTES];
+	syndrome_sw_host(validate_mat, pk, e);
+	for (int i=0;i<SYND_BYTES;i++){
+		if (validate_mat[i] != *(s+i)){\
+			printf("\nERROR in %d: Expected %d, got %d\n", i, validate_mat[i], *(s+i));
+		}
+	}
+	#endif
 
 #ifdef TIME_MEASUREMENT
 	cl_profile_print(&event_migr_tokern, 1, sum_list_syndrome_tokern, &times_syndrome_tokern);
@@ -222,7 +222,7 @@ void syndrome_host(unsigned char *s, unsigned char *pk, unsigned char *e)
 
 
 }
-//#endif
+#endif
 
 
 
@@ -248,12 +248,12 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
   	gettimeofday(&start_syndrome, NULL);
 #endif
 
-//	#ifdef SYNDROME_KERNEL
+	#ifdef SYNDROME_KERNEL
 	syndrome_host(s, pk, e);
-//	#endif
-//	#ifndef SYNDROME_KERNEL
-//	syndrome_sw_host(s, pk, e);
-//	#endif
+	#endif
+	#ifndef SYNDROME_KERNEL
+	syndrome_sw_host(s, pk, e);
+	#endif
 
 #ifdef TIME_MEASUREMENT
 	gettimeofday(&end_syndrome, NULL);
