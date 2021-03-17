@@ -47,17 +47,17 @@ extern unsigned int *ptr_fail;
 
 //SYND
 extern int synd_kernels;
-extern cl_kernel synd_kernels_list[10];
-extern cl_mem buffer_out_out_list[10];
-extern gf * ptr_out_out_list[10];
-extern cl_mem buffer_f_in_list[10];
-extern gf *ptr_f_in_list[10];
+extern cl_kernel synd_kernels_list[15];
+extern cl_mem buffer_out_out_list[15];
+extern gf * ptr_out_out_list[15];
+extern cl_mem buffer_f_in_list[15];
+extern gf *ptr_f_in_list[15];
 extern cl_mem buffer_L_in;
 extern gf *ptr_L_in;
 extern cl_mem buffer_r_in;
 extern unsigned char *ptr_r_in;
-extern cl_mem pt_list_synd_combined[12];
-extern cl_mem pt_list_synd_combined_out[10];
+extern cl_mem pt_list_synd_combined[17];
+extern cl_mem pt_list_synd_combined_out[15];
 
 
 

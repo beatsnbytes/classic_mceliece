@@ -115,30 +115,18 @@ cl_mem pt_list_syndrome_combined[9];
 //#ifdef SYND_KERNEL
 int synd_kernels = 10;
 
-cl_kernel synd_kernels_list[10];
-const char *synd_kernels_name_list[17] = {"synd_kernel1_1",
-										"synd_kernel2_1",
-										"synd_kernel2_2",
-										"synd_kernel4_1",
-										"synd_kernel4_2",
-										"synd_kernel4_3",
-										"synd_kernel4_4",
-										"synd_kernel10_1",
-										"synd_kernel10_2",
-										"synd_kernel10_3",
-										"synd_kernel10_4",
-										"synd_kernel10_5",
-										"synd_kernel10_6",
-										"synd_kernel10_7",
-										"synd_kernel10_8",
-										"synd_kernel10_9",
-										"synd_kernel10_10"
+cl_kernel synd_kernels_list[15];
+const char *synd_kernels_name_list[32] = {"synd_kernel1_1",
+										"synd_kernel2_1", "synd_kernel2_2",
+										"synd_kernel4_1", "synd_kernel4_2", "synd_kernel4_3", "synd_kernel4_4",
+										"synd_kernel10_1", "synd_kernel10_2", "synd_kernel10_3", "synd_kernel10_4", "synd_kernel10_5", "synd_kernel10_6", "synd_kernel10_7", "synd_kernel10_8", "synd_kernel10_9","synd_kernel10_10",
+										"synd_kernel15_1", "synd_kernel15_2", "synd_kernel15_3", "synd_kernel15_4", "synd_kernel15_5", "synd_kernel15_6", "synd_kernel15_7", "synd_kernel15_8", "synd_kernel15_9","synd_kernel15_10","synd_kernel15_11","synd_kernel15_12","synd_kernel15_13","synd_kernel15_14","synd_kernel15_15"
 										};
 
-cl_mem buffer_out_out_list[10];
-gf * ptr_out_out_list[10];
-cl_mem buffer_f_in_list[10];
-gf *ptr_f_in_list[10];
+cl_mem buffer_out_out_list[15];
+gf * ptr_out_out_list[15];
+cl_mem buffer_f_in_list[15];
+gf *ptr_f_in_list[15];
 
 cl_mem buffer_L_in;
 gf *ptr_L_in;
@@ -146,8 +134,8 @@ gf *ptr_L_in;
 cl_mem buffer_r_in;
 unsigned char *ptr_r_in;
 
-cl_mem pt_list_synd_combined[12];
-cl_mem pt_list_synd_combined_out[10];
+cl_mem pt_list_synd_combined[17];
+cl_mem pt_list_synd_combined_out[15];
 
 
 //#endif
@@ -632,7 +620,18 @@ main(int argc, char* argv[])
 	#endif
 
 	//Iteratively initialize kernels and their private buffers/pointers
-	int name_idx=7;
+	int name_idx;
+	switch (synd_kernels)
+	{
+	case 10:
+		name_idx=7;
+		break;
+	case 15:
+		name_idx=17;
+	default:
+		break;
+	}
+	
 	for(int i=0; i<synd_kernels; i++){
 
 		int index = name_idx+i;

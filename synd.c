@@ -19,7 +19,7 @@
 
 double sum_list_synd_tokern[1];
 double sum_list_synd_tohost[1];
-double sum_list_synd_kernel[10];
+double sum_list_synd_kernel[15];
 int times_synd = 0;
 int times_synd_tohost = 0;
 int times_synd_tokern = 0;
@@ -58,7 +58,7 @@ void synd_sw_host(gf *out, gf* f , gf *L, unsigned char *r)
 void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 {
 
-	cl_event events_enq[10], event_migr_tohost, event_migr_tokern;
+	cl_event events_enq[15], event_migr_tohost, event_migr_tokern;
 	gf xor_reduction;
 
 
