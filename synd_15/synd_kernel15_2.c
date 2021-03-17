@@ -1,5 +1,5 @@
-#include "params.h"
-#include "gf.h"
+#include "../params.h"
+#include "../gf.h"
 #include <stdlib.h>
 #include <string.h>
 
