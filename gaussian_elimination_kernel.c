@@ -28,8 +28,8 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 	unsigned char tmpRow[MAT_COLS];
     unsigned char localMat[MAT_ROWS][MAT_COLS]; // Local memory to store input matrix
 
-	#pragma HLS ARRAY_PARTITION variable=localMat cyclic factor=58 dim=2
-	#pragma HLS ARRAY_PARTITION variable=tmpRow cyclic factor=58 //58
+	#pragma HLS ARRAY_PARTITION variable=localMat cyclic factor=87 dim=2
+	#pragma HLS ARRAY_PARTITION variable=tmpRow cyclic factor=87
 
 //	#pragma HLS RESOURCE variable=tmpRow core=RAM_2P_LUTRAM
 //	#pragma HLS RESOURCE variable=localMat core=RAM_2P_LUTRAM
@@ -59,7 +59,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 
 			TMP_ROW_CONSTRUCTION_LOOP2:for(c=0;c<MAT_COLS;c++){
 				#pragma HLS dependence variable=tmpRow inter false
-				#pragma HLS unroll factor=58
+				#pragma HLS unroll factor=87
 				#pragma HLS PIPELINE II=1
 
 				if (row>=1){
@@ -84,7 +84,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 				{
 				#pragma HLS dependence variable=tmpRow inter false
 				#pragma HLS PIPELINE
-				#pragma HLS unroll factor=58
+				#pragma HLS unroll factor=87
 					tmpRow[c] ^= localMat[k][c] & mask;
 				}
 			}
