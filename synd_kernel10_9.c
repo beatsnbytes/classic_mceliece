@@ -4,12 +4,12 @@
 #include <string.h>
 
 
-gf gf_add_kernel8_7(gf in0, gf in1)
+gf gf_add_kernel10_9(gf in0, gf in1)
 {
 	return in0 ^ in1;
 }
 
-gf gf_mul_kernel8_7(gf in0, gf in1)
+gf gf_mul_kernel10_9(gf in0, gf in1)
 {
 	int i;
 
@@ -43,7 +43,7 @@ gf gf_mul_kernel8_7(gf in0, gf in1)
 
 /* input: field element in */
 /* return: (in^2)^2 */
-static inline gf gf_sq2_kernel8_7(gf in)
+static inline gf gf_sq2_kernel10_9(gf in)
 {
 	int i;
 
@@ -79,7 +79,7 @@ static inline gf gf_sq2_kernel8_7(gf in)
 
 /* input: field element in, m */
 /* return: (in^2)*m */
-static inline gf gf_sqmul_kernel8_7(gf in, gf m)
+static inline gf gf_sqmul_kernel10_9(gf in, gf m)
 {
 	int i;
 
@@ -120,7 +120,7 @@ static inline gf gf_sqmul_kernel8_7(gf in, gf m)
 
 /* input: field element in, m */
 /* return: ((in^2)^2)*m */
-static inline gf gf_sq2mul_kernel8_7(gf in, gf m)
+static inline gf gf_sq2mul_kernel10_9(gf in, gf m)
 {
 	int i;
 
@@ -164,31 +164,31 @@ static inline gf gf_sq2mul_kernel8_7(gf in, gf m)
 
 
 
-gf gf_frac_kernel8_7(gf den, gf num)
+gf gf_frac_kernel10_9(gf den, gf num)
 {
 	gf tmp_11;
 	gf tmp_1111;
 	gf out;
 
-	tmp_11 = gf_sqmul_kernel8_7(den, den); // ^11
-	tmp_1111 = gf_sq2mul_kernel8_7(tmp_11, tmp_11); // ^1111
-	out = gf_sq2_kernel8_7(tmp_1111);
-	out = gf_sq2mul_kernel8_7(out, tmp_1111); // ^11111111
-	out = gf_sq2_kernel8_7(out);
-	out = gf_sq2mul_kernel8_7(out, tmp_1111); // ^111111111111
+	tmp_11 = gf_sqmul_kernel10_9(den, den); // ^11
+	tmp_1111 = gf_sq2mul_kernel10_9(tmp_11, tmp_11); // ^1111
+	out = gf_sq2_kernel10_9(tmp_1111);
+	out = gf_sq2mul_kernel10_9(out, tmp_1111); // ^11111111
+	out = gf_sq2_kernel10_9(out);
+	out = gf_sq2mul_kernel10_9(out, tmp_1111); // ^111111111111
 
-	return gf_sqmul_kernel8_7(out, num); // ^1111111111110 = ^-1
+	return gf_sqmul_kernel10_9(out, num); // ^1111111111110 = ^-1
 }
 
 
-gf gf_inv_kernel8_7(gf den)
+gf gf_inv_kernel10_9(gf den)
 {
-	return gf_frac_kernel8_7(den, ((gf) 1));
+	return gf_frac_kernel10_9(den, ((gf) 1));
 }
 
 
 
-gf eval_inner8_7(gf *f, gf a)
+gf eval_inner10_9(gf *f, gf a)
 {
         int i;
         gf r;
@@ -199,13 +199,13 @@ gf eval_inner8_7(gf *f, gf a)
         {
 //		#pragma HLS PIPELINE II=3
 //		#pragma HLS unroll factor=2
-                r = gf_mul_kernel8_7(r, a) ^ f[i];
+                r = gf_mul_kernel10_9(r, a) ^ f[i];
         }
 
         return r;
 }
 
-void synd_kernel8_7(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
+void synd_kernel10_9(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
 	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem4
@@ -241,13 +241,13 @@ void synd_kernel8_7(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		local_f[i] = *(f_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_L:for (uint i=6*SYS_N/8;i<7*SYS_N/8;i++){
+	LOOP_LOAD_FROM_BRAM_L:for (uint i=8*SYS_N/10;i<9*SYS_N/10;i++){
 	#pragma HLS PIPELINE II=1
 	#pragma HLS unroll factor=4
 		local_L[i] = *(L_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_R:for (uint i=6*MAT_COLS/8;i<7*MAT_COLS/8;i++){
+	LOOP_LOAD_FROM_BRAM_R:for (uint i=8*MAT_COLS/10;i<9*MAT_COLS/10;i++){
 	#pragma HLS PIPELINE II=1
 //	#pragma HLS unroll factor=2
 		local_r[i] = *(r_in+i);
@@ -255,36 +255,36 @@ void synd_kernel8_7(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	//READ into local vars END
 	LOOP_EVAL:
-	for(uint i=6*SYS_N/8; i <7*SYS_N/8; i++){
+	for(uint i=8*SYS_N/10; i <9*SYS_N/10; i++){
 //	#pragma HLS PIPELINE
 //	#pragma HLS unroll factor=2
-		e_mat[i] = eval_inner8_7(local_f, local_L[i]);
+		e_mat[i] = eval_inner10_9(local_f, local_L[i]);
 	}
 
 
 
 	LOOP_MAIN_OUTER:
-	for (uint i = 6*SYS_N/8; i < 7*SYS_N/8; i++) //12
+	for (uint i = 8*SYS_N/10; i < 9*SYS_N/10; i++) //12
 	{
 //	#pragma HLS pipeline
 
 		c = (local_r[i>>3] >> (i%8)) & 1;
-		e_inv = gf_inv_kernel8_7(gf_mul_kernel8_7(e_mat[i],e_mat[i]));
+		e_inv = gf_inv_kernel10_9(gf_mul_kernel10_9(e_mat[i],e_mat[i]));
 
 		LOOP_MAIN_INNER:
-		for (uint j = 0; j < 2*SYS_T; j++)//8
+		for (uint j = 0; j < 2*SYS_T; j++)//10
 		{
 //		#pragma HLS DEPENDENCE inter variable=local_out false
 		#pragma HLS PIPELINE
 //		#pragma HLS unroll factor=32
 
-			if(i==6*SYS_N/8){
-				local_out[j] = gf_mul_kernel8_7(e_inv, c);
+			if(i==8*SYS_N/10){
+				local_out[j] = gf_mul_kernel10_9(e_inv, c);
 			}else{
-				local_out[j] ^= gf_mul_kernel8_7(e_inv, c);
+				local_out[j] ^= gf_mul_kernel10_9(e_inv, c);
 
 			}
-			e_inv = gf_mul_kernel8_7(e_inv, local_L[i]);
+			e_inv = gf_mul_kernel10_9(e_inv, local_L[i]);
 
 		}
 	}
