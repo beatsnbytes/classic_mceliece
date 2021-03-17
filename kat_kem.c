@@ -113,30 +113,32 @@ cl_mem pt_list_syndrome_combined[9];
 #endif
 
 //#ifdef SYND_KERNEL
-int synd_kernels = 8;
+int synd_kernels = 10;
 
-cl_kernel synd_kernels_list[8];
-const char *synd_kernels_name_list[15] = {"synd_kernel1_1",
+cl_kernel synd_kernels_list[10];
+const char *synd_kernels_name_list[17] = {"synd_kernel1_1",
 										"synd_kernel2_1",
 										"synd_kernel2_2",
 										"synd_kernel4_1",
 										"synd_kernel4_2",
 										"synd_kernel4_3",
 										"synd_kernel4_4",
-										"synd_kernel8_1",
-										"synd_kernel8_2",
-										"synd_kernel8_3",
-										"synd_kernel8_4",
-										"synd_kernel8_5",
-										"synd_kernel8_6",
-										"synd_kernel8_7",
-										"synd_kernel8_8"
+										"synd_kernel10_1",
+										"synd_kernel10_2",
+										"synd_kernel10_3",
+										"synd_kernel10_4",
+										"synd_kernel10_5",
+										"synd_kernel10_6",
+										"synd_kernel10_7",
+										"synd_kernel10_8",
+										"synd_kernel10_9",
+										"synd_kernel10_10"
 										};
 
-cl_mem buffer_out_out_list[8];
-gf * ptr_out_out_list[8];
-cl_mem buffer_f_in_list[8];
-gf *ptr_f_in_list[8];
+cl_mem buffer_out_out_list[10];
+gf * ptr_out_out_list[10];
+cl_mem buffer_f_in_list[10];
+gf *ptr_f_in_list[10];
 
 cl_mem buffer_L_in;
 gf *ptr_L_in;
@@ -144,8 +146,8 @@ gf *ptr_L_in;
 cl_mem buffer_r_in;
 unsigned char *ptr_r_in;
 
-cl_mem pt_list_synd_combined[10];
-cl_mem pt_list_synd_combined_out[8];
+cl_mem pt_list_synd_combined[12];
+cl_mem pt_list_synd_combined_out[10];
 
 
 //#endif
@@ -382,7 +384,7 @@ main(int argc, char* argv[])
 	// -------------------------------------------------------------
 
 
-#ifdef GAUSSIAN_ELIMINATION_KERNELa
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
 	kernel_gaussian_elimination = clCreateKernel(program, "gaussian_elimination_kernel", &err);
 	#ifdef OCL_API_DEBUG
 	if (!kernel_gaussian_elimination || err != CL_SUCCESS) {
@@ -589,7 +591,7 @@ main(int argc, char* argv[])
 
 
 
-//#ifdef SYND_KERNEL
+#ifdef SYND_KERNEL
 
 	//Initalize the buffers/pointers that will be used by all kernels
 	buffer_L_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(gf)*SYS_N, NULL, &err);
@@ -630,9 +632,10 @@ main(int argc, char* argv[])
 	#endif
 
 	//Iteratively initialize kernels and their private buffers/pointers
+	int name_idx=7;
 	for(int i=0; i<synd_kernels; i++){
 
-		int index = synd_kernels-1+i;
+		int index = name_idx+i;
 		synd_kernels_list[i] = clCreateKernel(program, synd_kernels_name_list[index], &err);
 		#ifdef OCL_API_DEBUG
 		if (!synd_kernels_list[i] || err != CL_SUCCESS) {
@@ -726,7 +729,7 @@ main(int argc, char* argv[])
 	}
 
 
-//#endif
+#endif
 
 
     FILE                *fp_req, *fp_rsp;
@@ -870,7 +873,7 @@ main(int argc, char* argv[])
 #endif
 
 
-//#ifdef SYND_KERNEL
+#ifdef SYND_KERNEL
 	printf("\n***************SYND KERNEL***************\n");
 	printf("Kernel execution time\n");
 	print_kernel_execution_time(sum_list_synd_kernel, &times_synd, synd_kernels);
@@ -882,9 +885,9 @@ main(int argc, char* argv[])
 	print_event_execution_time(&sum_synd_kernels, &times_synd_kernels);
 	printf("Synd host function ");
 	print_event_execution_time(&sum_total_synd, &times_total_synd);
-//#endif
+#endif
 
-#ifdef SYNDROME_KERNELa
+#ifdef SYNDROME_KERNEL
 	printf("\n***************SYNDROME KERNEL***************\n");
 	printf("Kernel execution time\n");
 	print_kernel_execution_time(sum_list_syndrome_kernel, &times_syndrome, syndrome_kernels);
@@ -918,7 +921,7 @@ main(int argc, char* argv[])
 
 #endif
 
-	#ifdef GAUSSIAN_ELIMINATION_KERNELa
+	#ifdef GAUSSIAN_ELIMINATION_KERNEL
 	clReleaseKernel(kernel_gaussian_elimination);
 	clEnqueueUnmapMemObject(commands, buffer_mat_in, ptr_mat_in, 0, NULL, NULL);
 	clEnqueueUnmapMemObject(commands, buffer_mat_out, NULL, 0, NULL, NULL);

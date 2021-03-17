@@ -38,7 +38,7 @@ double sum_parallel=0.0;
 int times_parallel=0;
 
 
-#ifdef GAUSSIAN_ELIMINATION_KERNELa
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
 
 
 void parallel_sw_part(unsigned char * sk, unsigned char * seed, unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ], int16_t * pi){
@@ -281,7 +281,7 @@ void gaussian_elimination_host(unsigned char mat[ GFBITS * SYS_T ][ SYS_N/8 ], u
 
 
 // Code that contains the call to gaussian elimination hw kernel
-#ifdef GAUSSIAN_ELIMINATION_KERNELa
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
 int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t * pi, unsigned char * sk_initial,  unsigned char * seed_initial)
 {
 

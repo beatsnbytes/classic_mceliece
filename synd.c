@@ -19,7 +19,7 @@
 
 double sum_list_synd_tokern[1];
 double sum_list_synd_tohost[1];
-double sum_list_synd_kernel[8];
+double sum_list_synd_kernel[10];
 int times_synd = 0;
 int times_synd_tohost = 0;
 int times_synd_tokern = 0;
@@ -54,11 +54,11 @@ void synd_sw_host(gf *out, gf* f , gf *L, unsigned char *r)
 }
 
 
-//#ifdef SYND_KERNEL
+#ifdef SYND_KERNEL
 void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 {
 
-	cl_event events_enq[8], event_migr_tohost, event_migr_tokern;
+	cl_event events_enq[10], event_migr_tohost, event_migr_tokern;
 	gf xor_reduction;
 
 
@@ -137,6 +137,6 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 #endif
 
 }
-//#endif
+#endif
 
 
