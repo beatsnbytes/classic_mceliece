@@ -57,6 +57,9 @@ cl_platform_id platform_id;
 cl_device_id device_id;
 cl_context context;
 cl_command_queue commands;
+cl_command_queue commands_2;
+cl_command_queue commands_3;
+cl_command_queue commands_4;
 cl_program program;
 
 #ifdef GAUSSIAN_ELIMINATION_KERNELa
@@ -76,7 +79,7 @@ cl_mem buffer_fail;
 
 
 #ifdef SYNDROME_KERNEL
-int syndrome_kernels = 4 ;
+int syndrome_kernels = 1 ;
 cl_kernel syndrome_kernels_list[8];
 
 const char *syndrome_kernels_name_list[15] = {"syndrome_kernel",
@@ -112,7 +115,7 @@ cl_mem pt_list_syndrome_combined[9];
 
 #endif
 
-//#ifdef SYND_KERNEL
+#ifdef SYND_KERNEL
 int synd_kernels = 15;
 
 cl_kernel synd_kernels_list[15];
@@ -138,7 +141,7 @@ cl_mem pt_list_synd_combined[17];
 cl_mem pt_list_synd_combined_out[15];
 
 
-//#endif
+#endif
 
 
 double sum_keygen=0;
@@ -306,7 +309,6 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 	#endif
-
 
 
    cl_int status;
