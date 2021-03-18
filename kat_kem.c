@@ -113,7 +113,7 @@ cl_mem pt_list_syndrome_combined[9];
 #endif
 
 //#ifdef SYND_KERNEL
-int synd_kernels = 10;
+int synd_kernels = 15;
 
 cl_kernel synd_kernels_list[15];
 const char *synd_kernels_name_list[32] = {"synd_kernel1_1",
