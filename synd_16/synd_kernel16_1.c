@@ -3,14 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
-gf gf_add_kernel4_3(gf in0, gf in1)
+gf gf_add_kernel16_1(gf in0, gf in1)
 {
 	return in0 ^ in1;
 }
 
-gf gf_mul_kernel4_3(gf in0, gf in1)
+gf gf_mul_kernel16_1(gf in0, gf in1)
 {
 	int i;
 
@@ -44,7 +42,7 @@ gf gf_mul_kernel4_3(gf in0, gf in1)
 
 /* input: field element in */
 /* return: (in^2)^2 */
-static inline gf gf_sq2_kernel4_3(gf in)
+static inline gf gf_sq2_kernel16_1(gf in)
 {
 	int i;
 
@@ -80,7 +78,7 @@ static inline gf gf_sq2_kernel4_3(gf in)
 
 /* input: field element in, m */
 /* return: (in^2)*m */
-static inline gf gf_sqmul_kernel4_3(gf in, gf m)
+static inline gf gf_sqmul_kernel16_1(gf in, gf m)
 {
 	int i;
 
@@ -121,7 +119,7 @@ static inline gf gf_sqmul_kernel4_3(gf in, gf m)
 
 /* input: field element in, m */
 /* return: ((in^2)^2)*m */
-static inline gf gf_sq2mul_kernel4_3(gf in, gf m)
+static inline gf gf_sq2mul_kernel16_1(gf in, gf m)
 {
 	int i;
 
@@ -165,31 +163,31 @@ static inline gf gf_sq2mul_kernel4_3(gf in, gf m)
 
 
 
-gf gf_frac_kernel4_3(gf den, gf num)
+gf gf_frac_kernel16_1(gf den, gf num)
 {
 	gf tmp_11;
 	gf tmp_1111;
 	gf out;
 
-	tmp_11 = gf_sqmul_kernel4_3(den, den); // ^11
-	tmp_1111 = gf_sq2mul_kernel4_3(tmp_11, tmp_11); // ^1111
-	out = gf_sq2_kernel4_3(tmp_1111);
-	out = gf_sq2mul_kernel4_3(out, tmp_1111); // ^11111111
-	out = gf_sq2_kernel4_3(out);
-	out = gf_sq2mul_kernel4_3(out, tmp_1111); // ^111111111111
+	tmp_11 = gf_sqmul_kernel16_1(den, den); // ^11
+	tmp_1111 = gf_sq2mul_kernel16_1(tmp_11, tmp_11); // ^1111
+	out = gf_sq2_kernel16_1(tmp_1111);
+	out = gf_sq2mul_kernel16_1(out, tmp_1111); // ^11111111
+	out = gf_sq2_kernel16_1(out);
+	out = gf_sq2mul_kernel16_1(out, tmp_1111); // ^111111111111
 
-	return gf_sqmul_kernel4_3(out, num); // ^1111111111110 = ^-1
+	return gf_sqmul_kernel16_1(out, num); // ^1111111111110 = ^-1
 }
 
 
-gf gf_inv_kernel4_3(gf den)
+gf gf_inv_kernel16_1(gf den)
 {
-	return gf_frac_kernel4_3(den, ((gf) 1));
+	return gf_frac_kernel16_1(den, ((gf) 1));
 }
 
 
 
-gf eval_inner4_3(gf *f, gf a)
+gf eval_inner16_1(gf *f, gf a)
 {
         int i;
         gf r;
@@ -200,20 +198,19 @@ gf eval_inner4_3(gf *f, gf a)
         {
 //		#pragma HLS PIPELINE II=3
 //		#pragma HLS unroll factor=2
-                r = gf_mul_kernel4_3(r, a) ^ f[i];
+                r = gf_mul_kernel16_1(r, a) ^ f[i];
         }
 
         return r;
 }
 
-
-void synd_kernel4_3(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
+void synd_kernel16_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
-	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem3
-	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem2
-	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem1
-	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem1
+	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem2
+	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem3
 	#pragma HLS INTERFACE s_axilite port=out_out            bundle=control
 	#pragma HLS INTERFACE s_axilite port=f_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=L_in               bundle=control
@@ -226,15 +223,14 @@ void synd_kernel4_3(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	gf e, e_inv, c;
 	gf local_out[2*SYS_T];
 	gf local_f[SYS_T+1];
-	gf local_L[SYS_N];
-	gf tmp_mul_1, tmp_mul_2;
-	unsigned char local_r[MAT_COLS];
+	gf local_L[SYS_N/16];
+	unsigned char local_r[MAT_COLS/16];
 
 	gf e_mat[SYS_N];
 
-	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4
-	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4
-	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4
+	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4 //64
+	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4 //8
+	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4 //8
 
 	//READ into local vars
 
@@ -243,50 +239,52 @@ void synd_kernel4_3(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		local_f[i] = *(f_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_L:for (uint i=2*SYS_N/4;i<3*SYS_N/4;i++){
+	LOOP_LOAD_FROM_BRAM_L:for (uint i=0;i<SYS_N/16;i++){
 	#pragma HLS PIPELINE II=1
 	#pragma HLS unroll factor=4
 		local_L[i] = *(L_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_R:for (uint i=2*MAT_COLS/4;i<3*MAT_COLS/4;i++){
+
+	LOOP_LOAD_FROM_BRAM_R:for (uint i=0;i<MAT_COLS/16;i++){
 	#pragma HLS PIPELINE II=1
 	#pragma HLS unroll factor=2
 		local_r[i] = *(r_in+i);
 	}
 
+
 	//READ into local vars END
 	LOOP_EVAL:
-	for(uint i=2*SYS_N/4; i <3*SYS_N/4; i++){
+	for(uint i=0; i <SYS_N/16; i++){//11
 //	#pragma HLS PIPELINE
 //	#pragma HLS unroll factor=2
-		e_mat[i] = eval_inner4_3(local_f, local_L[i]);
+		e_mat[i] = eval_inner16_1(local_f, local_L[i]);
 	}
 
 
 
 	LOOP_MAIN_OUTER:
-	for (uint i = 2*SYS_N/4; i < 3*SYS_N/4; i++) //12
+	for (uint i = 0; i < SYS_N/16; i++) //11
 	{
 //	#pragma HLS pipeline
 
 		c = (local_r[i>>3] >> (i%8)) & 1;
-		e_inv = gf_inv_kernel4_3(gf_mul_kernel4_3(e_mat[i],e_mat[i]));
+		e_inv = gf_inv_kernel16_1(gf_mul_kernel16_1(e_mat[i],e_mat[i]));
 
 		LOOP_MAIN_INNER:
-		for (uint j = 0; j < 2*SYS_T; j++)//8
+		for (uint j = 0; j < 2*SYS_T; j++) //8
 		{
 //		#pragma HLS DEPENDENCE inter variable=local_out false
 		#pragma HLS PIPELINE
 //		#pragma HLS unroll factor=32
 
-			if(i==2*SYS_N/4){
-				local_out[j] = gf_mul_kernel4_3(e_inv, c);
+			if(i==0){
+				local_out[j] = gf_mul_kernel16_1(e_inv, c);
 			}else{
-				local_out[j] ^= gf_mul_kernel4_3(e_inv, c);
+				local_out[j] ^= gf_mul_kernel16_1(e_inv, c);
 
 			}
-			e_inv = gf_mul_kernel4_3(e_inv, local_L[i]);
+			e_inv = gf_mul_kernel16_1(e_inv, local_L[i]);
 
 		}
 	}
