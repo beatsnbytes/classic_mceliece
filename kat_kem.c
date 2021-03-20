@@ -80,27 +80,24 @@ cl_mem buffer_fail;
 
 #ifdef SYNDROME_KERNEL
 int syndrome_kernels = 1 ;
-cl_kernel syndrome_kernels_list[8];
+cl_kernel syndrome_kernels_list[7];
 
-const char *syndrome_kernels_name_list[15] = {"syndrome_kernel",
+const char *syndrome_kernels_name_list[14] = {"syndrome_kernel",
 										"syndrome_kernel2_1",
 										"syndrome_kernel2_2",
 										"syndrome_kernel4_1",
 										"syndrome_kernel4_2",
 										"syndrome_kernel4_3",
 										"syndrome_kernel4_4",
-										"syndrome_kernel8_1",
-										"syndrome_kernel8_2",
-										"syndrome_kernel8_3",
-										"syndrome_kernel8_4",
-										"syndrome_kernel8_5",
-										"syndrome_kernel8_6",
-										"syndrome_kernel8_7",
-										"syndrome_kernel8_8"
+										"syndrome_kernel7_1",
+										"syndrome_kernel7_2",
+										"syndrome_kernel7_3",
+										"syndrome_kernel7_4",
+										"syndrome_kernel7_5",
+										"syndrome_kernel7_6",
+										"syndrome_kernel7_7"
 										};
 
-
-cl_mem pt_list_syndrome_combined[9];
 
 cl_mem buffer_pk_in;
 unsigned char *ptr_pk_in;
@@ -108,10 +105,10 @@ unsigned char *ptr_pk_in;
 cl_mem buffer_s_out;
 unsigned char *ptr_s_out;
 
-cl_mem buffer_e_in_list[8];
-unsigned char *ptr_e_in_list[8];
+cl_mem buffer_e_in_list[7];
+unsigned char *ptr_e_in_list[7];
 
-cl_mem pt_list_syndrome_combined[9];
+cl_mem pt_list_syndrome_combined[8];
 
 #endif
 

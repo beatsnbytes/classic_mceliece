@@ -6,7 +6,7 @@
 
 void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
 {
-	#pragma HLS INTERFACE m_axi     port=pk_in  offset=slave bundle=gmem
+	#pragma HLS INTERFACE m_axi     port=pk_in  offset=slave bundle=gmem0
 	#pragma HLS INTERFACE m_axi     port=e_in   offset=slave bundle=gmem1
 	#pragma HLS INTERFACE m_axi     port=s_out  offset=slave bundle=gmem2
     #pragma HLS INTERFACE s_axilite port=pk_in               bundle=control
@@ -32,7 +32,7 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 	for(int i=0;i<MAT_ROWS;i++){
 		for(int j=0;j<PK_ROW_BYTES;j++){
 			#pragma HLS PIPELINE ΙΙ=1
-			#pragma HLS unroll factor=4
+//			#pragma HLS unroll factor=2
 			local_pk[i][j] = *(pk_in+i*PK_ROW_BYTES+j);
 		}
 	}
@@ -40,7 +40,7 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 
 	LOOP_LOAD_FROM_BRAM_E:for(unsigned int i=0;i<MAT_COLS;i++){
 		#pragma HLS PIPELINE ΙΙ=1
-		#pragma HLS unroll factor=2
+//		#pragma HLS unroll factor=2
 		local_e[i] = *(e_in+i);
 	}
 
@@ -82,7 +82,7 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 		for (int j = SYS_N/8-1; j >= SYS_N/8 - PK_ROW_BYTES; j--){
 		#pragma HLS DEPENDENCE variable=row inter false
 		#pragma HLS PIPELINE
-		#pragma HLS unroll factor=87
+//		#pragma HLS unroll factor=2
 			row[ j ] = (row[ j ] << tail) | (row[j-1] >> (8-tail));
 		}
 
@@ -108,7 +108,7 @@ void syndrome_kernel(unsigned char *pk_in, unsigned char *e_in, unsigned char *s
 
 	LOOP_WRITE_TO_BRAM_R:for (unsigned int i=0;i<SYND_BYTES;i++){
 		#pragma HLS PIPELINE ΙΙ=1
-		#pragma HLS unroll factor=4
+		#pragma HLS unroll factor=2
 		*(s_out+i) = local_s[i];
 	}
 
