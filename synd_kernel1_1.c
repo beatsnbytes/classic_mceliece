@@ -208,7 +208,7 @@ gf eval_inner1_1(gf *f, gf a)
 void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
-	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem
 	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem1
 	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem2
 	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem3
@@ -230,9 +230,9 @@ void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	gf e_mat[SYS_N];
 
-	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=64 //32
-	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=8 //8
-	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=8 //8
+	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4 //32
+	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4 //8
+	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4 //8
 
 	//READ into local vars
 
@@ -258,7 +258,7 @@ void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	//READ into local vars END
 	LOOP_EVAL:
 	for(uint i=0; i <SYS_N; i++){
-	#pragma HLS PIPELINE
+//	#pragma HLS PIPELINE
 //	#pragma HLS unroll factor=2 //taking long
 		e_mat[i] = eval_inner1_1(local_f, local_L[i]);
 	}
@@ -275,9 +275,9 @@ void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		LOOP_MAIN_INNER:
 		for (uint j = 0; j < 2*SYS_T; j++)
 		{
-		#pragma HLS DEPENDENCE inter variable=e_inv RAW true
+//		#pragma HLS DEPENDENCE inter variable=e_inv RAW true
 		#pragma HLS PIPELINE
-		#pragma HLS unroll factor=2
+//		#pragma HLS unroll factor=2
 
 
 			if(i==0){

@@ -113,7 +113,7 @@ cl_mem pt_list_syndrome_combined[9];
 #endif
 
 #ifdef SYND_KERNEL
-int synd_kernels = 11;
+int synd_kernels = 1;
 int start_idx = 7;
 
 cl_kernel synd_kernels_list[11];
@@ -633,6 +633,7 @@ main(int argc, char* argv[])
 	}
 	#endif
 
+	start_idx=0;
 	if (synd_kernels==11){
 		start_idx = 7;
 	}

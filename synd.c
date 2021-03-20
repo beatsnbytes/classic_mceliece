@@ -77,19 +77,19 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
     }
 	#endif
 
-	#ifdef TIME_MEASUREMENT
-		struct timeval start_kernel, end_kernel;
-		gettimeofday(&start_kernel, NULL);
-	#endif
+//	#ifdef TIME_MEASUREMENT
+//		struct timeval start_kernel, end_kernel;
+//		gettimeofday(&start_kernel, NULL);
+//	#endif
 
     for (int i=0; i<synd_kernels; i++){
     	err = clEnqueueTask(commands, synd_kernels_list[i], 1, &event_migr_tokern, &events_enq[i]);
     }
-    	#ifdef TIME_MEASUREMENT
-    		clWaitForEvents(synd_kernels, &events_enq);
-    		gettimeofday(&end_kernel, NULL);
-    		get_event_time(&start_kernel, &end_kernel, &sum_synd_kernels, &times_synd_kernels);
-    	#endif
+//    	#ifdef TIME_MEASUREMENT
+//    		clWaitForEvents(synd_kernels, &events_enq);
+//    		gettimeofday(&end_kernel, NULL);
+//    		get_event_time(&start_kernel, &end_kernel, &sum_synd_kernels, &times_synd_kernels);
+//    	#endif
 
 	#ifdef OCL_API_DEBUG
     if (err != CL_SUCCESS) {

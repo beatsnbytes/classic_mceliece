@@ -228,9 +228,9 @@ void synd_kernel11_11(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	gf e_mat[SYS_N];
 
-	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4 //64
+//	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4 //64
 	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4 //8
-	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4 //8
+//	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4 //8
 
 	//READ into local vars
 
