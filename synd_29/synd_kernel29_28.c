@@ -1,8 +1,8 @@
-#include "../params.h"
-#include "../gf.h"
+#include "params.h"
+#include "gf.h"
 #include <stdlib.h>
 #include <string.h>
-
+//#include "ap_cint.h"
 
 gf gf_add_kernel29_28(gf in0, gf in1)
 {
@@ -108,8 +108,8 @@ static inline gf gf_sqmul_kernel29_28(gf in, gf m)
 
 	for (i = 0; i < 3; i++)
 	{
-	#pragma HLS PIPELINE
-	#pragma HLS unroll
+	// #pragma HLS PIPELINE
+	// #pragma HLS unroll
 
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
@@ -152,8 +152,8 @@ static inline gf gf_sq2mul_kernel29_28(gf in, gf m)
 
 	for (i = 0; i < 6; i++)
 	{
-	#pragma HLS PIPELINE
-	#pragma HLS unroll
+	// #pragma HLS PIPELINE
+	// #pragma HLS unroll
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
 	}
@@ -205,13 +205,14 @@ gf eval_inner29_28(gf *f, gf a)
         return r;
 }
 
+
 void synd_kernel29_28(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
-	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem4
-	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem5
-	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem6
-	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem7
+	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem1
+	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem1
+	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem1
+	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem1
 	#pragma HLS INTERFACE s_axilite port=out_out            bundle=control
 	#pragma HLS INTERFACE s_axilite port=f_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=L_in               bundle=control
@@ -222,7 +223,7 @@ void synd_kernel29_28(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	int i, j;
 	gf e, e_inv, c;
-	gf local_out[2*SYS_T];
+	gf local_out[28*SYS_T];
 	gf local_f[SYS_T+1];
 	gf local_L[SYS_N];
 	gf tmp_mul_1, tmp_mul_2;
@@ -230,9 +231,10 @@ void synd_kernel29_28(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	gf e_mat[SYS_N];
 
-	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4
-	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4
-	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4
+	// #pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4 //64
+	// #pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4 //8
+	// #pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4 //8
+	// #pragma HLS ARRAY_PARTITION variable=local_f cyclic factor=4 //8
 
 	//READ into local vars
 
@@ -243,13 +245,13 @@ void synd_kernel29_28(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	LOOP_LOAD_FROM_BRAM_L:for (uint i=27*SYS_N/29;i<28*SYS_N/29;i++){
 	#pragma HLS PIPELINE II=1
-	#pragma HLS unroll factor=4
+	// #pragma HLS unroll factor=4
 		local_L[i] = *(L_in+i);
 	}
 
 	LOOP_LOAD_FROM_BRAM_R:for (uint i=27*MAT_COLS/29;i<28*MAT_COLS/29;i++){
 	#pragma HLS PIPELINE II=1
-//	#pragma HLS unroll factor=2
+	// #pragma HLS unroll factor=2
 		local_r[i] = *(r_in+i);
 	}
 
@@ -272,11 +274,11 @@ void synd_kernel29_28(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		e_inv = gf_inv_kernel29_28(gf_mul_kernel29_28(e_mat[i],e_mat[i]));
 
 		LOOP_MAIN_INNER:
-		for (uint j = 0; j < 2*SYS_T; j++)//29
+		for (uint j = 0; j < 28*SYS_T; j++)//8
 		{
 //		#pragma HLS DEPENDENCE inter variable=local_out false
-		#pragma HLS PIPELINE
-//		#pragma HLS unroll factor=32
+//		#pragma HLS PIPELINE
+//		#pragma HLS unroll factor=2
 
 			if(i==27*SYS_N/29){
 				local_out[j] = gf_mul_kernel29_28(e_inv, c);
@@ -291,7 +293,7 @@ void synd_kernel29_28(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	//WRITE to local memory
 
-	LOOP_WRITE_TO_BRAM_OUT:for(uint i=0;i<(2*SYS_T);i++){
+	LOOP_WRITE_TO_BRAM_OUT:for(uint i=0;i<(28*SYS_T);i++){
 	#pragma HLS PIPELINE II=1
 	#pragma HLS unroll factor=2
 		*(out_out+i) = local_out[i];

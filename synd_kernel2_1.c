@@ -66,9 +66,9 @@ static inline gf gf_sq2_kernel2_1(gf in)
 	x = (x | (x << 3)) & B[0];
 
 	for (i = 0; i < 4; i++)
-	{
-	#pragma HLS PIPELINE
-	#pragma HLS unroll
+	// {
+	// #pragma HLS PIPELINE
+	// #pragma HLS unroll
 
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
@@ -108,8 +108,8 @@ static inline gf gf_sqmul_kernel2_1(gf in, gf m)
 
 	for (i = 0; i < 3; i++)
 	{
-	#pragma HLS PIPELINE
-	#pragma HLS unroll
+	// #pragma HLS PIPELINE
+	// #pragma HLS unroll
 
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
@@ -152,8 +152,8 @@ static inline gf gf_sq2mul_kernel2_1(gf in, gf m)
 
 	for (i = 0; i < 6; i++)
 	{
-	#pragma HLS PIPELINE
-	#pragma HLS unroll
+	// #pragma HLS PIPELINE
+	// #pragma HLS unroll
 		t = x & M[i];
 		x ^= (t >> 9) ^ (t >> 10) ^ (t >> 12) ^ (t >> 13);
 	}
@@ -210,9 +210,9 @@ void synd_kernel2_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
 	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem0
-	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem1
-	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem2
-	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem3
+	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem0
 	#pragma HLS INTERFACE s_axilite port=out_out            bundle=control
 	#pragma HLS INTERFACE s_axilite port=f_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=L_in               bundle=control
@@ -230,9 +230,9 @@ void synd_kernel2_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	gf e_mat[SYS_N];
 
-	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4 //64
-	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4 //8
-	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4 //8
+	// #pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4 //64
+	// #pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4 //8
+	// #pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4 //8
 
 	//READ into local vars
 
@@ -243,14 +243,14 @@ void synd_kernel2_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	LOOP_LOAD_FROM_BRAM_L:for (uint i=0;i<SYS_N/2;i++){
 	#pragma HLS PIPELINE II=1
-	#pragma HLS unroll factor=4
+	// #pragma HLS unroll factor=4
 		local_L[i] = *(L_in+i);
 	}
 
 
 	LOOP_LOAD_FROM_BRAM_R:for (uint i=0;i<MAT_COLS/2;i++){
 	#pragma HLS PIPELINE II=1
-	#pragma HLS unroll factor=2
+	// #pragma HLS unroll factor=2
 		local_r[i] = *(r_in+i);
 	}
 
@@ -295,7 +295,7 @@ void synd_kernel2_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	LOOP_WRITE_TO_BRAM_OUT:for(uint i=0;i<(2*SYS_T);i++){
 	#pragma HLS PIPELINE II=1
-	#pragma HLS unroll factor=2
+	// #pragma HLS unroll factor=2
 		*(out_out+i) = local_out[i];
 	}
 }
