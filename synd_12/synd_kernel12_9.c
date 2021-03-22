@@ -210,10 +210,10 @@ gf eval_inner12_9(gf *f, gf a)
 void synd_kernel12_9(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
-	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem7
-	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem6
-	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem5
-	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem4
+	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem8
+	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem8
+	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem8
+	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem8
 	#pragma HLS INTERFACE s_axilite port=out_out            bundle=control
 	#pragma HLS INTERFACE s_axilite port=f_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=L_in               bundle=control

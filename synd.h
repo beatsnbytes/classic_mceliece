@@ -12,7 +12,7 @@ void synd(gf *, gf *, gf *, unsigned char *);
 
 extern double sum_list_synd_tokern[1];
 extern double sum_list_synd_tohost[1];
-extern double sum_list_synd_kernel[8];
+extern double sum_list_synd_kernel[18];
 extern int times_synd;
 extern int times_synd_tohost;
 extern int times_synd_tokern;

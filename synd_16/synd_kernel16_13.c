@@ -210,9 +210,9 @@ gf eval_inner16_13(gf *f, gf a)
 void synd_kernel16_13(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
-	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem7
-	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem6
-	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem5
+	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem4
+	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem4
+	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem4
 	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem4
 	#pragma HLS INTERFACE s_axilite port=out_out            bundle=control
 	#pragma HLS INTERFACE s_axilite port=f_in               bundle=control
@@ -243,13 +243,13 @@ void synd_kernel16_13(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		local_f[i] = *(f_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_L:for (uint i=12*SYS_N/16;i<112*SYS_N/16;i++){
+	LOOP_LOAD_FROM_BRAM_L:for (uint i=12*SYS_N/16;i<13*SYS_N/16;i++){
 	#pragma HLS PIPELINE II=1
 	// #pragma HLS unroll factor=4
 		local_L[i] = *(L_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_R:for (uint i=12*MAT_COLS/16;i<112*MAT_COLS/16;i++){
+	LOOP_LOAD_FROM_BRAM_R:for (uint i=12*MAT_COLS/16;i<13*MAT_COLS/16;i++){
 	#pragma HLS PIPELINE II=1
 	// #pragma HLS unroll factor=2
 		local_r[i] = *(r_in+i);
@@ -257,7 +257,7 @@ void synd_kernel16_13(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	//READ into local vars END
 	LOOP_EVAL:
-	for(uint i=12*SYS_N/16; i <112*SYS_N/16; i++){
+	for(uint i=12*SYS_N/16; i <13*SYS_N/16; i++){
 //	#pragma HLS PIPELINE
 //	#pragma HLS unroll factor=2
 		e_mat[i] = eval_inner16_13(local_f, local_L[i]);
@@ -266,7 +266,7 @@ void synd_kernel16_13(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 
 	LOOP_MAIN_OUTER:
-	for (uint i = 12*SYS_N/16; i < 112*SYS_N/16; i++) //12
+	for (uint i = 12*SYS_N/16; i < 13*SYS_N/16; i++) //12
 	{
 //	#pragma HLS pipeline
 

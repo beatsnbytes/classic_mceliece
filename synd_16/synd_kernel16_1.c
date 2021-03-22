@@ -208,9 +208,9 @@ void synd_kernel16_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
 	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem0
-	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem1
-	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem2
-	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem3
+	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem0
 	#pragma HLS INTERFACE s_axilite port=out_out            bundle=control
 	#pragma HLS INTERFACE s_axilite port=f_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=L_in               bundle=control
