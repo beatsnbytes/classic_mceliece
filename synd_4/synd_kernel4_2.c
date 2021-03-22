@@ -208,10 +208,10 @@ gf eval_inner4_2(gf *f, gf a)
 void synd_kernel4_2(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
-	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem4
-	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem5
-	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem6
-	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem7
+	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem1
+	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem1
+	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem1
+	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem1
 	#pragma HLS INTERFACE s_axilite port=out_out            bundle=control
 	#pragma HLS INTERFACE s_axilite port=f_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=L_in               bundle=control
@@ -241,13 +241,13 @@ void synd_kernel4_2(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		local_f[i] = *(f_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_L:for (uint i=SYS_N/4;i<2*SYS_N/4;i++){
+	LOOP_LOAD_FROM_BRAM_L:for (uint i=1*SYS_N/4;i<2*SYS_N/4;i++){
 	#pragma HLS PIPELINE II=1
 	// #pragma HLS unroll factor=4
 		local_L[i] = *(L_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_R:for (uint i=MAT_COLS/4;i<2*MAT_COLS/4;i++){
+	LOOP_LOAD_FROM_BRAM_R:for (uint i=1*MAT_COLS/4;i<2*MAT_COLS/4;i++){
 	#pragma HLS PIPELINE II=1
 	// #pragma HLS unroll factor=2
 		local_r[i] = *(r_in+i);
@@ -255,7 +255,7 @@ void synd_kernel4_2(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	//READ into local vars END
 	LOOP_EVAL:
-	for(uint i=SYS_N/4; i <2*SYS_N/4; i++){
+	for(uint i=1*SYS_N/4; i <2*SYS_N/4; i++){
 //	#pragma HLS PIPELINE
 //	#pragma HLS unroll factor=2
 		e_mat[i] = eval_inner4_2(local_f, local_L[i]);
@@ -264,7 +264,7 @@ void synd_kernel4_2(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 
 	LOOP_MAIN_OUTER:
-	for (uint i = SYS_N/4; i < 2*SYS_N/4; i++) //12
+	for (uint i = 1*SYS_N/4; i < 2*SYS_N/4; i++) //12
 	{
 //	#pragma HLS pipeline
 
@@ -278,7 +278,7 @@ void synd_kernel4_2(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		#pragma HLS PIPELINE
 //		#pragma HLS unroll factor=32
 
-			if(i==SYS_N/4){
+			if(i==1*SYS_N/4){
 				local_out[j] = gf_mul_kernel4_2(e_inv, c);
 			}else{
 				local_out[j] ^= gf_mul_kernel4_2(e_inv, c);

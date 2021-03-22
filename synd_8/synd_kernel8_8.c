@@ -4,6 +4,7 @@
 #include <string.h>
 
 
+
 gf gf_add_kernel8_8(gf in0, gf in1)
 {
 	return in0 ^ in1;
@@ -205,13 +206,14 @@ gf eval_inner8_8(gf *f, gf a)
         return r;
 }
 
+
 void synd_kernel8_8(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
-	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem4
-	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem5
-	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem6
-	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem7
+	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem8
+	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem8
+	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem8
+	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem8
 	#pragma HLS INTERFACE s_axilite port=out_out            bundle=control
 	#pragma HLS INTERFACE s_axilite port=f_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=L_in               bundle=control
@@ -230,9 +232,9 @@ void synd_kernel8_8(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	gf e_mat[SYS_N];
 
-	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4
-	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4
-	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4
+	// #pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4
+	// #pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4
+	// #pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4
 
 	//READ into local vars
 
@@ -243,13 +245,13 @@ void synd_kernel8_8(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	LOOP_LOAD_FROM_BRAM_L:for (uint i=7*SYS_N/8;i<8*SYS_N/8;i++){
 	#pragma HLS PIPELINE II=1
-	#pragma HLS unroll factor=4
+	// #pragma HLS unroll factor=4
 		local_L[i] = *(L_in+i);
 	}
 
 	LOOP_LOAD_FROM_BRAM_R:for (uint i=7*MAT_COLS/8;i<8*MAT_COLS/8;i++){
 	#pragma HLS PIPELINE II=1
-	#pragma HLS unroll factor=2
+	// #pragma HLS unroll factor=2
 		local_r[i] = *(r_in+i);
 	}
 
@@ -293,7 +295,7 @@ void synd_kernel8_8(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	LOOP_WRITE_TO_BRAM_OUT:for(uint i=0;i<(2*SYS_T);i++){
 	#pragma HLS PIPELINE II=1
-	#pragma HLS unroll factor=2
+	// #pragma HLS unroll factor=2
 		*(out_out+i) = local_out[i];
 	}
 }
