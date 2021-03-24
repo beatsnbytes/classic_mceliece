@@ -1,7 +1,8 @@
-#include "params.h"
-#include "gf.h"
+#include "../params.h"
+#include "../gf.h"
 #include <stdlib.h>
 #include <string.h>
+//#include "ap_cint.h"
 
 gf gf_add_kernel4_1(gf in0, gf in1)
 {
@@ -28,6 +29,7 @@ gf gf_mul_kernel4_1(gf in0, gf in1)
 //	#pragma HLS DEPENDENCE inter variable=tmp_mul RAW false
 //	#pragma HLS pipeline
 //	#pragma HLS unroll
+
 		tmp ^= (t0 * (t1 & (1 << i)));
 	}
 
@@ -187,7 +189,7 @@ void synd_kernel4_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		for (uint j = 0; j < 2*SYS_T; j++) //8
 		{
 //		#pragma HLS DEPENDENCE inter variable=local_out false
-		#pragma HLS PIPELINE II
+		#pragma HLS PIPELINE
 //		#pragma HLS unroll factor=32
 
 			if(i==0){

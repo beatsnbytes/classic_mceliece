@@ -1,15 +1,15 @@
-#include "params.h"
-#include "gf.h"
+#include "../params.h"
+#include "../gf.h"
 #include <stdlib.h>
 #include <string.h>
 //#include "ap_cint.h"
 
-gf gf_add_kernel8_8(gf in0, gf in1)
+gf gf_add_kernel2_1(gf in0, gf in1)
 {
 	return in0 ^ in1;
 }
 
-gf gf_mul_kernel8_8(gf in0, gf in1)
+gf gf_mul_kernel2_1(gf in0, gf in1)
 {
 	int i;
 
@@ -29,6 +29,7 @@ gf gf_mul_kernel8_8(gf in0, gf in1)
 //	#pragma HLS DEPENDENCE inter variable=tmp_mul RAW false
 //	#pragma HLS pipeline
 //	#pragma HLS unroll
+
 		tmp ^= (t0 * (t1 & (1 << i)));
 	}
 
@@ -44,7 +45,7 @@ gf gf_mul_kernel8_8(gf in0, gf in1)
 	return tmp & ((1 << GFBITS)-1);
 }
 
-static inline gf gf_sq_kernel8_8(gf in)
+static inline gf gf_sq_kernel2_1(gf in)
 {
 	const uint32_t B[] = {0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF};
 
@@ -67,7 +68,7 @@ static inline gf gf_sq_kernel8_8(gf in)
 	return x & ((1 << GFBITS)-1);
 }
 
-gf gf_inv_kernel8_8(gf in)
+gf gf_inv_kernel2_1(gf in)
 {
 	gf tmp_11;
 	gf tmp_1111;
@@ -75,32 +76,32 @@ gf gf_inv_kernel8_8(gf in)
 	gf out = in;
 
 
-	out = gf_sq_kernel8_8(out);
-	tmp_11 = gf_mul_kernel8_8(out, in); // 11
+	out = gf_sq_kernel2_1(out);
+	tmp_11 = gf_mul_kernel2_1(out, in); // 11
 
-	out = gf_sq_kernel8_8(tmp_11);
-	out = gf_sq_kernel8_8(out);
-	tmp_1111 = gf_mul_kernel8_8(out, tmp_11); // 1111
+	out = gf_sq_kernel2_1(tmp_11);
+	out = gf_sq_kernel2_1(out);
+	tmp_1111 = gf_mul_kernel2_1(out, tmp_11); // 1111
 
-	out = gf_sq_kernel8_8(tmp_1111);
+	out = gf_sq_kernel2_1(tmp_1111);
 
-	out = gf_sq_kernel8_8(out);
-	out = gf_sq_kernel8_8(out);
-	out = gf_sq_kernel8_8(out);
+	out = gf_sq_kernel2_1(out);
+	out = gf_sq_kernel2_1(out);
+	out = gf_sq_kernel2_1(out);
 
-	out = gf_mul_kernel8_8(out, tmp_1111); // 11111111
+	out = gf_mul_kernel2_1(out, tmp_1111); // 11111111
 
-	out = gf_sq_kernel8_8(out);
-	out = gf_sq_kernel8_8(out);
-	out = gf_mul_kernel8_8(out, tmp_11); // 1111111111
+	out = gf_sq_kernel2_1(out);
+	out = gf_sq_kernel2_1(out);
+	out = gf_mul_kernel2_1(out, tmp_11); // 1111111111
 
-	out = gf_sq_kernel8_8(out);
-	out = gf_mul_kernel8_8(out, in); // 11111111111
+	out = gf_sq_kernel2_1(out);
+	out = gf_mul_kernel2_1(out, in); // 11111111111
 
-	return gf_sq_kernel8_8(out); // 111111111110
+	return gf_sq_kernel2_1(out); // 111111111110
 }
 
-gf eval_inner8_8(gf *f, gf a)
+gf eval_inner2_1(gf *f, gf a)
 {
         int i;
         gf r;
@@ -111,20 +112,19 @@ gf eval_inner8_8(gf *f, gf a)
         {
 //		#pragma HLS PIPELINE II=1
 //		#pragma HLS unroll factor=2
-                r = gf_mul_kernel8_8(r, a) ^ f[i];
-//                r = gf_add(r, f[i]);
+                r = gf_mul_kernel2_1(r, a) ^ f[i];
         }
 
         return r;
 }
 
-void synd_kernel8_8(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
+void synd_kernel2_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
-	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem8
-	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem8
-	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem8
-	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem8
+	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem0
 	#pragma HLS INTERFACE s_axilite port=out_out            bundle=control
 	#pragma HLS INTERFACE s_axilite port=f_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=L_in               bundle=control
@@ -135,11 +135,10 @@ void synd_kernel8_8(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	int i, j;
 	gf e, e_inv, c;
-	gf local_out[8*SYS_T];
+	gf local_out[2*SYS_T];
 	gf local_f[SYS_T+1];
-	gf local_L[SYS_N];
-	gf tmp_mul_1, tmp_mul_2;
-	unsigned char local_r[MAT_COLS];
+	gf local_L[SYS_N/2];
+	unsigned char local_r[MAT_COLS/2];
 
 	gf e_mat[SYS_N];
 
@@ -154,57 +153,59 @@ void synd_kernel8_8(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		local_f[i] = *(f_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_L:for (uint i=7*SYS_N/8;i<8*SYS_N/8;i++){
+	LOOP_LOAD_FROM_BRAM_L:for (uint i=0;i<SYS_N/2;i++){
 	#pragma HLS PIPELINE II=1
 	#pragma HLS unroll factor=4
 		local_L[i] = *(L_in+i);
 	}
 
-	LOOP_LOAD_FROM_BRAM_R:for (uint i=7*MAT_COLS/8;i<8*MAT_COLS/8;i++){
+
+	LOOP_LOAD_FROM_BRAM_R:for (uint i=0;i<MAT_COLS/2;i++){
 	#pragma HLS PIPELINE II=1
 	#pragma HLS unroll factor=2
 		local_r[i] = *(r_in+i);
 	}
 
+
 	//READ into local vars END
 	LOOP_EVAL:
-	for(uint i=7*SYS_N/8; i <8*SYS_N/8; i++){
+	for(uint i=0; i <SYS_N/2; i++){//
 //	#pragma HLS PIPELINE
 //	#pragma HLS unroll factor=2
-		e_mat[i] = eval_inner8_8(local_f, local_L[i]);
+		e_mat[i] = eval_inner2_1(local_f, local_L[i]);
 	}
 
 
 
 	LOOP_MAIN_OUTER:
-	for (uint i = 7*SYS_N/8; i < 8*SYS_N/8; i++) //12
+	for (uint i = 0; i < SYS_N/2; i++) //11
 	{
 	// #pragma HLS pipeline
 
 		c = (local_r[i>>3] >> (i%8)) & 1;
-		e_inv = gf_inv_kernel8_8(gf_mul_kernel8_8(e_mat[i],e_mat[i]));
+		e_inv = gf_inv_kernel2_1(gf_mul_kernel2_1(e_mat[i],e_mat[i]));
 
 		LOOP_MAIN_INNER:
-		for (uint j = 0; j < 8*SYS_T; j++)//8
+		for (uint j = 0; j < 2*SYS_T; j++) //8
 		{
 //		#pragma HLS DEPENDENCE inter variable=local_out false
 		#pragma HLS PIPELINE
 //		#pragma HLS unroll factor=32
 
-			if(i==7*SYS_N/8){
-				local_out[j] = gf_mul_kernel8_8(e_inv, c);
+			if(i==0){
+				local_out[j] = gf_mul_kernel2_1(e_inv, c);
 			}else{
-				local_out[j] ^= gf_mul_kernel8_8(e_inv, c);
+				local_out[j] ^= gf_mul_kernel2_1(e_inv, c);
 
 			}
-			e_inv = gf_mul_kernel8_8(e_inv, local_L[i]);
+			e_inv = gf_mul_kernel2_1(e_inv, local_L[i]);
 
 		}
 	}
 
 	//WRITE to local memory
 
-	LOOP_WRITE_TO_BRAM_OUT:for(uint i=0;i<(8*SYS_T);i++){
+	LOOP_WRITE_TO_BRAM_OUT:for(uint i=0;i<(2*SYS_T);i++){
 	#pragma HLS PIPELINE II=1
 	#pragma HLS unroll factor=2
 		*(out_out+i) = local_out[i];

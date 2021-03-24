@@ -1,5 +1,5 @@
-#include "params.h"
-#include "gf.h"
+#include "../params.h"
+#include "../gf.h"
 #include <stdlib.h>
 #include <string.h>
 //#include "ap_cint.h"
@@ -29,6 +29,7 @@ gf gf_mul_kernel4_2(gf in0, gf in1)
 //	#pragma HLS DEPENDENCE inter variable=tmp_mul RAW false
 //	#pragma HLS pipeline
 //	#pragma HLS unroll
+
 		tmp ^= (t0 * (t1 & (1 << i)));
 	}
 
@@ -112,7 +113,6 @@ gf eval_inner4_2(gf *f, gf a)
 //		#pragma HLS PIPELINE II=1
 //		#pragma HLS unroll factor=2
                 r = gf_mul_kernel4_2(r, a) ^ f[i];
-//                r = gf_add(r, f[i]);
         }
 
         return r;
@@ -179,7 +179,7 @@ void synd_kernel4_2(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	LOOP_MAIN_OUTER:
 	for (uint i = 1*SYS_N/4; i < 2*SYS_N/4; i++) //12
 	{
-	// #pragma HLS pipeline
+	#pragma HLS pipeline
 
 		c = (local_r[i>>3] >> (i%8)) & 1;
 		e_inv = gf_inv_kernel4_2(gf_mul_kernel4_2(e_mat[i],e_mat[i]));
@@ -188,7 +188,7 @@ void synd_kernel4_2(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		for (uint j = 0; j < 2*SYS_T; j++)//8
 		{
 //		#pragma HLS DEPENDENCE inter variable=local_out false
-		#pragma HLS PIPELINE
+//		#pragma HLS PIPELINE II=1
 //		#pragma HLS unroll factor=32
 
 			if(i==1*SYS_N/4){

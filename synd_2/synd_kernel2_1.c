@@ -1,5 +1,5 @@
-#include "params.h"
-#include "gf.h"
+#include "../params.h"
+#include "../gf.h"
 #include <stdlib.h>
 #include <string.h>
 //#include "ap_cint.h"
@@ -29,12 +29,8 @@ gf gf_mul_kernel2_1(gf in0, gf in1)
 //	#pragma HLS DEPENDENCE inter variable=tmp_mul RAW false
 //	#pragma HLS pipeline
 //	#pragma HLS unroll
-		tmp_bit = t1 & (1 << i);
-//	#pragma HLS RESOURCE variable=tmp_mul core=Mul_lut
-		tmp_mul = t0 * tmp_bit;
 
-		tmp ^= tmp_mul;
-//		tmp ^= (t0 * (t1 & (1 << i)));
+		tmp ^= (t0 * (t1 & (1 << i)));
 	}
 
 
@@ -126,9 +122,9 @@ void synd_kernel2_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 {
 
 	#pragma HLS INTERFACE m_axi     port=out_out  offset=slave bundle=gmem0
-	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem1
-	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem2
-	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem3
+	#pragma HLS INTERFACE m_axi     port=f_in     offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=L_in     offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=r_in     offset=slave bundle=gmem0
 	#pragma HLS INTERFACE s_axilite port=out_out            bundle=control
 	#pragma HLS INTERFACE s_axilite port=f_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=L_in               bundle=control
@@ -184,7 +180,7 @@ void synd_kernel2_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	LOOP_MAIN_OUTER:
 	for (uint i = 0; i < SYS_N/2; i++) //11
 	{
-	#pragma HLS pipeline
+	// #pragma HLS pipeline
 
 		c = (local_r[i>>3] >> (i%8)) & 1;
 		e_inv = gf_inv_kernel2_1(gf_mul_kernel2_1(e_mat[i],e_mat[i]));
@@ -193,7 +189,7 @@ void synd_kernel2_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		for (uint j = 0; j < 2*SYS_T; j++) //8
 		{
 //		#pragma HLS DEPENDENCE inter variable=local_out false
-//		#pragma HLS PIPELINE II=1
+		#pragma HLS PIPELINE
 //		#pragma HLS unroll factor=32
 
 			if(i==0){
