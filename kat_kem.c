@@ -113,7 +113,7 @@ cl_mem pt_list_syndrome_combined[9];
 #endif
 
 #ifdef SYND_KERNEL
-int synd_kernels = 18;
+int synd_kernels = 1;
 
 cl_kernel synd_kernels_list[18];
 const char *synd_kernels_name_list[61] = {"synd_kernel1_1",
@@ -622,15 +622,33 @@ main(int argc, char* argv[])
 	#endif
 
 	int synd_idx;
-	if(synd_kernels==12){
-		synd_idx = 7;
-	}else if(synd_kernels==16){
-		synd_idx = 19;
-	}else if(synd_kernels==8){
-		synd_idx = 8;
-	}else if(synd_kernels==18){
-		synd_idx = 43;
+	switch (synd_kernels)
+	{
+    	case 1:
+    		synd_idx = 0;
+    		break;
+	    case 2:
+	    	synd_idx = 1;
+	    	break;
+    	case 4:
+    		synd_idx = 3;
+    		break;
+	    case 8:
+	    	synd_idx = 7;
+	    	break;
+	    case 12:
+	    	synd_idx = 15;
+	    	break;
+	    case 16:
+	    	synd_idx = 27;
+	    	break;
+	    case 18:
+	    	synd_idx = 43;
+	    	break;
+	    default:
+	    	break;
 	}
+
 
 	//Iteratively initialize kernels and their private buffers/pointers
 	for(int i=0; i<synd_kernels; i++){
