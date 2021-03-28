@@ -6,7 +6,7 @@
 
 void syndrome_kernel4_1(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
 {
-	#pragma HLS INTERFACE m_axi     port=pk_in  offset=slave bundle=gmem
+	#pragma HLS INTERFACE m_axi     port=pk_in  offset=slave bundle=gmem0
 	#pragma HLS INTERFACE m_axi     port=e_in   offset=slave bundle=gmem1
 	#pragma HLS INTERFACE m_axi     port=s_out  offset=slave bundle=gmem2
     #pragma HLS INTERFACE s_axilite port=pk_in               bundle=control

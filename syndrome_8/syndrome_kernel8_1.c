@@ -6,9 +6,9 @@
 
 void syndrome_kernel8_1(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
 {
-	#pragma HLS INTERFACE m_axi     port=pk_in  offset=slave bundle=gmem
-	#pragma HLS INTERFACE m_axi     port=e_in   offset=slave bundle=gmem1
-	#pragma HLS INTERFACE m_axi     port=s_out  offset=slave bundle=gmem2
+	#pragma HLS INTERFACE m_axi     port=pk_in  offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=e_in   offset=slave bundle=gmem0
+	#pragma HLS INTERFACE m_axi     port=s_out  offset=slave bundle=gmem0
     #pragma HLS INTERFACE s_axilite port=pk_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=e_in                bundle=control
 	#pragma HLS INTERFACE s_axilite port=s_out               bundle=control
@@ -60,7 +60,7 @@ void syndrome_kernel8_1(unsigned char *pk_in, unsigned char *e_in, unsigned char
 
 		LOOP_INIT_ROW:for (unsigned int i = 0; i < MAT_COLS - PK_ROW_BYTES; i++){
 			#pragma HLS PIPELINE ΙΙ=1
-			#pragma HLS unroll factor=16
+			#pragma HLS unroll factor=208
 			row[i] = 0;
 		}
 
@@ -74,8 +74,6 @@ void syndrome_kernel8_1(unsigned char *pk_in, unsigned char *e_in, unsigned char
 				 row[j] = local_pk[i][j-(MAT_COLS - PK_ROW_BYTES)];
 
 		 }
-
-
 
 		row[i>>3] |= 1 << (i%8);
 

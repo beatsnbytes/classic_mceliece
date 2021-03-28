@@ -76,7 +76,7 @@ cl_mem buffer_fail;
 
 
 #ifdef SYNDROME_KERNEL
-int syndrome_kernels = 4 ;
+int syndrome_kernels = 8 ;
 cl_kernel syndrome_kernels_list[8];
 
 const char *syndrome_kernels_name_list[15] = {"syndrome_kernel",
@@ -515,10 +515,20 @@ main(int argc, char* argv[])
 		#endif
 
 		//Iterative generation of buffers/pointer for the rest of the kernels defined
+		int syndrome_idx;
+		switch(syndrome_kernels){
+			case 8:
+				syndrome_idx = 7;
+				break;
+			default:
+				break;
+		}
+
+
 
 		for(int i=0; i<syndrome_kernels; i++){
 
-			int index = syndrome_kernels-1+i;
+			int index = syndrome_idx+i;
 			syndrome_kernels_list[i] = clCreateKernel(program, syndrome_kernels_name_list[index], &err);
 			#ifdef OCL_API_DEBUG
 			if (!syndrome_kernels_list[i] || err != CL_SUCCESS) {

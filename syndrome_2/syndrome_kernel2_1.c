@@ -6,7 +6,7 @@
 
 void syndrome_kernel2_1(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
 {
-	#pragma HLS INTERFACE m_axi     port=pk_in  offset=slave bundle=gmem
+	#pragma HLS INTERFACE m_axi     port=pk_in  offset=slave bundle=gmem0
 	#pragma HLS INTERFACE m_axi     port=e_in   offset=slave bundle=gmem1
 	#pragma HLS INTERFACE m_axi     port=s_out  offset=slave bundle=gmem2
     #pragma HLS INTERFACE s_axilite port=pk_in               bundle=control
@@ -53,7 +53,7 @@ void syndrome_kernel2_1(unsigned char *pk_in, unsigned char *e_in, unsigned char
 	LOOP_MAIN:
 	for (int i = 0; i < PK_NROWS/2; i++)
 	{
-//	#pragma HLS PIPELINE
+	#pragma HLS PIPELINE
 
 		LOOP_INIT_ROW:for (unsigned int i = 0; i < MAT_COLS - PK_ROW_BYTES; i++){
 			#pragma HLS PIPELINE ΙΙ=1
