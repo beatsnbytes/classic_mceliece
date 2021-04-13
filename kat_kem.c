@@ -113,30 +113,22 @@ cl_mem pt_list_syndrome_combined[9];
 #endif
 
 #ifdef SYND_KERNEL
-int synd_kernels = 8;
+int synd_kernels = 16;
 
-cl_kernel synd_kernels_list[8];
-const char *synd_kernels_name_list[15] = {"synd_kernel1_1",
-										"synd_kernel2_1",
-										"synd_kernel2_2",
-										"synd_kernel4_1",
-										"synd_kernel4_2",
-										"synd_kernel4_3",
-										"synd_kernel4_4",
-										"synd_kernel8_1",
-										"synd_kernel8_2",
-										"synd_kernel8_3",
-										"synd_kernel8_4",
-										"synd_kernel8_5",
-										"synd_kernel8_6",
-										"synd_kernel8_7",
-										"synd_kernel8_8"
+cl_kernel synd_kernels_list[16];
+const char *synd_kernels_name_list[61] = {"synd_kernel1_1",
+										"synd_kernel2_1", "synd_kernel2_2",
+										"synd_kernel4_1", "synd_kernel4_2", "synd_kernel4_3", "synd_kernel4_4",
+										"synd_kernel8_1", "synd_kernel8_2", "synd_kernel8_3", "synd_kernel8_4","synd_kernel8_5", "synd_kernel8_6", "synd_kernel8_7", "synd_kernel8_8",
+										"synd_kernel12_1", "synd_kernel12_2", "synd_kernel12_3", "synd_kernel12_4", "synd_kernel12_5", "synd_kernel12_6", "synd_kernel12_7", "synd_kernel12_8", "synd_kernel12_9","synd_kernel12_10","synd_kernel12_11","synd_kernel12_12",
+										"synd_kernel16_1", "synd_kernel16_2", "synd_kernel16_3", "synd_kernel16_4", "synd_kernel16_5", "synd_kernel16_6", "synd_kernel16_7", "synd_kernel16_8", "synd_kernel16_9","synd_kernel16_10","synd_kernel16_11","synd_kernel16_12", "synd_kernel16_13","synd_kernel16_14","synd_kernel16_15","synd_kernel16_16",
+										"synd_kernel18_1", "synd_kernel18_2", "synd_kernel18_3", "synd_kernel18_4", "synd_kernel18_5", "synd_kernel18_6", "synd_kernel18_7", "synd_kernel18_8", "synd_kernel18_9","synd_kernel18_10","synd_kernel18_11","synd_kernel18_12", "synd_kernel18_13","synd_kernel18_14","synd_kernel18_15","synd_kernel18_16","synd_kernel18_17","synd_kernel18_18"
 										};
 
-cl_mem buffer_out_out_list[8];
-gf * ptr_out_out_list[8];
-cl_mem buffer_f_in_list[8];
-gf *ptr_f_in_list[8];
+cl_mem buffer_out_out_list[16];
+gf * ptr_out_out_list[16];
+cl_mem buffer_f_in_list[16];
+gf *ptr_f_in_list[16];
 
 cl_mem buffer_L_in;
 gf *ptr_L_in;
@@ -144,8 +136,8 @@ gf *ptr_L_in;
 cl_mem buffer_r_in;
 unsigned char *ptr_r_in;
 
-cl_mem pt_list_synd_combined[10];
-cl_mem pt_list_synd_combined_out[8];
+cl_mem pt_list_synd_combined[18];
+cl_mem pt_list_synd_combined_out[16];
 
 
 #endif
@@ -639,10 +631,41 @@ main(int argc, char* argv[])
 	}
 	#endif
 
+	int synd_idx;
+	switch (synd_kernels)
+	{
+    	case 1:
+    		synd_idx = 0;
+    		break;
+	    case 2:
+	    	synd_idx = 1;
+	    	break;
+    	case 4:
+    		synd_idx = 3;
+    		break;
+	    case 8:
+	    	synd_idx = 7;
+	    	break;
+	    case 12:
+	    	synd_idx = 15;
+	    	break;
+	    case 16:
+	    	synd_idx = 27;
+	    	break;
+	    case 18:
+	    	synd_idx = 43;
+	    	break;
+	    default:
+	    	break;
+	}
+
+
+
 	//Iteratively initialize kernels and their private buffers/pointers
 	for(int i=0; i<synd_kernels; i++){
 
-		int index = synd_kernels-1+i;
+		int index = synd_idx +i;
+
 		synd_kernels_list[i] = clCreateKernel(program, synd_kernels_name_list[index], &err);
 		#ifdef OCL_API_DEBUG
 		if (!synd_kernels_list[i] || err != CL_SUCCESS) {
