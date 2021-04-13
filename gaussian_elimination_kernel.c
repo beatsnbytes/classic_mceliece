@@ -86,7 +86,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 				OUTER_LOOP_BACK_SUB:for (k = 0; k < MAT_ROWS; k++)
 				{
 //				#pragma HLS dependence variable=localMat inter false
-				#pragma HLS unroll factor=2
+				#pragma HLS unroll factor=4
 				#pragma HLS PIPELINE
 					if (k != row)
 					{

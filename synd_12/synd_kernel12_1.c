@@ -24,7 +24,7 @@ gf gf_mul_kernel12_1(gf in0, gf in1)
 
 	for (uint i = 1; i < GFBITS; i++){
 //#pragma HLS dependence variable=tmp_mul_mat RAW true
-//	#pragma HLS pipeline
+	#pragma HLS pipeline
 //	#pragma HLS unroll
 		tmp ^= (t0 * (t1 & (1 << i)));
 	}
@@ -266,7 +266,7 @@ void synd_kernel12_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	LOOP_MAIN_OUTER:
 	for (uint i = 0; i < SYS_N/12; i++) //11
 	{
-//	#pragma HLS pipeline
+	#pragma HLS pipeline
 
 		c = (local_r[i>>3] >> (i%8)) & 1;
 		e_inv = gf_inv_kernel12_1(gf_mul_kernel12_1(e_mat[i],e_mat[i]));
