@@ -8,9 +8,9 @@
 
 void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, unsigned int *fail_flag)
 {
-	#pragma HLS INTERFACE m_axi     port=mat_in     offset=slave bundle=gmem
+	#pragma HLS INTERFACE m_axi     port=mat_in     offset=slave bundle=gmem0
 	#pragma HLS INTERFACE m_axi     port=mat_out    offset=slave bundle=gmem1
-	#pragma HLS INTERFACE m_axi     port=fail_flag  offset=slave bundle=gmem
+	#pragma HLS INTERFACE m_axi     port=fail_flag  offset=slave bundle=gmem0
     #pragma HLS INTERFACE s_axilite port=mat_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=mat_out              bundle=control
 	#pragma HLS INTERFACE s_axilite port=fail_flag            bundle=control
@@ -28,8 +28,8 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 	unsigned char tmpRow[MAT_COLS];
     unsigned char localMat[MAT_ROWS][MAT_COLS]; // Local memory to store input matrix
 
-	#pragma HLS ARRAY_PARTITION variable=localMat cyclic factor=87 dim=2
-	#pragma HLS ARRAY_PARTITION variable=tmpRow cyclic factor=87
+	#pragma HLS ARRAY_PARTITION variable=localMat cyclic factor=209 dim=2
+	#pragma HLS ARRAY_PARTITION variable=tmpRow cyclic factor=209
 
 //	#pragma HLS RESOURCE variable=tmpRow core=RAM_2P_LUTRAM
 //	#pragma HLS RESOURCE variable=localMat core=RAM_2P_LUTRAM
@@ -59,7 +59,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 
 			TMP_ROW_CONSTRUCTION_LOOP2:for(c=0;c<MAT_COLS;c++){
 				#pragma HLS dependence variable=tmpRow inter false
-				#pragma HLS unroll factor=87
+				#pragma HLS unroll factor=209
 				#pragma HLS PIPELINE II=1
 
 				if (row>=1){
@@ -84,7 +84,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 				{
 				#pragma HLS dependence variable=tmpRow inter false
 				#pragma HLS PIPELINE
-				#pragma HLS unroll factor=87
+				#pragma HLS unroll factor=209
 					tmpRow[c] ^= localMat[k][c] & mask;
 				}
 			}

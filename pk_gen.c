@@ -382,7 +382,7 @@ int pk_gen_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int16_t
 #endif
 
 
-//
+
 //	unsigned char * sk_parallel = (unsigned char *)malloc(sizeof(unsigned char) * crypto_kem_SECRETKEYBYTES);;
 //	int16_t * pi_parallel= (int16_t *)malloc(sizeof(uint16_t) * (1<<GFBITS));
 //

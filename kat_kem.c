@@ -62,7 +62,7 @@ cl_command_queue commands_3;
 cl_command_queue commands_4;
 cl_program program;
 
-#ifdef GAUSSIAN_ELIMINATION_KERNELa
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
 cl_kernel kernel_gaussian_elimination;
 
 cl_mem buffer_mat_in;
@@ -854,7 +854,7 @@ main(int argc, char* argv[])
 	
 
 #ifdef TIME_MEASUREMENT
-#ifdef GAUSSIAN_ELIMINATION_KERNELa
+#ifdef GAUSSIAN_ELIMINATION_KERNEL
 	printf("\n***************ELIM KERNEL***************\n");
 	printf("Kernel execution time\n");
 	print_kernel_execution_time(sum_list_elim_kernel, &times_elim, 1);

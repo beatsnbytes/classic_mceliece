@@ -66,7 +66,7 @@ static inline gf gf_sq2_kernel2_1(gf in)
 	x = (x | (x << 3)) & B[0];
 
 	for (i = 0; i < 4; i++)
-	// {
+	 {
 	// #pragma HLS PIPELINE
 	// #pragma HLS unroll
 
