@@ -12,4 +12,4 @@ After we can execute the binray "./kat" and see the timing measurements at the s
 
 Our code is tested in Ubuntu 18.04. The user needs to install the libssl-dev package for the compilation to succeed.
 
- 
+Code residing in "zcu102/" branches is our hardware/software co-design acceleration and is still subject to changes.
