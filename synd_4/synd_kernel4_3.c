@@ -27,7 +27,7 @@ gf gf_mul_kernel4_3(gf in0, gf in1)
 
 	for (uint i = 1; i < GFBITS; i++){
 //	#pragma HLS DEPENDENCE inter variable=tmp_mul RAW false
-//	#pragma HLS pipeline
+	#pragma HLS pipeline
 //	#pragma HLS unroll
 
 		tmp ^= (t0 * (t1 & (1 << i)));
@@ -162,14 +162,14 @@ void synd_kernel4_3(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	LOOP_LOAD_FROM_BRAM_R:for (uint i=2*MAT_COLS/4;i<3*MAT_COLS/4;i++){
 	#pragma HLS PIPELINE II=1
-	#pragma HLS unroll factor=2
+//	#pragma HLS unroll factor=2
 		local_r[i] = *(r_in+i);
 	}
 
 	//READ into local vars END
 	LOOP_EVAL:
 	for(uint i=2*SYS_N/4; i <3*SYS_N/4; i++){
-//	#pragma HLS PIPELINE
+	#pragma HLS PIPELINE
 //	#pragma HLS unroll factor=2
 		e_mat[i] = eval_inner4_3(local_f, local_L[i]);
 	}
@@ -179,7 +179,7 @@ void synd_kernel4_3(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	LOOP_MAIN_OUTER:
 	for (uint i = 2*SYS_N/4; i < 3*SYS_N/4; i++) //12
 	{
-	#pragma HLS pipeline
+//	#pragma HLS pipeline
 
 		c = (local_r[i>>3] >> (i%8)) & 1;
 		e_inv = gf_inv_kernel4_3(gf_mul_kernel4_3(e_mat[i],e_mat[i]));
@@ -188,7 +188,7 @@ void synd_kernel4_3(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		for (uint j = 0; j < 3*SYS_T; j++)//8
 		{
 //		#pragma HLS DEPENDENCE inter variable=local_out false
-//		#pragma HLS PIPELINE II=1
+		#pragma HLS PIPELINE
 //		#pragma HLS unroll factor=32
 
 			if(i==2*SYS_N/4){

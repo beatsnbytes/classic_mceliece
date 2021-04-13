@@ -130,11 +130,11 @@ void synd_host(gf *out, gf *f, gf *L, unsigned char *r)
 	}
 #endif
 
-#ifdef TIME_MEASUREMENT
-	cl_profile_print(&event_migr_tokern, 1, sum_list_synd_tokern, &times_synd_tokern);
-	cl_profile_print(&events_enq[0], synd_kernels, sum_list_synd_kernel, &times_synd);
-	cl_profile_print(&event_migr_tohost, 1, sum_list_synd_tohost, &times_synd_tohost);
-#endif
+//#ifdef TIME_MEASUREMENT
+//	cl_profile_print(&event_migr_tokern, 1, sum_list_synd_tokern, &times_synd_tokern);
+//	cl_profile_print(&events_enq[0], synd_kernels, sum_list_synd_kernel, &times_synd);
+//	cl_profile_print(&event_migr_tohost, 1, sum_list_synd_tohost, &times_synd_tohost);
+//#endif
 
 }
 #endif

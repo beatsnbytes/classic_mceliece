@@ -20,13 +20,13 @@ gf gf_mul_kernel1_1(gf in0, gf in1)
 
 	t0 = in0;
 	t1 = in1;
-#pragma HLS dependence variable=tmp_mul_mat RAW true
+
 
 	tmp = t0 * (t1 & 1);
 
 	for (uint i = 1; i < GFBITS; i++){
 //#pragma HLS dependence variable=tmp_mul_mat RAW true
-//	#pragma HLS pipeline
+	#pragma HLS pipeline
 //	#pragma HLS unroll
 		tmp ^= (t0 * (t1 & (1 << i)));
 	}
@@ -110,7 +110,7 @@ gf eval_inner1_1(gf *f, gf a)
 
         for (i = SYS_T-1; i >= 0; i--)
         {
-//		#pragma HLS PIPELINE II=3
+		#pragma HLS PIPELINE II=3
 //		#pragma HLS unroll factor=2
                 r = gf_mul_kernel1_1(r, a) ^ f[i];
         }
@@ -143,14 +143,15 @@ void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 
 	gf e_mat[SYS_N];
 
-	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=4 //32
-	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=4 //8
-	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=4 //8
+	#pragma HLS ARRAY_PARTITION variable=local_out cyclic factor=64 //32
+	#pragma HLS ARRAY_PARTITION variable=local_L cyclic factor=8 //8
+	#pragma HLS ARRAY_PARTITION variable=e_mat cyclic factor=8 //8
 
 	//READ into local vars
 
 	LOOP_LOAD_FROM_BRAM_F:for (uint i=0;i<=SYS_T;i++){
 	#pragma HLS PIPELINE II=1
+	#pragma HLS unroll factor=2
 		local_f[i] = *(f_in+i);
 	}
 
@@ -171,7 +172,7 @@ void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	//READ into local vars END
 	LOOP_EVAL:
 	for(uint i=0; i <SYS_N; i++){
-//	#pragma HLS PIPELINE
+	#pragma HLS PIPELINE
 //	#pragma HLS unroll factor=2 //taking long
 		e_mat[i] = eval_inner1_1(local_f, local_L[i]);
 	}
@@ -180,7 +181,7 @@ void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	LOOP_MAIN_OUTER:
 	for (uint i = 0; i < SYS_N; i++)
 	{
-//	#pragma HLS pipeline
+	#pragma HLS pipeline
 
 		c = (local_r[i>>3] >> (i%8)) & 1;
 		e_inv = gf_inv_kernel1_1(gf_mul_kernel1_1(e_mat[i],e_mat[i]));
@@ -189,7 +190,7 @@ void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 		for (uint j = 0; j < 2*SYS_T; j++)
 		{
 //		#pragma HLS DEPENDENCE inter variable=e_inv RAW true
-		#pragma HLS PIPELINE
+//		#pragma HLS PIPELINE
 //		#pragma HLS unroll factor=2
 
 

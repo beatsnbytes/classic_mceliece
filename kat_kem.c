@@ -113,8 +113,7 @@ cl_mem pt_list_syndrome_combined[9];
 #endif
 
 #ifdef SYND_KERNEL
-int synd_kernels = 1;
-int start_idx = 7;
+int synd_kernels = 2;
 
 cl_kernel synd_kernels_list[11];
 const char *synd_kernels_name_list[18] = {"synd_kernel1_1",
@@ -633,14 +632,25 @@ main(int argc, char* argv[])
 	}
 	#endif
 
-	start_idx=0;
-	if (synd_kernels==11){
-		start_idx = 7;
+	int synd_idx=0;
+	switch(synd_kernels){
+		case(1):
+			synd_idx = 0;
+			break;
+		case(2):
+			synd_idx=1;
+			break;
+		case(11):
+			synd_idx=7;
+			break;
+		default:
+			break;
 	}
+
 	//Iteratively initialize kernels and their private buffers/pointers
 	for(int i=0; i<synd_kernels; i++){
 
-		int index = start_idx +i;
+		int index = synd_idx +i;
 		synd_kernels_list[i] = clCreateKernel(program, synd_kernels_name_list[index], &err);
 		#ifdef OCL_API_DEBUG
 		if (!synd_kernels_list[i] || err != CL_SUCCESS) {
