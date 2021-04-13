@@ -18,7 +18,7 @@
 #include "custom_util.h"
 
 #include <sys/time.h>
-#include <valgrind/callgrind.h>
+//#include <valgrind/callgrind.h>
 
 #define KAT_SUCCESS          0
 #define KAT_FILE_OPEN_ERROR -1
