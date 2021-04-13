@@ -861,7 +861,6 @@ main(int argc, char* argv[])
 	
 
 #ifdef TIME_MEASUREMENT
-//	printf("\n***************TIMING RESULTS***************\n");
 #ifdef GAUSSIAN_ELIMINATION_KERNEL
 	printf("\n***************ELIM KERNEL***************\n");
 	printf("Kernel execution time\n");

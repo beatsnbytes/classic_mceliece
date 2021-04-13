@@ -8,9 +8,9 @@
 
 void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, unsigned int *fail_flag)
 {
-	#pragma HLS INTERFACE m_axi     port=mat_in     offset=slave bundle=gmem
+	#pragma HLS INTERFACE m_axi     port=mat_in     offset=slave bundle=gmem0
 	#pragma HLS INTERFACE m_axi     port=mat_out    offset=slave bundle=gmem1
-	#pragma HLS INTERFACE m_axi     port=fail_flag  offset=slave bundle=gmem
+	#pragma HLS INTERFACE m_axi     port=fail_flag  offset=slave bundle=gmem0
     #pragma HLS INTERFACE s_axilite port=mat_in               bundle=control
 	#pragma HLS INTERFACE s_axilite port=mat_out              bundle=control
 	#pragma HLS INTERFACE s_axilite port=fail_flag            bundle=control
@@ -28,8 +28,8 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 	unsigned char tmpRow[MAT_COLS];
     unsigned char localMat[MAT_ROWS][MAT_COLS]; // Local memory to store input matrix
 
-	#pragma HLS ARRAY_PARTITION variable=localMat cyclic factor=76 dim=2
-	#pragma HLS ARRAY_PARTITION variable=tmpRow cyclic factor=76 //76
+	#pragma HLS ARRAY_PARTITION variable=localMat cyclic factor=128 dim=2
+	#pragma HLS ARRAY_PARTITION variable=tmpRow cyclic factor=128 //76
 
 //	#pragma HLS RESOURCE variable=tmpRow core=RAM_2P_LUTRAM
 //	#pragma HLS RESOURCE variable=localMat core=RAM_2P_LUTRAM
@@ -55,7 +55,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 			row = (i<<3) + j;
 			TMP_ROW_CONSTRUCTION_LOOP2:for(c=0;c<MAT_COLS;c++){
 				#pragma HLS dependence variable=tmpRow inter false
-				#pragma HLS unroll factor=76
+				#pragma HLS unroll factor=128
 				#pragma HLS PIPELINE II=1
 
 				if (row>=1){
@@ -80,7 +80,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 				{
 				#pragma HLS dependence variable=tmpRow inter false
 				#pragma HLS PIPELINE
-				#pragma HLS unroll factor=76
+				#pragma HLS unroll factor=128
 					tmpRow[c] ^= localMat[k][c] & mask;
 				}
 			}
@@ -93,7 +93,7 @@ void gaussian_elimination_kernel(unsigned char *mat_in, unsigned char *mat_out, 
 				OUTER_LOOP_BACK_SUB:for (k = 0; k < MAT_ROWS; k++)
 				{
 //				#pragma HLS dependence variable=localMat inter false//not before stay as is
-				#pragma HLS unroll factor=2
+				#pragma HLS unroll factor=4
 				#pragma HLS PIPELINE
 					if (k != row)
 					{
