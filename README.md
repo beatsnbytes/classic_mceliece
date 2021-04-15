@@ -1,6 +1,11 @@
 This repository contains a hardware/software co-design acceleration of Classic McEliece Key Encapsulation Mechanism (CM KEM).
 It is based on the 3rd Round submission of the CM KEM to the NIST Post-Quantum Standardization contest.
-The baseline implementation for the different security levels can be found in the "mceliece-20201010/baseline/mceliece<>" branches. 
+The hardware/software co-design code is located at the "mceliece-20201010/zcu102/" branches. The different branches are different implementations for the security levels implemented in CM KEM.
+
+The baseline implementation for the different security levels can be found in the "mceliece-20201010/baseline/" branches. 
+The "mceliece-20201010/vec/" branches contain the manually vectorized code across the 64-bits in a long long.
+The rest of the CM KEM implementations that we did not use in our proposal for development or comparison purposes are not included in this repo, but can be found at https://classic.mceliece.org/nist.html.
+
 The master branch contains the baseline\mceliece348864 (Level 1) software implementation. 
 The baseline code is the C software implementation of CM KEM with the addition of custom time measurement functions for different parts of the application.
 Baseline software implementations have been augmented with custom time measurement functions for different parts of the application.
