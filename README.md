@@ -18,3 +18,19 @@ After we can execute the binray "./kat" and see the timing measurements at the s
 Our code is tested in Ubuntu 18.04. The user needs to install the libssl-dev package for the compilation to succeed.
 
 Code residing in "zcu102/" branches is our hardware/software co-design acceleration and is still subject to changes.
+
+LIBRARIES NEEDED
+
+KECCAK
+
+For the compilation of the source code we need the Keccak library (libkeccak.a) and the SimpleFIPS202.h header file which is part of the Keccak library headers (libkeccak.a.headers).
+For this reason we clone the Github repo of the [XKCP](https://github.com/XKCP/XKCP). For specific build targets check the README of the git repo. In our case, we performed the following steps
+1. Follow the instructions in the XKCP repository and install all dependencies
+2. Build the libXKCP libraries for the x86 architecture.
+3. The crypto_hash.h and the build file from the Classic McEliece project need the <libkeccak.a.headers/SimpleFIPS202.h> header file and the libkeccak.a static library. Since the XKCP repo produces  <libXKCP.a.headers/SimpleFIPS202.h> header file and a libXKCP.a static library we renamed the Classic Mceliece files mentioned above to match the XKCP naming convention. 
+4. We placed the <libXKCP.a.headers/SimpleFIPS202.h> header file and the libXKCP.a static library in the subroutines/ folder and the lib/ folder (we created the latter specifically for this reason). We also made sure to put the appropriate -L flag to the build file so that gcc can find the libXKCP.a library.
+
+CRYPTO
+
+For the crypto library we used the one provided by the Linux packaga manager (libcrypto.so.1.1).
+
