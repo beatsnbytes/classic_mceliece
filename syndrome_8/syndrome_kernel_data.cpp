@@ -1,66 +1,73 @@
 #include "../params.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include <ap_int.h>
+#include <math.h>
 #include "hls_stream.h"
+#include "ap_int.h"
 
-void read_function_pk(unsigned char * pk_in,  hls::stream<unsigned char> &stream_pk)
-{
+#define PACK_FACTOR_PK 34
+#define PACK_BITWIDTH_PK PACK_FACTOR_PK*8
+#define PACK_FACTOR_E 4
+#define PACK_BITWIDTH_E PACK_FACTOR_E*8
 
-//	LOOP_LOAD_FROM_BRAM_PK:
-//	for(int i=0;i<MAT_ROWS;i++){
-//		for(int j=0;j<PK_ROW_BYTES;j++){
-//			#pragma HLS PIPELINE II=1
-//			stream_pk.write(*(pk_in+i*PK_ROW_BYTES+j));
-//		}
-//	}
-
-		LOOP_READ_FROM_DRAM_ALT:
-		    for (unsigned int itr = 0, i = 0, j = 0; itr < MAT_ROWS * PK_ROW_BYTES; itr++, j++) {
-		       #pragma HLS LOOP_TRIPCOUNT min=768*340 max=768*340
-		       #pragma HLS PIPELINE II=1
-		        if (j == PK_ROW_BYTES) {
-		            j = 0;
-		            i++;
-		        }
-		        	stream_pk.write(*(pk_in+i*PK_ROW_BYTES+j));
-		    }
-
-
-
-}
-
-
-void read_function_e(unsigned char * e_in, hls::stream<unsigned char> &stream_e)
+void read_function_pk(hls::stream<ap_uint<PACK_BITWIDTH_PK>> &stream_pk, ap_uint<PACK_BITWIDTH_PK> * pk_in)
 {
 
 
-	LOOP_LOAD_FROM_BRAM_E:for(unsigned int i=0;i<MAT_COLS;i++){
-		#pragma HLS PIPELINE II=1
-		stream_e.write(*(e_in+i));
+	LOOP_LOAD_FROM_BRAM_PK:
+	for(uint i=0;i<MAT_ROWS;i++){
+		for(uint j=0;j<PK_ROW_BYTES/PACK_FACTOR_PK;j++){
+			#pragma HLS PIPELINE II=1
+			stream_pk << *(pk_in+i*PK_ROW_BYTES/PACK_FACTOR_PK+j);
+		}
 	}
 
 }
 
 
-void compute_function(hls::stream<unsigned char> &stream_pk, hls::stream<unsigned char> &stream_e, hls::stream<unsigned char> &stream_s){
+void read_function_e(hls::stream<ap_uint<PACK_BITWIDTH_E>> &stream_e, ap_uint<PACK_BITWIDTH_E> * e_in)
+{
+	LOOP_LOAD_FROM_BRAM_E:for(unsigned int i=0;i<MAT_COLS/PACK_FACTOR_E;i++){
+		#pragma HLS PIPELINE II=1
+		stream_e << *(e_in+i);
+
+	}
+
+}
+
+
+
+void compute_function(hls::stream<unsigned char> &stream_s, hls::stream<ap_uint<PACK_BITWIDTH_PK>> &stream_pk, hls::stream<ap_uint<PACK_BITWIDTH_E>> &stream_e){
 
 	unsigned char local_s[SYND_BYTES];
 	unsigned char b, row[MAT_COLS];
-	unsigned char local_pk[MAT_ROWS][PK_ROW_BYTES];
 	unsigned char local_e[MAT_COLS];
 
-	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=16
-	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=16
-	#pragma HLS ARRAY_PARTITION variable=local_s cyclic factor=24
-	#pragma HLS ARRAY_PARTITION variable=local_pk cyclic factor=16 dim=2
+	#pragma HLS ARRAY_PARTITION variable=row cyclic factor=64
+	#pragma HLS ARRAY_PARTITION variable=local_e cyclic factor=64
 
 
-	LOOP_INIT_S:for (unsigned int i = 0; i < SYND_BYTES; i++){
-		#pragma HLS PIPELINE
-		#pragma HLS unroll factor=24
+	LOOP_INIT_S:for (uint i = 0; i <SYND_BYTES; i++){
+		#pragma HLS PIPELINE II=1
 		local_s[i] = 0;
+	}
+
+
+	ap_uint<PACK_BITWIDTH_E> packed_e;
+	LOOP_READ_FROM_STREAM_E:
+	for (int i=0;i<MAT_COLS; i=i+PACK_FACTOR_E){
+		#pragma HLS DEPENDENCE variable=local_e inter false
+		#pragma HLS PIPELINE II=1
+		stream_e >> packed_e;
+
+		LOOP_INNER_UNPACK_E:
+		for(int k=0; k<PACK_FACTOR_E; k++){
+			local_e[i+k] = (packed_e >> (k<<3) ) & 0xff;
+		}
+
+
 	}
 
 
@@ -68,37 +75,42 @@ void compute_function(hls::stream<unsigned char> &stream_pk, hls::stream<unsigne
 	for (int i = 0; i < PK_NROWS; i++)
 	{
 //	#pragma HLS DEPENDENCE variable=row inter RAW true
-//	#pragma HLS PIPELINE
+	#pragma HLS PIPELINE
 
 
+		LOOP_INIT_ROW:
+		for(int j=0; j<(MAT_COLS - PK_ROW_BYTES); j++){
+		#pragma HLS PIPELINE II=1
+		#pragma HLS unroll factor=64
+			row[j]=0;
+		}
+
+
+		ap_uint<PACK_BITWIDTH_PK> ext32b_row;
 
 		 LOOP_ROW_MAT:
-		 for ( uint j = 0; j <(MAT_COLS); j++) {
-			#pragma HLS PIPELINE
-			#pragma HLS unroll factor=16
+		 for ( uint j = (MAT_COLS - PK_ROW_BYTES); j <MAT_COLS; j=j+PACK_FACTOR_PK) {
+			#pragma HLS DEPENDENCE variable=row inter false
+			#pragma HLS DEPENDENCE variable=stream_pk inter false
+			#pragma HLS PIPELINE II=1
+				 //The stream provides 32b values
+				 stream_pk >> ext32b_row;
 
-			 if(j<(MAT_COLS - PK_ROW_BYTES)){
-				 row[j] = 0;
-			 }else{
+				 LOOP_INNER_UNPACK_PK:
+				 for(int k=0; k<PACK_FACTOR_PK; k++){
+					 row[j+k] = (ext32b_row >> (k<<3) ) & 0xff;
+				 }
 
-//				 row[j] = local_pk[i][j-(MAT_COLS - PK_ROW_BYTES)];
-
-				 row[j] = stream_pk.read();
 			 }
 
-		 }
 
 
 		row[i>>3] |= 1 << (i%8);
 
 		b = 0;
 		LOOP_B_COMPUTE:for (uint j = 0; j < MAT_COLS; j++){
-			#pragma HLS PIPELINE
-			#pragma HLS unroll factor=16
-			//read the local_e variables from the stream only for the first iter
-			if (i==0){
-				local_e[j] = stream_e.read();
-			}
+			#pragma HLS PIPELINE II=1
+			#pragma HLS unroll factor=64
 			b ^= row[j] & local_e[j];
 		}
 
@@ -111,10 +123,12 @@ void compute_function(hls::stream<unsigned char> &stream_pk, hls::stream<unsigne
 
 		local_s[ i>>3 ] |= (b << (i%8));
 
-//		Write result to output stream
-		if(i%8==7){
-			stream_s.write(local_s[(i>>3)]);
-		}
+	}
+
+
+	LOOP_WRITE_STREAM:for (unsigned int i=0;i<SYND_BYTES;i++){
+		#pragma HLS PIPELINE II=1
+		stream_s << local_s[i];
 
 	}
 
@@ -128,37 +142,36 @@ void write_function(unsigned char *s_out, hls::stream<unsigned char> &stream_s){
 
 	LOOP_WRITE_TO_BRAM_R:for (unsigned int i=0;i<SYND_BYTES;i++){
 		#pragma HLS PIPELINE
-//		#pragma HLS unroll factor=4
-		*(s_out+i) = stream_s.read();
+		stream_s >> *(s_out+i);
+
 	}
 }
 
-void syndrome_kernel_data(unsigned char *pk_in, unsigned char *e_in, unsigned char *s_out)
+void syndrome_kernel_data(ap_uint<PACK_BITWIDTH_PK> *pk_in, ap_uint<PACK_BITWIDTH_E> *e_in, unsigned char *s_out)
 {
-	#pragma HLS INTERFACE m_axi     port=pk_in  offset=slave bundle=gmem
-	#pragma HLS INTERFACE m_axi     port=e_in   offset=slave bundle=gmem1
-	#pragma HLS INTERFACE m_axi     port=s_out  offset=slave bundle=gmem2
-    #pragma HLS INTERFACE s_axilite port=pk_in               bundle=control
+	#pragma HLS DATAFLOW
+
+	#pragma HLS INTERFACE m_axi depth=10000 bundle=gmem port=pk_in offset=slave//depth=4080 num_read_outstanding=3000
+	#pragma HLS INTERFACE m_axi port=e_in   offset=slave bundle=gmem1 depth=436//depth=109
+	#pragma HLS INTERFACE m_axi port=s_out  offset=slave bundle=gmem2 depth=96//depth=3
+    #pragma HLS INTERFACE s_axilite bundle=control port=pk_in
 	#pragma HLS INTERFACE s_axilite port=e_in                bundle=control
 	#pragma HLS INTERFACE s_axilite port=s_out               bundle=control
 	#pragma HLS INTERFACE s_axilite port=return 		     bundle=control
 
-    static hls::stream<unsigned char> stream_pk;
-    static hls::stream<unsigned char> stream_e;
+
+    static hls::stream<ap_uint<PACK_BITWIDTH_PK>> stream_pk;
+    static hls::stream<ap_uint<PACK_BITWIDTH_E>> stream_e;
     static hls::stream<unsigned char> stream_s;
 
-	#pragma HLS STREAM variable = stream_pk depth = 32
-	#pragma HLS STREAM variable = stream_e depth = 32
-	#pragma HLS STREAM variable = stream_s depth = 32
+	#pragma HLS STREAM variable=stream_pk depth=2
+	#pragma HLS STREAM variable=stream_e depth=2
+	#pragma HLS STREAM variable=stream_s depth=2
 
 
-	#pragma HLS DATAFLOW
-
-
-	read_function_pk(pk_in, stream_pk);
-	read_function_e(e_in, stream_e);
-	compute_function(stream_pk, stream_e, stream_s);
+	read_function_pk(stream_pk, pk_in);
+	read_function_e(stream_e, e_in);
+	compute_function(stream_s, stream_pk, stream_e);
 	write_function(s_out, stream_s);
-
 
 }
