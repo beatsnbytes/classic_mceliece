@@ -21,6 +21,14 @@
 
 //Custom definitions
 
+#define DATAFLOW_OPT
+//#undef DATAFLOW_OPT
+
+#define PACK_FACTOR_PK 10
+#define PACK_BITWIDTH_PK (PACK_FACTOR_PK*8)
+#define PACK_FACTOR_E 4
+#define PACK_BITWIDTH_E (PACK_FACTOR_E*8)
+
 //#define FUNC_CORRECTNESS
 #undef FUNC_CORRECTNESS
 

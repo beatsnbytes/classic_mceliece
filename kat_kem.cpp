@@ -8,12 +8,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "rng.h"
 #include "crypto_kem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "rng.c"
 #include "params.h"
 #include <stdbool.h>
 #include <CL/opencl.h>
@@ -28,12 +28,16 @@
 #include "controlbits.h"
 #include "synd.h"
 #include "operations.h"
-#include "custom_util.h"
+#include "custom_util.c"
 
 #include <sys/time.h>
 #include <CL/opencl.h>
 #include <CL/cl_ext.h>
 #include <valgrind/callgrind.h>
+
+#include "ap_int.h"
+
+
 
 #define KAT_SUCCESS          0
 #define KAT_FILE_OPEN_ERROR -1
@@ -79,6 +83,7 @@ cl_mem buffer_fail;
 int syndrome_kernels = 1 ;
 cl_kernel syndrome_kernels_list[8];
 
+#ifndef DATAFLOW_OPT
 const char *syndrome_kernels_name_list[15] = {"syndrome_kernel",
 										"syndrome_kernel2_1",
 										"syndrome_kernel2_2",
@@ -95,20 +100,41 @@ const char *syndrome_kernels_name_list[15] = {"syndrome_kernel",
 										"syndrome_kernel8_7",
 										"syndrome_kernel8_8"
 										};
+#endif
 
+#ifdef DATAFLOW_OPT
+const char *syndrome_dataflow_kernels_name_list[15] = {"syndrome_kernel_dataflow1_1",
+										"syndrome_kernel_dataflow2_1",
+										"syndrome_kernel_dataflow2_2",
+										"syndrome_kernel_dataflow4_1",
+										"syndrome_kernel_dataflow4_2",
+										"syndrome_kernel_dataflow4_3",
+										"syndrome_kernel_dataflow4_4",
+										"syndrome_kernel_dataflow8_1",
+										"syndrome_kernel_dataflow8_2",
+										"syndrome_kernel_dataflow8_3",
+										"syndrome_kernel_dataflow8_4",
+										"syndrome_kernel_dataflow8_5",
+										"syndrome_kernel_dataflow8_6",
+										"syndrome_kernel_dataflow8_7",
+										"syndrome_kernel_dataflow8_8"
+										};
+#endif
 
 cl_mem pt_list_syndrome_combined[9];
 
 cl_mem buffer_pk_in;
-unsigned char *ptr_pk_in;
+ap_uint<PACK_BITWIDTH_PK> *ptr_pk_in;
+
+cl_mem buffer_pk_out;
+unsigned char *ptr_pk_out;
 
 cl_mem buffer_s_out;
 unsigned char *ptr_s_out;
 
 cl_mem buffer_e_in_list[8];
-unsigned char *ptr_e_in_list[8];
+ap_uint<PACK_BITWIDTH_E> *ptr_e_in_list[8];
 
-cl_mem pt_list_syndrome_combined[9];
 
 #endif
 
@@ -195,9 +221,6 @@ cl_uint load_file_to_memory(const char *filename, char **result)
 
 void	fprintBstr(FILE *fp, char *S, unsigned char *A, unsigned long long L);
 
-
-unsigned char entropy_input[48];
-unsigned char seed[KATNUM][48];
 
 int
 main(int argc, char* argv[])
@@ -479,8 +502,8 @@ main(int argc, char* argv[])
 
 #ifdef SYNDROME_KERNEL
 
-
-		buffer_pk_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES, NULL, &err);
+		//TODO change the datatype here
+		buffer_pk_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(ap_uint<PACK_BITWIDTH_PK>)*(crypto_kem_PUBLICKEYBYTES/PACK_FACTOR_PK), NULL, &err);
 		#ifdef OCL_API_DEBUG
 		if (err != CL_SUCCESS) {
 			printf("FAILED to create buffer_pk_in");
@@ -496,9 +519,28 @@ main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 		#endif
+///
+		buffer_pk_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(unsigned char)*(crypto_kem_PUBLICKEYBYTES), NULL, &err);
+		#ifdef OCL_API_DEBUG
+		if (err != CL_SUCCESS) {
+			printf("FAILED to create buffer_pk_out");
+			return EXIT_FAILURE;
+		}
+		#endif
+
+		ptr_pk_out = (unsigned char *) clEnqueueMapBuffer(commands, buffer_pk_out, true, CL_MAP_READ, 0, sizeof(unsigned char)*(crypto_kem_PUBLICKEYBYTES), 0, NULL, NULL, &err);
+		#ifdef OCL_API_DEBUG
+		if (err != CL_SUCCESS) {
+			printf("ERROR : %d\n", err);
+			printf("FAILED to enqueue map buffer_pk_out");
+			return EXIT_FAILURE;
+		}
+		#endif
+
+///
 
 
-		ptr_pk_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_pk_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*crypto_kem_PUBLICKEYBYTES, 0, NULL, NULL, &err);
+		ptr_pk_in = (ap_uint<PACK_BITWIDTH_PK> *) clEnqueueMapBuffer(commands, buffer_pk_in, true, CL_MAP_WRITE, 0, sizeof(ap_uint<PACK_BITWIDTH_PK>)*(crypto_kem_PUBLICKEYBYTES/PACK_FACTOR_PK), 0, NULL, NULL, &err);
 		#ifdef OCL_API_DEBUG
 		if (err != CL_SUCCESS) {
 			printf("ERROR : %d\n", err);
@@ -522,7 +564,12 @@ main(int argc, char* argv[])
 		for(int i=0; i<syndrome_kernels; i++){
 
 			int index = syndrome_kernels-1+i;
+			#ifdef DATAFLOW_OPT
+			syndrome_kernels_list[i] = clCreateKernel(program, syndrome_dataflow_kernels_name_list[index], &err);
+			#endif
+			#ifndef DATAFLOW_OPT
 			syndrome_kernels_list[i] = clCreateKernel(program, syndrome_kernels_name_list[index], &err);
+			#endif
 			#ifdef OCL_API_DEBUG
 			if (!syndrome_kernels_list[i] || err != CL_SUCCESS) {
 				printf("Error: Failed to create compute kernel_syndrome!\n");
@@ -531,8 +578,8 @@ main(int argc, char* argv[])
 			}
 			#endif
 
-
-			buffer_e_in_list[i] = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*MAT_COLS, NULL, &err);
+			//TODO change the datatype here
+			buffer_e_in_list[i] = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(ap_uint<PACK_BITWIDTH_E>)*(MAT_COLS/PACK_FACTOR_E), NULL, &err);
 			#ifdef OCL_API_DEBUG
 			if (err != CL_SUCCESS) {
 				printf("FAILED to create buffer_e_in");
@@ -565,8 +612,18 @@ main(int argc, char* argv[])
 			}
 			#endif
 
+			//
+			err = clSetKernelArg(syndrome_kernels_list[i], 3, sizeof(cl_mem), &buffer_pk_out);
+			#ifdef OCL_API_DEBUG
+			if (err != CL_SUCCESS) {
+				printf("FAILED to set kernel arguments for buffer_pk_out");
+				return EXIT_FAILURE;
+			}
+			#endif
+			//
 
-			ptr_e_in_list[i] = (unsigned char *) clEnqueueMapBuffer(commands, buffer_e_in_list[i], false, CL_MAP_WRITE, 0, sizeof(unsigned char)*MAT_COLS, 0, NULL, NULL, &err);
+
+			ptr_e_in_list[i] = (ap_uint<PACK_BITWIDTH_E> *) clEnqueueMapBuffer(commands, buffer_e_in_list[i], false, CL_MAP_WRITE, 0, sizeof(ap_uint<PACK_BITWIDTH_E>)*(MAT_COLS/PACK_FACTOR_E), 0, NULL, NULL, &err);
 			#ifdef OCL_API_DEBUG
 			if (err != CL_SUCCESS) {
 				printf("ERROR : %d\n", err);
@@ -785,15 +842,15 @@ main(int argc, char* argv[])
     fprintf(fp_rsp, "# kem/%s\n\n", crypto_kem_PRIMITIVE);
 
     for (i=0; i<KATNUM; i++) {
-        if (!ct) ct = malloc(crypto_kem_CIPHERTEXTBYTES);
+        if (!ct) ct = (unsigned char *)malloc(crypto_kem_CIPHERTEXTBYTES);
         if (!ct) abort();
-        if (!ss) ss = malloc(crypto_kem_BYTES);
+        if (!ss) ss = (unsigned char *)malloc(crypto_kem_BYTES);
         if (!ss) abort();
-        if (!ss1) ss1 = malloc(crypto_kem_BYTES);
+        if (!ss1) ss1 = (unsigned char *)malloc(crypto_kem_BYTES);
         if (!ss1) abort();
-        if (!pk) pk = malloc(crypto_kem_PUBLICKEYBYTES);
+        if (!pk) pk = (unsigned char *)malloc(crypto_kem_PUBLICKEYBYTES);
         if (!pk) abort();
-        if (!sk) sk = malloc(crypto_kem_SECRETKEYBYTES);
+        if (!sk) sk = (unsigned char *)malloc(crypto_kem_SECRETKEYBYTES);
         if (!sk) abort();
 
         randombytes_init(seed[i], NULL, 256);

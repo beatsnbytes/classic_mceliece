@@ -1,18 +1,9 @@
-/*
-  This file is for Niederreiter encryption
-*/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#include "params.h"
-
-#ifndef ENCRYPT_H
-#define ENCRYPT_H
-#define encrypt CRYPTO_NAMESPACE(encrypt)
-
-
-
-void encrypt(unsigned char *, const unsigned char *, unsigned char *);
-static void syndrome_sw_host(unsigned char *, const unsigned char *, unsigned char *);
+extern int syndrome_host(unsigned char *, const unsigned char *, unsigned char  *);
 
 extern double sum_list_syndrome_tokern[1];
 extern double sum_list_syndrome_tohost[1];
@@ -27,5 +18,6 @@ extern int times_syndrome_kernels;
 extern double sum_total_syndrome;
 extern int times_total_syndrome;
 
+#ifdef __cplusplus
+}
 #endif
-

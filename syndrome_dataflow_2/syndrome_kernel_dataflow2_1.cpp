@@ -7,12 +7,8 @@
 #include "hls_stream.h"
 #include "ap_int.h"
 
-#define PACK_FACTOR_PK 34
-#define PACK_BITWIDTH_PK PACK_FACTOR_PK*8
-#define PACK_FACTOR_E 4
-#define PACK_BITWIDTH_E PACK_FACTOR_E*8
 
-void read_function_pk(hls::stream<ap_uint<PACK_BITWIDTH_PK>> &stream_pk, ap_uint<PACK_BITWIDTH_PK> * pk_in)
+void read_function_pk2_1(hls::stream<ap_uint<PACK_BITWIDTH_PK>> &stream_pk, ap_uint<PACK_BITWIDTH_PK> * pk_in)
 {
 
 
@@ -27,7 +23,7 @@ void read_function_pk(hls::stream<ap_uint<PACK_BITWIDTH_PK>> &stream_pk, ap_uint
 }
 
 
-void read_function_e(hls::stream<ap_uint<PACK_BITWIDTH_E>> &stream_e, ap_uint<PACK_BITWIDTH_E> * e_in)
+void read_function_e2_1(hls::stream<ap_uint<PACK_BITWIDTH_E>> &stream_e, ap_uint<PACK_BITWIDTH_E> * e_in)
 {
 	LOOP_LOAD_FROM_BRAM_E:for(unsigned int i=0;i<MAT_COLS/PACK_FACTOR_E;i++){
 		#pragma HLS PIPELINE II=1
@@ -39,7 +35,7 @@ void read_function_e(hls::stream<ap_uint<PACK_BITWIDTH_E>> &stream_e, ap_uint<PA
 
 
 
-void compute_function(hls::stream<unsigned char> &stream_s, hls::stream<ap_uint<PACK_BITWIDTH_PK>> &stream_pk, hls::stream<ap_uint<PACK_BITWIDTH_E>> &stream_e){
+void compute_function2_1(hls::stream<unsigned char> &stream_s, hls::stream<ap_uint<PACK_BITWIDTH_PK>> &stream_pk, hls::stream<ap_uint<PACK_BITWIDTH_E>> &stream_e){
 
 	unsigned char local_s[SYND_BYTES];
 	unsigned char b, row[MAT_COLS];
@@ -137,7 +133,7 @@ void compute_function(hls::stream<unsigned char> &stream_s, hls::stream<ap_uint<
 
 
 
-void write_function(unsigned char *s_out, hls::stream<unsigned char> &stream_s){
+void write_function2_1(unsigned char *s_out, hls::stream<unsigned char> &stream_s){
 
 
 	LOOP_WRITE_TO_BRAM_R:for (unsigned int i=0;i<SYND_BYTES;i++){
@@ -147,7 +143,7 @@ void write_function(unsigned char *s_out, hls::stream<unsigned char> &stream_s){
 	}
 }
 
-void syndrome_kernel_data(ap_uint<PACK_BITWIDTH_PK> *pk_in, ap_uint<PACK_BITWIDTH_E> *e_in, unsigned char *s_out)
+void syndrome_kernel_dataflow2_1(ap_uint<PACK_BITWIDTH_PK> *pk_in, ap_uint<PACK_BITWIDTH_E> *e_in, unsigned char *s_out)
 {
 	#pragma HLS DATAFLOW
 
@@ -169,9 +165,9 @@ void syndrome_kernel_data(ap_uint<PACK_BITWIDTH_PK> *pk_in, ap_uint<PACK_BITWIDT
 	#pragma HLS STREAM variable=stream_s depth=2
 
 
-	read_function_pk(stream_pk, pk_in);
-	read_function_e(stream_e, e_in);
-	compute_function(stream_s, stream_pk, stream_e);
-	write_function(s_out, stream_s);
+	read_function_pk2_1(stream_pk, pk_in);
+	read_function_e2_1(stream_e, e_in);
+	compute_function2_1(stream_s, stream_pk, stream_e);
+	write_function2_1(s_out, stream_s);
 
 }

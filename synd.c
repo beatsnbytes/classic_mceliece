@@ -11,8 +11,8 @@
 #include "params.h"
 #include "root.h"
 #include "gf.h"
-#include "kat_kem.h"
 #include "custom_util.h"
+//#include "kat_kem.h"
 
 /* input: Goppa polynomial f, support L, received word r */
 /* output: out, the syndrome of length 2t */

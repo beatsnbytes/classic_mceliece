@@ -9,6 +9,7 @@
 #include "gf.h"
 
 int pk_gen(unsigned char *, unsigned char *, uint32_t *, int16_t *, unsigned char *, unsigned char *);
+int pk_gen_sw_host(unsigned char *, unsigned char *, uint32_t *, int16_t *);
 
 extern double sum_list_elim_tokern[1];
 extern double sum_list_elim_tohost[1];

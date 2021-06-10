@@ -3,9 +3,8 @@
    Created by Bassham, Lawrence E (Fed) on 8/29/17.
    Copyright © 2017 Bassham, Lawrence E (Fed). All rights reserved.
 */
-
-#include <string.h>
 #include "rng.h"
+#include <string.h>
 #include <openssl/conf.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>

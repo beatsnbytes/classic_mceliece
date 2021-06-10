@@ -11,14 +11,14 @@
 #include <CL/opencl.h>
 #include <CL/cl_ext.h>
 
-#include "kat_kem.h"
 #include "controlbits.h"
-#include "crypto_hash.h"
+//#include "crypto_hash.h"
 #include "uint64_sort.h"
 #include "crypto_kem.h"
 #include "pk_gen.h"
 #include "params.h"
 #include "benes.h"
+//#include "kat_kem.h"
 #include "root.h"
 #include "util.h"
 

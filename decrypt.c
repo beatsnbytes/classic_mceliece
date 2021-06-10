@@ -9,6 +9,7 @@
 #include "decrypt.h"
 
 #include "params.h"
+#include "encrypt.h"
 #include "benes.h"
 #include "util.h"
 #include "synd.h"

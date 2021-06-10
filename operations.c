@@ -1,14 +1,16 @@
+
+#include "crypto_hash.h"
 #include "operations.h"
 
 #include "controlbits.h"
 #include "randombytes.h"
-#include "crypto_hash.h"
 #include "encrypt.h"
 #include "decrypt.h"
 #include "params.h"
 #include "sk_gen.h"
 #include "pk_gen.h"
 #include "util.h"
+
 
 
 #include <stdint.h>
@@ -18,7 +20,8 @@
 #include <CL/opencl.h>
 #include <CL/cl_ext.h>
 #include <sys/time.h>
-#include"kat_kem.h"
+#include "custom_util.h"
+
 
 double sum_decrypt=0.0;
 int times_decrypt=0;
@@ -49,6 +52,7 @@ int crypto_kem_enc(
 			gettimeofday(&end_encrypt, NULL);
 			get_event_time(&start_encrypt, &end_encrypt, &sum_encrypt, &times_encrypt);
 #endif
+
 
     crypto_hash_32b(c + SYND_BYTES, two_e, sizeof(two_e));
 	memcpy(one_ec + 1, e, SYS_N/8);
@@ -91,7 +95,7 @@ int crypto_kem_dec(
 			get_event_time(&start_decrypt, &end_decrypt, &sum_decrypt, &times_decrypt);
 #endif
 
-	crypto_hash_32b(conf, two_e, sizeof(two_e)); 
+	crypto_hash_32b(conf, two_e, sizeof(two_e));
 
 	for (i = 0; i < 32; i++) 
 		ret_confirm |= conf[i] ^ c[SYND_BYTES + i];
@@ -107,7 +111,7 @@ int crypto_kem_dec(
 	for (i = 0; i < SYND_BYTES + 32; i++) 
 		*x++ = c[i];
 
-	crypto_hash_32b(key, preimage, sizeof(preimage)); 
+	crypto_hash_32b(key, preimage, sizeof(preimage));
 
 	return 0;
 }
