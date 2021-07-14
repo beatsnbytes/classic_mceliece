@@ -1,7 +1,7 @@
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 extern int syndrome_host(unsigned char *, const unsigned char *, unsigned char  *);
 
@@ -18,6 +18,6 @@ extern int times_syndrome_kernels;
 extern double sum_total_syndrome;
 extern int times_total_syndrome;
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif

@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "rng.c"
+//#include "rng.c"
 #include "params.h"
 #include <stdbool.h>
 #include <CL/opencl.h>
@@ -28,14 +28,14 @@
 #include "controlbits.h"
 #include "synd.h"
 #include "operations.h"
-#include "custom_util.c"
+//#include "custom_util.c"
 
 #include <sys/time.h>
 #include <CL/opencl.h>
 #include <CL/cl_ext.h>
 #include <valgrind/callgrind.h>
 
-#include "ap_int.h"
+//#include "ap_int.h"
 
 
 
@@ -80,11 +80,11 @@ cl_mem buffer_fail;
 
 
 #ifdef SYNDROME_KERNEL
-int syndrome_kernels = 1 ;
+int syndrome_kernels = 2;
 cl_kernel syndrome_kernels_list[8];
 
 #ifndef DATAFLOW_OPT
-const char *syndrome_kernels_name_list[15] = {"syndrome_kernel",
+const char *syndrome_kernels_name_list[15] = {"syndrome_kernel1_1",
 										"syndrome_kernel2_1",
 										"syndrome_kernel2_2",
 										"syndrome_kernel4_1",
@@ -124,7 +124,14 @@ const char *syndrome_dataflow_kernels_name_list[15] = {"syndrome_kernel_dataflow
 cl_mem pt_list_syndrome_combined[9];
 
 cl_mem buffer_pk_in;
-ap_uint<PACK_BITWIDTH_PK> *ptr_pk_in;
+
+
+//data_packed_pk *ptr_pk_in;
+unsigned char *ptr_pk_in;
+
+//data_packed_e *ptr_e_in_list[8];
+unsigned char *ptr_e_in_list[8];
+
 
 cl_mem buffer_pk_out;
 unsigned char *ptr_pk_out;
@@ -133,7 +140,6 @@ cl_mem buffer_s_out;
 unsigned char *ptr_s_out;
 
 cl_mem buffer_e_in_list[8];
-ap_uint<PACK_BITWIDTH_E> *ptr_e_in_list[8];
 
 
 #endif
@@ -502,8 +508,8 @@ main(int argc, char* argv[])
 
 #ifdef SYNDROME_KERNEL
 
-		//TODO change the datatype here
-		buffer_pk_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(ap_uint<PACK_BITWIDTH_PK>)*(crypto_kem_PUBLICKEYBYTES/PACK_FACTOR_PK), NULL, &err);
+//		buffer_pk_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(data_packed_pk)*(crypto_kem_PUBLICKEYBYTES/PACK_FACTOR_PK), NULL, &err);
+		buffer_pk_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*(crypto_kem_PUBLICKEYBYTES), NULL, &err);
 		#ifdef OCL_API_DEBUG
 		if (err != CL_SUCCESS) {
 			printf("FAILED to create buffer_pk_in");
@@ -519,28 +525,10 @@ main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 		#endif
-///
-		buffer_pk_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(unsigned char)*(crypto_kem_PUBLICKEYBYTES), NULL, &err);
-		#ifdef OCL_API_DEBUG
-		if (err != CL_SUCCESS) {
-			printf("FAILED to create buffer_pk_out");
-			return EXIT_FAILURE;
-		}
-		#endif
-
-		ptr_pk_out = (unsigned char *) clEnqueueMapBuffer(commands, buffer_pk_out, true, CL_MAP_READ, 0, sizeof(unsigned char)*(crypto_kem_PUBLICKEYBYTES), 0, NULL, NULL, &err);
-		#ifdef OCL_API_DEBUG
-		if (err != CL_SUCCESS) {
-			printf("ERROR : %d\n", err);
-			printf("FAILED to enqueue map buffer_pk_out");
-			return EXIT_FAILURE;
-		}
-		#endif
-
-///
 
 
-		ptr_pk_in = (ap_uint<PACK_BITWIDTH_PK> *) clEnqueueMapBuffer(commands, buffer_pk_in, true, CL_MAP_WRITE, 0, sizeof(ap_uint<PACK_BITWIDTH_PK>)*(crypto_kem_PUBLICKEYBYTES/PACK_FACTOR_PK), 0, NULL, NULL, &err);
+//		ptr_pk_in = (data_packed_pk *) clEnqueueMapBuffer(commands, buffer_pk_in, true, CL_MAP_WRITE, 0, sizeof(data_packed_pk)*(crypto_kem_PUBLICKEYBYTES/PACK_FACTOR_PK), 0, NULL, NULL, &err);
+		ptr_pk_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_pk_in, true, CL_MAP_WRITE, 0, sizeof(data_packed_pk)*(crypto_kem_PUBLICKEYBYTES/PACK_FACTOR_PK), 0, NULL, NULL, &err);
 		#ifdef OCL_API_DEBUG
 		if (err != CL_SUCCESS) {
 			printf("ERROR : %d\n", err);
@@ -579,7 +567,8 @@ main(int argc, char* argv[])
 			#endif
 
 			//TODO change the datatype here
-			buffer_e_in_list[i] = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(ap_uint<PACK_BITWIDTH_E>)*(MAT_COLS/PACK_FACTOR_E), NULL, &err);
+//			buffer_e_in_list[i] = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(data_packed_e)*(MAT_COLS/PACK_FACTOR_E), NULL, &err);
+			buffer_e_in_list[i] = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*(MAT_COLS), NULL, &err);
 			#ifdef OCL_API_DEBUG
 			if (err != CL_SUCCESS) {
 				printf("FAILED to create buffer_e_in");
@@ -612,18 +601,9 @@ main(int argc, char* argv[])
 			}
 			#endif
 
-			//
-			err = clSetKernelArg(syndrome_kernels_list[i], 3, sizeof(cl_mem), &buffer_pk_out);
-			#ifdef OCL_API_DEBUG
-			if (err != CL_SUCCESS) {
-				printf("FAILED to set kernel arguments for buffer_pk_out");
-				return EXIT_FAILURE;
-			}
-			#endif
-			//
 
-
-			ptr_e_in_list[i] = (ap_uint<PACK_BITWIDTH_E> *) clEnqueueMapBuffer(commands, buffer_e_in_list[i], false, CL_MAP_WRITE, 0, sizeof(ap_uint<PACK_BITWIDTH_E>)*(MAT_COLS/PACK_FACTOR_E), 0, NULL, NULL, &err);
+//			ptr_e_in_list[i] = (data_packed_e *) clEnqueueMapBuffer(commands, buffer_e_in_list[i], false, CL_MAP_WRITE, 0, sizeof(data_packed_e)*(MAT_COLS/PACK_FACTOR_E), 0, NULL, NULL, &err);
+			ptr_e_in_list[i] = (unsigned char *) clEnqueueMapBuffer(commands, buffer_e_in_list[i], false, CL_MAP_WRITE, 0, sizeof(unsigned char)*(MAT_COLS), 0, NULL, NULL, &err);
 			#ifdef OCL_API_DEBUG
 			if (err != CL_SUCCESS) {
 				printf("ERROR : %d\n", err);

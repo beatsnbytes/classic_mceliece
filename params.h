@@ -21,10 +21,10 @@
 
 //Custom definitions
 
-#define DATAFLOW_OPT
-//#undef DATAFLOW_OPT
+//#define DATAFLOW_OPT
+#undef DATAFLOW_OPT
 
-#define PACK_FACTOR_PK 10
+#define PACK_FACTOR_PK 16
 #define PACK_BITWIDTH_PK (PACK_FACTOR_PK*8)
 #define PACK_FACTOR_E 4
 #define PACK_BITWIDTH_E (PACK_FACTOR_E*8)
@@ -52,6 +52,14 @@
 
 //#define SYND_KERNEL
 #undef SYND_KERNEL
+
+typedef struct {
+   unsigned char packed_values[PACK_FACTOR_PK];
+   }data_packed_pk;
+
+typedef struct {
+  unsigned char packed_values[PACK_FACTOR_E];
+  }data_packed_e;
 
 
 #endif

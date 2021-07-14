@@ -1,7 +1,7 @@
 // Global variables to be used by the computational kernels
 
 #include "gf.h"
-#include "ap_int.h"
+//#include "ap_int.h"
 
 extern cl_platform_id platform_id;
 extern cl_device_id device_id;
@@ -24,12 +24,19 @@ extern cl_int err;
 extern cl_command_queue commands;
 
 //syndrome
+
+
 extern int syndrome_kernels;
 extern cl_mem buffer_pk_in;
 extern cl_mem buffer_e_in;
 extern cl_mem buffer_s_out;
-extern ap_uint<PACK_BITWIDTH_PK> *ptr_pk_in;
-extern ap_uint<PACK_BITWIDTH_E> *ptr_e_in;
+
+
+//extern data_packed_pk *ptr_pk_in;
+extern unsigned char *ptr_pk_in;
+
+
+extern data_packed_e *ptr_e_in;
 extern unsigned char *ptr_s_out;
 extern cl_mem pt_list_syndrome[3];
 
@@ -39,12 +46,14 @@ extern cl_mem buffer_pk_out;
 //
 
 
+
 extern cl_kernel syndrome_kernels_list[8];
 
 extern cl_mem pt_list_syndrome_combined[9];
 
 extern cl_mem buffer_e_in_list[8];
-extern ap_uint<PACK_BITWIDTH_E> *ptr_e_in_list[8];
+//extern data_packed_e *ptr_e_in_list[8];
+extern unsigned char *ptr_e_in_list[8];
 
 extern cl_mem pt_list_syndrome_combined[9];
 extern cl_mem pt_list_syndrome_combined_out[8];
