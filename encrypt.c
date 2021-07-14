@@ -149,68 +149,6 @@ void encrypt(unsigned char *s, const unsigned char *pk, unsigned char *e)
 
 	syndrome(s, pk, e);
 
-/////////////////////////////////////////////////////////////////
-	unsigned char buff;
-	unsigned char pk_read[PK_NROWS][PK_ROW_BYTES];
-	unsigned char e_read[SYS_N/8];
-   FILE *fp;
-
-   fp = fopen("/home/vat/classic_mceliece/pk_in.txt", "w");
-   for(int i=0; i<PK_NROWS; i++){
-	   for(int j=0; j<PK_ROW_BYTES; j++){
-		   fprintf(fp, "%d\n ", *(pk + i*PK_ROW_BYTES+j));
-	   }
-   }
-   fclose(fp);
-
-
-
-   fp = fopen("/home/vat/classic_mceliece/e_in.txt", "w");
-   for(int i=0; i<SYS_N/8; i++){
-		fprintf(fp, "%d\n ", *(e + i));
-	   }
-   fclose(fp);
-
-
-   fp = fopen("/home/vat/classic_mceliece/s_out.txt", "w");
-   for(int i=0; i<SYND_BYTES; i++){
-		fprintf(fp, "%d\n ", *(s + i));
-	   }
-   fclose(fp);
-
-
-    fp = fopen("/home/vat/classic_mceliece/pk_in.txt", "r");
-    for(int i=0; i<PK_NROWS; i++){
-	   for(int j=0; j<PK_ROW_BYTES; j++){
-		   fscanf(fp, "%hhu\n ", &buff);
-           pk_read[i][j] = buff;
-	   }
-   }
-   fclose(fp);
-
-	fp = fopen("/home/vat/classic_mceliece/e_in.txt", "r");
-    for(int i=0; i<SYS_N/8; i++){
-		fscanf(fp, "%hhu\n ", &buff);
-		e_read[i] = buff;
-	   }
-   fclose(fp);
-
-	for(int i=0; i<PK_NROWS; i++){
-		for(int j=0; j<PK_ROW_BYTES; j++){
-			if(*(pk + i*PK_ROW_BYTES+j)!=pk_read[i][j]){
-				printf("ERROR!\n");
-			}
-		}
-	}
-
-    for(int i=0; i<SYS_N/8; i++){
-		if(*(e + i)!=e_read[i]){
-			printf("ERROR!\n");
-		}
-	}
-
-/////////////////////////////////////////////////////////////////
-
 
 	gettimeofday(&end_syndrome, NULL);
 	get_event_time(&start_syndrome, &end_syndrome, &sum_syndrome, &times_syndrome);
