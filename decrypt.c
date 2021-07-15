@@ -73,7 +73,8 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 
 	bm(locator, s);
 
-	root(images, locator, L);
+	root_host(images, locator, L);
+//	root_sw_host(images, locator, L);
 
 	//
 	

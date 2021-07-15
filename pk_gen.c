@@ -509,7 +509,7 @@ int pk_gen_sw_host(unsigned char * pk, unsigned char * sk, uint32_t * perm, int1
 
 	// filling the matrix
 
-	root(inv, g, L);
+	root_sw_host(inv, g, L);
 
 	for (i = 0; i < SYS_N; i++)
 		inv[i] = gf_inv(inv[i]);

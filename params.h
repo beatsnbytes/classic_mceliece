@@ -47,11 +47,15 @@
 //#define GAUSSIAN_ELIMINATION_KERNEL
 #undef GAUSSIAN_ELIMINATION_KERNEL
 
-#define SYNDROME_KERNEL
-//#undef SYNDROME_KERNEL
+//#define SYNDROME_KERNEL
+#undef SYNDROME_KERNEL
 
 //#define SYND_KERNEL
 #undef SYND_KERNEL
+
+#define ROOT_KERNEL
+//#undef ROOT_KERNEL
+
 
 typedef struct {
    unsigned char packed_values[PACK_FACTOR_PK];

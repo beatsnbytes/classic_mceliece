@@ -82,5 +82,15 @@ extern unsigned char *ptr_r_in;
 extern cl_mem pt_list_synd_combined[13];
 extern cl_mem pt_list_synd_combined_out[11];
 
+//ROOT
+extern int root_kernels;
+extern cl_kernel root_kernels_list[1];
 
+extern cl_mem buffer_out_out;
+extern cl_mem buffer_fr_in;
+extern cl_mem buffer_Lr_in;
+
+extern gf * ptr_out_out;
+extern gf * ptr_fr_in;
+extern gf * ptr_Lr_in;
 
