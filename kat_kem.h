@@ -94,3 +94,25 @@ extern gf * ptr_out_out;
 extern gf * ptr_fr_in;
 extern gf * ptr_Lr_in;
 
+//BM
+extern int bm_kernels;
+extern cl_kernel bm_kernels_list[1];
+
+extern cl_mem buffer_outbm_out;
+extern cl_mem buffer_sbm_in;
+
+extern gf * ptr_outbm_out;
+extern gf * ptr_sbm_in;
+
+//SUPPORT
+
+extern int support_kernels;
+extern cl_kernel support_kernels_list[1];
+
+extern cl_mem buffer_ssupp_out;
+extern cl_mem buffer_csupp_in;
+
+
+extern gf * ptr_ssupp_out;
+extern unsigned char * ptr_csupp_in;
+

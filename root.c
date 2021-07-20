@@ -1,9 +1,6 @@
 /*
   This file is for evaluating a polynomial at one or more field elements
 */
-
-
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

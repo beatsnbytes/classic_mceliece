@@ -181,7 +181,7 @@ void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	LOOP_MAIN_OUTER:
 	for (uint i = 0; i < SYS_N; i++)
 	{
-	#pragma HLS pipeline
+//	#pragma HLS pipeline
 
 		c = (local_r[i>>3] >> (i%8)) & 1;
 		e_inv = gf_inv_kernel1_1(gf_mul_kernel1_1(e_mat[i],e_mat[i]));

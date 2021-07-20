@@ -141,7 +141,7 @@ cl_mem buffer_e_in_list[8];
 #endif
 
 #ifdef SYND_KERNEL
-int synd_kernels = 2;
+int synd_kernels = 1;
 
 cl_kernel synd_kernels_list[11];
 const char *synd_kernels_name_list[18] = {"synd_kernel1_1",
@@ -184,7 +184,7 @@ cl_mem pt_list_synd_combined_out[11];
 
 
 #ifdef ROOT_KERNEL
-root_kernels = 1;
+int root_kernels = 1;
 
 cl_kernel root_kernels_list[1];
 const char *root_kernels_name_list[1] = {"root_kernel1_1"
@@ -200,6 +200,39 @@ gf * ptr_Lr_in;
 
 #endif
 
+
+
+#ifdef BM_KERNEL
+int bm_kernels = 1;
+
+cl_kernel bm_kernels_list[1];
+const char *bm_kernels_name_list[1] = {"bm_kernel1_1"
+										};
+
+cl_mem buffer_outbm_out;
+cl_mem buffer_sbm_in;
+
+gf * ptr_outbm_out;
+gf * ptr_sbm_in;
+
+#endif
+
+
+#ifdef SUPPORT_KERNEL
+int support_kernels = 1;
+
+cl_kernel support_kernels_list[1];
+const char *support_kernels_name_list[1] = {"support_gen_kernel1_1"
+										};
+
+cl_mem buffer_ssupp_out;
+cl_mem buffer_csupp_in;
+
+
+gf * ptr_ssupp_out;
+unsigned char * ptr_csupp_in;
+
+#endif
 
 
 
@@ -896,7 +929,133 @@ main(int argc, char* argv[])
 
 
 
+#ifdef BM_KERNEL
 
+	bm_kernels_list[0] = clCreateKernel(program, bm_kernels_name_list[0], &err);
+	#ifdef OCL_API_DEBUG
+	if (!bm_kernels_list[0] || err != CL_SUCCESS) {
+		printf("Error: Failed to create compute kernel_root!\n");
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_outbm_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(gf)*(SYS_T+1), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_outbm_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_sbm_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(gf)*(SYS_T*2), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_sbm_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_outbm_out = (gf *) clEnqueueMapBuffer(commands, buffer_outbm_out, true, CL_MAP_READ, 0, sizeof(gf)*(SYS_T+1), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_outbm_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_sbm_in = (gf *) clEnqueueMapBuffer(commands, buffer_sbm_in, true, CL_MAP_WRITE, 0, sizeof(gf)*(SYS_T*2), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_fr_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(bm_kernels_list[0], 0, sizeof(cl_mem), &buffer_outbm_out);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_outbm_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(bm_kernels_list[0], 1, sizeof(cl_mem), &buffer_sbm_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_sbm_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+#endif
+
+#ifdef SUPPORT_KERNEL
+
+	support_kernels_list[0] = clCreateKernel(program, support_kernels_name_list[0], &err);
+	#ifdef OCL_API_DEBUG
+	if (!support_kernels_list[0] || err != CL_SUCCESS) {
+		printf("Error: Failed to create compute kernel_support!\n");
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_ssupp_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(gf)*(SYS_N), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_ssupp_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_csupp_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*(crypto_kem_SECRETKEYBYTES), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_sbm_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_ssupp_out = (gf *) clEnqueueMapBuffer(commands, buffer_ssupp_out, true, CL_MAP_READ, 0, sizeof(gf)*(SYS_N), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_ssupp_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_csupp_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_csupp_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*(crypto_kem_SECRETKEYBYTES), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_csupp_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(support_kernels_list[0], 0, sizeof(cl_mem), &buffer_ssupp_out);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_ssupp_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(support_kernels_list[0], 1, sizeof(cl_mem), &buffer_csupp_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_csupp_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+#endif
 
 
     FILE                *fp_req, *fp_rsp;

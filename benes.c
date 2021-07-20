@@ -1,15 +1,23 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/time.h>
+#include <CL/opencl.h>
+#include <CL/cl_ext.h>
+
+#include "util.h"
+#include "transpose.h"
+#include "params.h"
+#include "benes.h"
+#include "kat_kem.h"
+#include "crypto_kem.h"
+
 /*
   This file is for Benes network related functions
 
   For the implementation strategy, see
   https://eprint.iacr.org/2017/793.pdf
 */
-
-#include "util.h"
-#include "transpose.h"
-#include "params.h"
-#include "benes.h"
-
 /* one layer of the benes network */
 static void layer(uint64_t * data, uint64_t * bits, int lgs)
 {
@@ -111,7 +119,7 @@ void apply_benes(unsigned char * r, const unsigned char * bits, int rev)
 
 /* input: condition bits c */
 /* output: support s */
-void support_gen(gf * s, const unsigned char *c)
+void support_gen_sw_host(gf * s, const unsigned char *c)
 {
 	gf a;
 	int i, j;
@@ -143,3 +151,70 @@ void support_gen(gf * s, const unsigned char *c)
 	}
 }
 
+void support_gen_host(gf * s, const unsigned char *c)
+{
+
+
+	cl_event events_enq[11], event_migr_tohost, event_migr_tokern[1];
+
+
+	memcpy(ptr_csupp_in, c, sizeof(unsigned char)*crypto_kem_SECRETKEYBYTES);
+
+
+	//TODO move to one list and enqueue together
+	err = clEnqueueMigrateMemObjects(commands, 1, &buffer_csupp_in, 0, 0, NULL, &event_migr_tokern[0]);
+	#ifdef OCL_API_DEBUG
+    if (err != CL_SUCCESS) {
+    	printf("FAILED to enqueue input buffer Lr\n");
+    	return EXIT_FAILURE;
+    }
+	#endif
+
+
+//	#ifdef TIME_MEASUREMENT
+//		struct timeval start_kernel, end_kernel;
+//		gettimeofday(&start_kernel, NULL);
+//	#endif
+
+    for (int i=0; i<support_kernels; i++){
+    	err = clEnqueueTask(commands, support_kernels_list[i], 1, &event_migr_tokern, &events_enq[i]);
+    }
+//    	#ifdef TIME_MEASUREMENT
+//    		clWaitForEvents(root_kernels, &events_enq);
+//    		gettimeofday(&end_kernel, NULL);
+//    		get_event_time(&start_kernel, &end_kernel, &sum_root_kernels, &times_root_kernels);
+//    	#endif
+
+	#ifdef OCL_API_DEBUG
+    if (err != CL_SUCCESS) {
+    	printf("FAILED to execute kernel support\n");
+    	return EXIT_FAILURE;
+    }
+	#endif
+
+	err = clEnqueueMigrateMemObjects(commands, support_kernels, &buffer_ssupp_out, CL_MIGRATE_MEM_OBJECT_HOST, support_kernels, &events_enq[0], &event_migr_tohost);
+	#ifdef OCL_API_DEBUG
+    if (err != CL_SUCCESS) {
+    	printf("FAILED to enqueue bufer_ssupp_out\n");
+    	return EXIT_FAILURE;
+    }
+	#endif
+
+    clWaitForEvents(1, &event_migr_tohost);
+
+    memcpy(s, ptr_ssupp_out, sizeof(gf)*SYS_N);
+
+
+
+	#ifdef FUNC_CORRECTNESS
+
+	#endif
+
+	//#ifdef TIME_MEASUREMENT
+	//	cl_profile_print(&event_migr_tokern, 1, sum_list_support_tokern, &times_support_tokern);
+	//	cl_profile_print(&events_enq[0], synd_kernels, sum_list_root_kernel, &times_support);
+	//	cl_profile_print(&event_migr_tohost, 1, sum_list_support_tohost, &times_support_tohost);
+	//#endif
+
+
+}

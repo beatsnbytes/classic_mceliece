@@ -54,7 +54,13 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 
 	for (i = 0; i < SYS_T; i++) { g[i] = load_gf(sk); sk += 2; } g[ SYS_T ] = 1;
 
-	support_gen(L, sk);
+
+#ifdef SUPPORT_KERNEL
+	support_gen_host(L, sk);
+#endif
+#ifndef SUPPORT_KERNEL
+	support_gen_sw_host(L, sk);
+#endif
 
 #ifdef TIME_MEASUREMENT
   	struct timeval start_synd, end_synd;
@@ -71,13 +77,22 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 	get_event_time(&start_synd, &end_synd, &sum_total_synd, &times_total_synd);
 #endif
 
-	bm(locator, s);
+#ifdef BM_KERNEL
+	bm_host(locator, s);
+#endif
+#ifndef BM_KERNEL
+	bm_sw_host(locator, s);
+#endif
 
+#ifdef ROOT_KERNEL
 	root_host(images, locator, L);
-//	root_sw_host(images, locator, L);
+#endif
+#ifndef ROOT_KERNEL
+	root_sw_host(images, locator, L);
+#endif
 
-	//
 	
+
 	for (i = 0; i < SYS_N/8; i++) 
 		e[i] = 0;
 
