@@ -151,6 +151,7 @@ void support_gen_sw_host(gf * s, const unsigned char *c)
 	}
 }
 
+#ifdef SUPPORT_KERNEL
 void support_gen_host(gf * s, const unsigned char *c)
 {
 
@@ -218,3 +219,4 @@ void support_gen_host(gf * s, const unsigned char *c)
 
 
 }
+#endif

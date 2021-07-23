@@ -162,6 +162,9 @@ void synd_kernel1_1(gf *out_out, gf *f_in, gf *L_in, unsigned char *r_in)
 	}
 
 
+	//TODO I can read in c matrix and init the last local_r with zeroes here...will I avoid timing issues?
+
+
 	LOOP_LOAD_FROM_BRAM_R:for (uint i=0;i<MAT_COLS;i++){
 	#pragma HLS PIPELINE II=1
 	#pragma HLS unroll factor=2

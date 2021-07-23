@@ -50,17 +50,29 @@
 //#define SYNDROME_KERNEL
 #undef SYNDROME_KERNEL
 
-#define SYND_KERNEL
-//#undef SYND_KERNEL
+//#define SYND_KERNEL
+#undef SYND_KERNEL
 
-#define ROOT_KERNEL
-//#undef ROOT_KERNEL
+//#define ROOT_KERNEL
+#undef ROOT_KERNEL
 
-#define BM_KERNEL
-//#undef BM_KERNEL
+//#define BM_KERNEL
+#undef BM_KERNEL
 
-#define SUPPORT_KERNEL
-//#undef SUPPORT_KERNEL
+//#define SUPPORT_KERNEL
+#undef SUPPORT_KERNEL
+
+//#define INIT_KERNEL
+#undef INIT_KERNEL
+
+//#define MID_KERNEL
+#undef MID_KERNEL
+
+#define CHECK_KERNEL
+//#undef CHECK_KERNEL
+
+
+
 
 typedef struct {
    unsigned char packed_values[PACK_FACTOR_PK];

@@ -116,3 +116,52 @@ extern cl_mem buffer_csupp_in;
 extern gf * ptr_ssupp_out;
 extern unsigned char * ptr_csupp_in;
 
+
+//INIT
+extern int init_kernels;
+
+extern cl_kernel init_kernels_list[1];
+
+extern cl_mem buffer_ginit_out;
+extern cl_mem buffer_rinit_out;
+extern cl_mem buffer_cinit_in;
+extern cl_mem buffer_skinit_in;
+
+
+extern gf * ptr_ginit_out;
+extern unsigned char * ptr_rinit_out;
+extern unsigned char * ptr_cinit_in;
+extern unsigned char * ptr_skinit_in;
+
+//MID
+
+extern int mid_kernels;
+extern cl_kernel mid_kernels_list[1];
+
+extern cl_mem buffer_imagesmid_in;
+extern cl_mem buffer_wmid_out;
+extern cl_mem buffer_emid_out;
+
+
+extern gf * ptr_imagesmid_in;
+extern int * ptr_wmid_out;
+extern unsigned char * ptr_emid_out;
+
+//CHECK
+
+extern int check_kernels;
+
+extern cl_kernel check_kernels_list[1];
+
+extern cl_mem buffer_check_in;
+extern cl_mem buffer_wcheck_in;
+extern cl_mem buffer_scheck_in;
+extern cl_mem buffer_s_cmpcheck_in;
+
+
+extern uint16_t * ptr_check_out;
+extern int * ptr_wcheck_in;
+extern gf * ptr_scheck_in;
+extern gf * ptr_s_cmpcheck_in;
+
+

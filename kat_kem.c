@@ -235,6 +235,65 @@ unsigned char * ptr_csupp_in;
 #endif
 
 
+#ifdef INIT_KERNEL
+int init_kernels = 1;
+
+cl_kernel init_kernels_list[1];
+const char *init_kernels_name_list[1] = {"init_kernel1_1"
+										};
+
+cl_mem buffer_ginit_out;
+cl_mem buffer_rinit_out;
+cl_mem buffer_cinit_in;
+cl_mem buffer_skinit_in;
+
+
+gf * ptr_ginit_out;
+unsigned char * ptr_rinit_out;
+unsigned char * ptr_cinit_in;
+unsigned char * ptr_skinit_in;
+
+#endif
+
+
+#ifdef MID_KERNEL
+int mid_kernels = 1;
+
+cl_kernel mid_kernels_list[1];
+const char *mid_kernels_name_list[1] = {"mid_kernel1_1"
+										};
+
+cl_mem buffer_imagesmid_in;
+cl_mem buffer_wmid_out;
+cl_mem buffer_emid_out;
+
+
+gf * ptr_imagesmid_in;
+int * ptr_wmid_out;
+unsigned char * ptr_emid_out;
+
+#endif
+
+#ifdef CHECK_KERNEL
+int check_kernels = 1;
+
+cl_kernel check_kernels_list[1];
+const char *check_kernels_name_list[1] = {"check_kernel1_1"
+										};
+
+cl_mem buffer_check_in;
+cl_mem buffer_wcheck_in;
+cl_mem buffer_scheck_in;
+cl_mem buffer_s_cmpcheck_in;
+
+
+uint16_t * ptr_check_out;
+int * ptr_wcheck_in;
+gf * ptr_scheck_in;
+gf * ptr_s_cmpcheck_in;
+
+#endif
+
 
 double sum_keygen=0;
 double sum_enc=0;
@@ -1056,6 +1115,355 @@ main(int argc, char* argv[])
 
 
 #endif
+
+
+
+#ifdef INIT_KERNEL
+
+	init_kernels_list[0] = clCreateKernel(program, init_kernels_name_list[0], &err);
+	#ifdef OCL_API_DEBUG
+	if (!init_kernels_list[0] || err != CL_SUCCESS) {
+		printf("Error: Failed to create compute kernel_init!\n");
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_ginit_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(gf)*(SYS_T+1), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_ginit_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_rinit_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(unsigned char)*(SYS_N/8), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_ginit_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+
+	buffer_cinit_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*(SYND_BYTES), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_cinit_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	buffer_skinit_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(unsigned char)*(crypto_kem_SECRETKEYBYTES), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_skinit_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+
+	ptr_ginit_out = (gf *) clEnqueueMapBuffer(commands, buffer_ginit_out, true, CL_MAP_READ, 0, sizeof(gf)*(SYS_T+1), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_ginit_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_rinit_out = (unsigned char *) clEnqueueMapBuffer(commands, buffer_rinit_out, true, CL_MAP_READ, 0, sizeof(unsigned char)*(SYS_N/8), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_rinit_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+
+	ptr_cinit_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_cinit_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*(SYND_BYTES), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_cinit_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	ptr_skinit_in = (unsigned char *) clEnqueueMapBuffer(commands, buffer_skinit_in, true, CL_MAP_WRITE, 0, sizeof(unsigned char)*(crypto_kem_SECRETKEYBYTES), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_skinit_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	err = clSetKernelArg(init_kernels_list[0], 0, sizeof(cl_mem), &buffer_ginit_out);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_ginit_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(init_kernels_list[0], 1, sizeof(cl_mem), &buffer_rinit_out);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_rinit_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(init_kernels_list[0], 2, sizeof(cl_mem), &buffer_cinit_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_cinit_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(init_kernels_list[0], 3, sizeof(cl_mem), &buffer_skinit_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_skinit_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+#endif
+
+
+
+#ifdef MID_KERNEL
+
+	mid_kernels_list[0] = clCreateKernel(program, mid_kernels_name_list[0], &err);
+	#ifdef OCL_API_DEBUG
+	if (!mid_kernels_list[0] || err != CL_SUCCESS) {
+		printf("Error: Failed to create compute kernel_mid!\n");
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	//TODO scalar?
+	buffer_wmid_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(int), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_wmid_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_emid_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(unsigned char)*(SYS_N/8), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_emid_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	buffer_imagesmid_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(gf)*(SYS_N), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_sbm_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_wmid_out = (int *) clEnqueueMapBuffer(commands, buffer_wmid_out, true, CL_MAP_READ, 0, sizeof(int), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_wmid_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_emid_out = (unsigned char *) clEnqueueMapBuffer(commands, buffer_emid_out, true, CL_MAP_READ, 0, sizeof(unsigned char)*(SYS_N/8), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_emid_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	ptr_imagesmid_in = (gf *) clEnqueueMapBuffer(commands, buffer_imagesmid_in, true, CL_MAP_WRITE, 0, sizeof(gf)*(SYS_N), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_imagesmid_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(mid_kernels_list[0], 0, sizeof(cl_mem), &buffer_wmid_out);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_wmid_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(mid_kernels_list[0], 1, sizeof(cl_mem), &buffer_emid_out);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_emid_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+
+	err = clSetKernelArg(mid_kernels_list[0], 2, sizeof(cl_mem), &buffer_imagesmid_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_imagesmid_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+#endif
+
+
+#ifdef CHECK_KERNEL
+
+	check_kernels_list[0] = clCreateKernel(program, check_kernels_name_list[0], &err);
+	#ifdef OCL_API_DEBUG
+	if (!check_kernels_list[0] || err != CL_SUCCESS) {
+		printf("Error: Failed to create compute kernel_check!\n");
+		printf("Test failed\n");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	//TODO scalar?
+	buffer_check_out = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(uint16_t), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_check_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+
+	buffer_wcheck_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(int), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_wcheck_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_scheck_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(gf)*(SYS_T*2), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_scheck_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	buffer_s_cmp_check_in = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(gf)*(SYS_T*2), NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to create buffer_s_cmpcheck_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+
+	ptr_check_out = (uint16_t *) clEnqueueMapBuffer(commands, buffer_check_out, true, CL_MAP_READ, 0, sizeof(uint16_t), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_check_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_wcheck_in = (int *) clEnqueueMapBuffer(commands, buffer_wcheck_in, true, CL_MAP_WRITE, 0, sizeof(int), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_wcheck_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_scheck_in = (gf *) clEnqueueMapBuffer(commands, buffer_scheck_in, true, CL_MAP_WRITE, 0, sizeof(gf)*(SYS_T*2), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_scheck_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	ptr_s_cmpcheck_in = (gf *) clEnqueueMapBuffer(commands, buffer_s_cmpcheck_in, true, CL_MAP_WRITE, 0, sizeof(gf)*(SYS_T*2), 0, NULL, NULL, &err);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("ERROR : %d\n", err);
+		printf("FAILED to enqueue map ptr_imagesmid_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+
+	err = clSetKernelArg(check_kernels_list[0], 0, sizeof(cl_mem), &buffer_check_out);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_check_out");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+	err = clSetKernelArg(check_kernels_list[0], 1, sizeof(cl_mem), &buffer_wcheck_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_wcheck_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+
+	err = clSetKernelArg(check_kernels_list[0], 2, sizeof(cl_mem), &buffer_scheck_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_scheck_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+	err = clSetKernelArg(check_kernels_list[0], 3, sizeof(cl_mem), &buffer_s_cmpcheck_in);
+	#ifdef OCL_API_DEBUG
+	if (err != CL_SUCCESS) {
+		printf("FAILED to set kernel arguments for buffer_s_cmpcheck_in");
+		return EXIT_FAILURE;
+	}
+	#endif
+
+
+
+#endif
+
+
 
 
     FILE                *fp_req, *fp_rsp;
