@@ -155,10 +155,10 @@ int decrypt(unsigned char *e, const unsigned char *sk, const unsigned char *c)
 //	return check ^ 1;
 
 
-#ifdef CHECK
+#ifdef CHECK_KERNEL
 	check_host(&check, &w, s, s_cmp);
 #endif
-#ifndef CHECK
+#ifndef CHECK_KERNEL
 	check_sw_host(&check, &w, s, s_cmp);
 #endif
 
